@@ -1,0 +1,54 @@
+buildscript {
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "com.gradle.publish:plugin-publish-plugin:0.9.0"
+    }
+}
+apply plugin: "com.gradle.plugin-publish"
+apply plugin: 'groovy'
+
+group = 'net.ltgt.gradle'
+version = '0.1-SNAPSHOT'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile gradleApi()
+    compile localGroovy()
+
+    testCompile('com.netflix.nebula:nebula-test:2.2.1') {
+        exclude group: 'org.codehaus.groovy'
+    }
+}
+
+wrapper {
+  gradleVersion = "2.3"
+}
+
+test {
+    testLogging {
+        showExceptions = true
+        showStackTraces = true
+        exceptionFormat = 'FULL'
+    }
+}
+
+pluginBundle {
+    website = 'https://github.com/tbroyer/gradle-apt-plugin'
+    vcsUrl = 'https://github.com/tbroyer/gradle-apt-plugin'
+    description = 'Gradle plugin making it easier/safer to use Java annotation processors'
+    tags = [ 'annotation-processing', 'annotation-processors', 'apt' ]
+
+    plugins {
+        aptPlugin {
+            id = 'net.ltgt.apt'
+            displayName = 'Gradle APT plugin'
+        }
+    }
+}
