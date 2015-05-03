@@ -32,6 +32,7 @@ wrapper {
 }
 
 test {
+    systemProperty("plugin", tasks.jar.archivePath)
     testLogging {
         showExceptions = true
         showStackTraces = true
