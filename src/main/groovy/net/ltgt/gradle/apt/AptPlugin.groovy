@@ -36,7 +36,7 @@ class AptPlugin implements Plugin<Project> {
       }
 
       configureEclipse(project, compileOnlyConfiguration, aptConfiguration, testCompileOnlyConfiguration, testAptConfiguration)
-      configureIdeaModule(project, outputDir, compileOnlyConfiguration, testOutputDir, testCompileOnlyConfiguration)
+      configureIdeaModule(project, outputDir, compileOnlyConfiguration, aptConfiguration, testOutputDir, testCompileOnlyConfiguration, testAptConfiguration)
     }
     configureIdeaProject(project)
   }
@@ -102,8 +102,9 @@ class AptPlugin implements Plugin<Project> {
     }
   }
 
-  private void configureIdeaModule(Project project, File outputDir, Configuration compileOnlyConfiguration,
-      File testOutputDir, Configuration testCompileOnlyConfiguration) {
+  private void configureIdeaModule(Project project,
+      File outputDir, Configuration compileOnlyConfiguration, Configuration aptConfiguration,
+      File testOutputDir, Configuration testCompileOnlyConfiguration, Configuration testAptConfiguration) {
     project.plugins.withType(IdeaPlugin) {
       project.afterEvaluate {
         project.idea.module {
@@ -131,8 +132,8 @@ class AptPlugin implements Plugin<Project> {
           // NOTE: ideally we'd use PROVIDED for both, but then every transitive dependency in
           // compile or testCompile configurations that would also be in compileOnly and
           // testCompileOnly would end up in PROVIDED.
-          scopes.COMPILE.plus += [ compileOnlyConfiguration ]
-          scopes.TEST.plus += [ testCompileOnlyConfiguration ]
+          scopes.COMPILE.plus += [ compileOnlyConfiguration, aptConfiguration ]
+          scopes.TEST.plus += [ testCompileOnlyConfiguration, testAptConfiguration ]
         }
       }
     }
@@ -145,23 +146,12 @@ class AptPlugin implements Plugin<Project> {
           def compilerConfiguration = it.node.component.find { it.@name == 'CompilerConfiguration' }
           compilerConfiguration.remove(compilerConfiguration.annotationProcessing)
           compilerConfiguration.append(new NodeBuilder().annotationProcessing() {
-            profile(name: 'Default', enabled: false, default: true)
-
-            project.rootProject.allprojects.findAll {
-              it.plugins.hasPlugin(IdeaPlugin) && it.plugins.hasPlugin(JavaPlugin) &&
-                  (!it.configurations.apt.empty || !it.configurations.testApt.empty)
-            }.each { p ->
-              profile(name: p.idea.module.name, enabled: true, default: false) {
-                sourceOutputDir(name: "${p.relativePath(p.buildDir)}/generated/source/apt/$SourceSet.MAIN_SOURCE_SET_NAME")
-                sourceTestOutputDir(name: "${p.relativePath(p.buildDir)}/generated/source/apt/$SourceSet.TEST_SOURCE_SET_NAME")
-                outputRelativeToContentRoot(value: true)
-                processorPath(useClasspath: false) {
-                  [ p.configurations.apt, p.configurations.testApt ]*.each {
-                    entry(name: it.path)
-                  }
-                }
-                module(name: p.idea.module.name)
-              }
+            profile(name: 'Default', enabled: true, default: true) {
+              // XXX: this assumes that all subprojects use the same name for their buildDir
+              sourceOutputDir(name: "${project.relativePath(project.buildDir)}/generated/source/apt/$SourceSet.MAIN_SOURCE_SET_NAME")
+              sourceTestOutputDir(name: "${project.relativePath(project.buildDir)}/generated/source/apt/$SourceSet.TEST_SOURCE_SET_NAME")
+              outputRelativeToContentRoot(value: true)
+              processorPath(useClasspath: true)
             }
           })
         }

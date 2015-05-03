@@ -26,12 +26,19 @@ class IdeaIntegrationSpec extends IntegrationSpec {
     runTasksSuccessfully('idea')
 
     then:
+    hasAnnotationProcessingConfigured()
+  }
+
+  void hasAnnotationProcessingConfigured() {
     with (new XmlSlurper().parse(new File(projectDir, "${moduleName}.ipr")).component.find { it.@name == 'CompilerConfiguration' }
-        .annotationProcessing.profile) {
+              .annotationProcessing.profile) {
       assert it.size() == 1
       assert it.@default == true
-      assert it.@enabled == false
-      assert it.empty
+      assert it.@enabled == true
+      assert it.sourceOutputDir.@name == 'build/generated/source/apt/main'
+      assert it.sourceTestOutputDir.@name == 'build/generated/source/apt/test'
+      assert it.outputRelativeToContentRoot.@value == true
+      assert it.processorPath.@useClasspath == true
     }
   }
 
@@ -85,27 +92,7 @@ class IdeaIntegrationSpec extends IntegrationSpec {
     runTasksSuccessfully('idea')
 
     then:
-    with (new XmlSlurper().parse(new File(projectDir, "${moduleName}.ipr")).component.find { it.@name == 'CompilerConfiguration' }
-        .annotationProcessing.profile) {
-      assert it.size() == 2
-      assert it.find { it.@default == true }.@enabled == false
-      with (it.find { it.@enabled == true }) {
-        assert it.size() == 1
-        assert it.sourceOutputDir.@name == "build/generated/source/apt/main"
-        assert it.sourceTestOutputDir.@name == "build/generated/source/apt/test"
-        assert it.outputRelativeToContentRoot.@value == true
-        assert it.module.size() == 1 // can't check name easily/reliably
-        assert it.processorPath.@useClasspath == false
-        assert (it.processorPath.entry.@name as Set).equals([
-                "$mavenRepo/leaf/compile/2.0/compile-2.0.jar",
-                "$mavenRepo/annotations/compile/1.0/compile-1.0.jar",
-                "$mavenRepo/processor/compile/1.0/compile-1.0.jar",
-                "$mavenRepo/leaf/testCompile/2.0/testCompile-2.0.jar",
-                "$mavenRepo/annotations/testCompile/1.0/testCompile-1.0.jar",
-                "$mavenRepo/processor/testCompile/1.0/testCompile-1.0.jar",
-            ] as Set)
-      }
-    }
+    hasAnnotationProcessingConfigured()
     // TODO: check IML for content roots and dependencies
   }
 
@@ -170,23 +157,20 @@ class IdeaIntegrationSpec extends IntegrationSpec {
         .contains(new File(projectDir, 'build'))
     // XXX: We can't test buildDir subdirectories unless we also build the project, should we?
 
-    def scopedDependencies = ideaModule.dependencies.collect {
+    def dependencies = ideaModule.dependencies.collect {
       "${it.gradleModuleVersion.group}:${it.gradleModuleVersion.name}:${it.gradleModuleVersion.version}:${it.scope.scope}" as String
     }
-    scopedDependencies.contains('leaf:compile:1.0:COMPILE')
-    scopedDependencies.contains('compile:compile:1.0:COMPILE')
-    scopedDependencies.contains('annotations:compile:1.0:COMPILE')
-    scopedDependencies.contains('leaf:testCompile:1.0:TEST')
-    scopedDependencies.contains('testCompile:testCompile:1.0:TEST')
-    scopedDependencies.contains('annotations:testCompile:1.0:TEST')
-
-    def dependencies = ideaModule.dependencies*.gradleModuleVersion.collect {
-      "${it.group}:${it.name}:${it.version}" as String
-    }
-    !dependencies.contains('leaf:compile:2.0')
-    !dependencies.contains('processor:compile:1.0')
-    !dependencies.contains('leaf:testCompile:2.0')
-    !dependencies.contains('processor:testCompile:1.0')
+    // XXX: it's unfortunate that we have both versions of "leaf" artifacts, but we can't easily do otherwise
+    dependencies.contains('leaf:compile:1.0:COMPILE')
+    dependencies.contains('compile:compile:1.0:COMPILE')
+    dependencies.contains('annotations:compile:1.0:COMPILE')
+    dependencies.contains('leaf:compile:2.0:COMPILE')
+    dependencies.contains('processor:compile:1.0:COMPILE')
+    dependencies.contains('leaf:testCompile:1.0:TEST')
+    dependencies.contains('testCompile:testCompile:1.0:TEST')
+    dependencies.contains('annotations:testCompile:1.0:TEST')
+    dependencies.contains('leaf:testCompile:2.0:TEST')
+    dependencies.contains('processor:testCompile:1.0:TEST')
 
     cleanup:
     connection.close()
