@@ -12,7 +12,7 @@ apply plugin: "com.gradle.plugin-publish"
 apply plugin: 'groovy'
 
 group = 'net.ltgt.gradle'
-version = '0.1'
+version = '0.2-SNAPSHOT'
 
 repositories {
     jcenter()
