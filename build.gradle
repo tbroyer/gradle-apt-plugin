@@ -12,7 +12,15 @@ apply plugin: "com.gradle.plugin-publish"
 apply plugin: 'groovy'
 
 group = 'net.ltgt.gradle'
-version = '0.2-SNAPSHOT'
+
+gradle.taskGraph.whenReady { graph ->
+    if (graph.hasTask(publishPlugins)) {
+        assert 'git diff --quiet --exit-code'.execute(null, rootDir).waitFor() == 0
+        def process ='git describe --exact-match'.execute(null, rootDir)
+        assert process.waitFor() == 0
+        version = process.text.trim() - ~'^v'
+    }
+}
 
 repositories {
     jcenter()
