@@ -31,7 +31,9 @@ class AptPlugin implements Plugin<Project> {
       }
       javaConvention.sourceSets.getByName(SourceSet.TEST_SOURCE_SET_NAME) { SourceSet sourceSet ->
         testCompileOnlyConfiguration.extendsFrom project.configurations[sourceSet.compileConfigurationName]
-        sourceSet.compileClasspath = testCompileOnlyConfiguration
+        sourceSet.compileClasspath = project.files(
+            javaConvention.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).output,
+            testCompileOnlyConfiguration)
         configureCompileTask(project, sourceSet.compileJavaTaskName, testOutputDir, testAptConfiguration)
       }
 
