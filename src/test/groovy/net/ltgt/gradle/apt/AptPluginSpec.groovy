@@ -125,6 +125,11 @@ class AptPluginSpec extends PluginProjectSpec {
     project.evaluate()
 
     then:
+    project.sourceSets.main.compileClasspath == project.configurations.compileOnly
+    project.sourceSets.test.compileClasspath.files == project.files(project.sourceSets.main.output, project.configurations.testCompileOnly).files
+    project.tasks.compileJava.classpath == project.sourceSets.main.compileClasspath
+    project.tasks.compileTestJava.classpath == project.sourceSets.test.compileClasspath
+    project.tasks.javadoc.classpath.files == project.sourceSets.main.output.plus(project.configurations.compileOnly).files
     project.configurations.compile.resolvedConfiguration.resolvedArtifacts*.moduleVersion.id.collect { "$it.group:$it.name:$it.version" as String }.toSet()
         .equals([ 'compile:compile:1.0', 'leaf:compile:1.0' ] as Set)
     project.configurations.compileOnly.resolvedConfiguration.resolvedArtifacts*.moduleVersion.id.collect { "$it.group:$it.name:$it.version" as String }.toSet()

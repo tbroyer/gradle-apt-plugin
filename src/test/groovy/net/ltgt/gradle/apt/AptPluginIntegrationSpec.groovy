@@ -39,4 +39,49 @@ class AptPluginIntegrationSpec extends IntegrationSpec {
     expect:
     runTasksSuccessfully('compileTestJava')
   }
+
+  def 'simple java project with compile-only dependency'() {
+    settingsFile << """\
+      include 'annotations'
+      include 'core'
+    """.stripIndent()
+
+    buildFile << """\
+      subprojects {
+        apply plugin: 'java'
+      }
+      project('core') {
+        apply plugin: 'net.ltgt.apt'
+
+        dependencies {
+          compileOnly project(':annotations')
+        }
+      }
+    """.stripIndent()
+
+    createFile('annotations/src/main/java/annotations/MyAnnotation.java') << """\
+      package annotations;
+
+      import java.lang.annotation.Documented;
+
+      public @interface MyAnnotation {
+      }
+    """.stripIndent()
+
+    createFile('core/src/main/java/core/HelloWorld.java') << """\
+      package core;
+
+      import annotations.MyAnnotation;
+
+      @MyAnnotation
+      public class HelloWorld {
+        public String sayHello(String name) {
+          return "Hello, " + name + "!";
+        }
+      }
+    """.stripIndent()
+
+    expect:
+    runTasksSuccessfully("javadoc")
+  }
 }
