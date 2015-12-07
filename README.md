@@ -23,6 +23,27 @@ The `*Only` configurations are used to specificy compile-time only dependencies 
 
 The `*Only` configurations are part of the `classpath` of the `JavaCompile` tasks, whereas the `apt` and`testApt` configurations are turned into `-processorpath` compiler arguments. Note that if those configurations are empty, an empty processor path (`-processorpath :`) will be passed to `javac`; this is a breaking change compared to the normal behavior of Gradle, as it means annotation processors won't be looked up in the tasks' `classpath`.
 
+## Example usage
+
+After applying the plugin via the instructions in "Using the plugin", the configurations described above can be used in the dependencies block of the gradle buildscript.
+
+```
+dependencies {
+    compile libs.jsr305
+    compile libs.jackson_annotations
+    compile libs.joda_time
+    compile libs.jackson_joda
+    compile libs.icu4j
+    compile libs.guava
+
+    compileOnly libs.immutables
+    apt         libs.immutables
+
+    testCompile libs.junit
+    testCompile libs.assertj
+}
+```
+
 ## Usage with IDEs
 
 When the `idea` or `eclipse` plugins are applied, the `idea` and `eclipse` tasks will auto-configure the generated files to enable annotation processing in the corresponding IDE.
