@@ -1,17 +1,24 @@
 package net.ltgt.gradle.apt
 
-import nebula.test.IntegrationSpec
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
 import nebula.test.dependencies.ModuleBuilder
+import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.ProjectConnection
 import org.gradle.tooling.model.eclipse.EclipseProject
+import org.junit.Rule
+import org.junit.rules.TemporaryFolder
+import spock.lang.Specification
+import spock.lang.Unroll
 
-class EclipseIntegrationSpec extends IntegrationSpec {
+class EclipseIntegrationSpec extends Specification {
+  @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
+  File buildFile
 
-  def 'eclipse without java'() {
-    setup:
+  def setup() {
+    buildFile = testProjectDir.newFile('build.gradle')
     buildFile << """\
       buildscript {
         dependencies {
@@ -21,16 +28,29 @@ class EclipseIntegrationSpec extends IntegrationSpec {
       apply plugin: 'net.ltgt.apt'
       apply plugin: 'eclipse'
     """.stripIndent()
-
-    when:
-    runTasksSuccessfully('eclipse')
-
-    then:
-    !fileExists('.factorypath')
   }
 
-  def 'eclipse task'() {
-    setup:
+  @Unroll
+  def "eclipse without java, with Gradle #gradleVersion"() {
+    when:
+    def result = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
+        .withProjectDir(testProjectDir.root)
+        .withArguments('eclipse')
+        .build()
+
+    then:
+    result.task(':eclipse').outcome == TaskOutcome.SUCCESS
+    result.task(':eclipseJdt') == null
+    !new File(testProjectDir.root, '.factorypath').exists()
+
+    where:
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9']
+  }
+
+  @Unroll
+  def "eclipse task, with Gradle #gradleVersion"() {
+    given:
     def mavenRepo = new GradleDependencyGenerator(
         new DependencyGraphBuilder()
             .addModule(new ModuleBuilder('compile:compile:1.0')
@@ -50,18 +70,11 @@ class EclipseIntegrationSpec extends IntegrationSpec {
                 .addDependency('leaf:testCompile:2.0')
                 .build())
             .build(),
-        directory('repo').path)
+        testProjectDir.newFolder('repo').path)
       .generateTestMavenRepo()
 
     buildFile << """\
-      buildscript {
-        dependencies {
-          classpath files('${System.getProperty('plugin')}')
-        }
-      }
-      apply plugin: 'net.ltgt.apt'
       apply plugin: 'java'
-      apply plugin: 'eclipse'
       repositories {
         maven { url file('${mavenRepo}') }
       }
@@ -76,10 +89,16 @@ class EclipseIntegrationSpec extends IntegrationSpec {
     """.stripIndent()
 
     when:
-    runTasksSuccessfully('eclipse')
+    def result = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
+        .withProjectDir(testProjectDir.root)
+        .withArguments('eclipse')
+        .build()
 
     then:
-    def factorypath = new File(projectDir, '.factorypath')
+    result.task(':eclipse').outcome == TaskOutcome.SUCCESS
+    result.task(':eclipseJdt').outcome == TaskOutcome.SUCCESS
+    def factorypath = new File(testProjectDir.root, '.factorypath')
     factorypath.exists()
     def entries = new XmlSlurper().parse(factorypath).factorypathentry
     entries.size() == 6
@@ -100,18 +119,22 @@ class EclipseIntegrationSpec extends IntegrationSpec {
     aptSettings.getProperty('org.eclipse.jdt.apt.aptEnabled') == 'true'
     aptSettings.getProperty('org.eclipse.jdt.apt.genSrcDir') == '.apt_generated'
     aptSettings.getProperty('org.eclipse.jdt.apt.reconcileEnabled') == 'true'
+
+    where:
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9']
   }
 
   def loadProperties(String path) {
     def props = new Properties()
-    new File(projectDir, path).withInputStream {
+    new File(testProjectDir.root, path).withInputStream {
       props.load(it)
     }
     props
   }
 
-  def 'tooling api'() {
-    setup:
+  @Unroll
+  def "tooling api, with Gradle #gradleVersion"() {
+    given:
     def mavenRepo = new GradleDependencyGenerator(
         new DependencyGraphBuilder()
             .addModule(new ModuleBuilder('compile:compile:1.0')
@@ -131,18 +154,11 @@ class EclipseIntegrationSpec extends IntegrationSpec {
                 .addDependency('leaf:testCompile:2.0')
                 .build())
             .build(),
-        directory('repo').path)
+        testProjectDir.newFolder('repo').path)
         .generateTestMavenRepo()
 
     buildFile << """\
-      buildscript {
-        dependencies {
-          classpath files('${System.getProperty('plugin')}')
-        }
-      }
-      apply plugin: 'net.ltgt.apt'
       apply plugin: 'java'
-      apply plugin: 'eclipse'
       repositories {
         maven { url file('${mavenRepo}') }
       }
@@ -158,7 +174,8 @@ class EclipseIntegrationSpec extends IntegrationSpec {
 
     when:
     ProjectConnection connection = GradleConnector.newConnector()
-        .forProjectDirectory(projectDir)
+        .forProjectDirectory(testProjectDir.root)
+        .useGradleVersion(gradleVersion)
         .connect()
     def classpath = connection.getModel(EclipseProject).classpath.collect {
       "${it.gradleModuleVersion.group}:${it.gradleModuleVersion.name}:${it.gradleModuleVersion.version}" as String
@@ -178,5 +195,8 @@ class EclipseIntegrationSpec extends IntegrationSpec {
 
     cleanup:
     connection.close()
+
+    where:
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9']
   }
 }

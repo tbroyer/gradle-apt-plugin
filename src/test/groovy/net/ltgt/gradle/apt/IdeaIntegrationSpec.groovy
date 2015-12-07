@@ -1,17 +1,29 @@
 package net.ltgt.gradle.apt
 
-import nebula.test.IntegrationSpec
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
 import nebula.test.dependencies.ModuleBuilder
+import org.gradle.testkit.runner.GradleRunner
+import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.ProjectConnection
 import org.gradle.tooling.model.idea.IdeaProject
+import org.junit.Rule
+import org.junit.rules.TemporaryFolder
+import spock.lang.Specification
+import spock.lang.Unroll
 
-class IdeaIntegrationSpec extends IntegrationSpec {
+class IdeaIntegrationSpec extends Specification {
+  @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
+  File settingsFile, buildFile
+  String moduleName = 'testProject'
 
-  def 'idea without java'() {
-    setup:
+  def setup() {
+    settingsFile = testProjectDir.newFile('settings.gradle')
+    settingsFile << """\
+      rootProject.name = '${moduleName}'
+    """.stripIndent()
+    buildFile = testProjectDir.newFile('build.gradle')
     buildFile << """\
       buildscript {
         dependencies {
@@ -21,16 +33,29 @@ class IdeaIntegrationSpec extends IntegrationSpec {
       apply plugin: 'net.ltgt.apt'
       apply plugin: 'idea'
     """.stripIndent()
+  }
 
+  @Unroll
+  def "idea without java, with Gradle #gradleVersion"() {
     when:
-    runTasksSuccessfully('idea')
+    def result = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
+        .withProjectDir(testProjectDir.root)
+        .withArguments('idea')
+        .build()
 
     then:
+    result.task(':idea').outcome == TaskOutcome.SUCCESS
+    result.task(':ideaProject').outcome == TaskOutcome.SUCCESS
+    result.task(':ideaModule').outcome == TaskOutcome.SUCCESS
     hasAnnotationProcessingConfigured()
+
+    where:
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9']
   }
 
   void hasAnnotationProcessingConfigured() {
-    with (new XmlSlurper().parse(new File(projectDir, "${moduleName}.ipr")).component.find { it.@name == 'CompilerConfiguration' }
+    with (new XmlSlurper().parse(new File(testProjectDir.root, "${moduleName}.ipr")).component.find { it.@name == 'CompilerConfiguration' }
               .annotationProcessing.profile) {
       assert it.size() == 1
       assert it.@default == true
@@ -42,7 +67,8 @@ class IdeaIntegrationSpec extends IntegrationSpec {
     }
   }
 
-  def 'idea task'() {
+  @Unroll
+  def "idea task, with Gradle #gradleVersion"() {
     setup:
     def mavenRepo = new GradleDependencyGenerator(
         new DependencyGraphBuilder()
@@ -63,18 +89,11 @@ class IdeaIntegrationSpec extends IntegrationSpec {
                 .addDependency('leaf:testCompile:2.0')
                 .build())
             .build(),
-        directory('repo').path)
+        testProjectDir.newFolder('repo').path)
       .generateTestMavenRepo()
 
     buildFile << """\
-        buildscript {
-          dependencies {
-            classpath files('${System.getProperty('plugin')}')
-          }
-        }
-        apply plugin: 'net.ltgt.apt'
         apply plugin: 'java'
-        apply plugin: 'idea'
         repositories {
           maven { url file('${mavenRepo}') }
         }
@@ -89,14 +108,24 @@ class IdeaIntegrationSpec extends IntegrationSpec {
     """.stripIndent()
 
     when:
-    runTasksSuccessfully('idea')
+    def result = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
+        .withProjectDir(testProjectDir.root)
+        .withArguments('idea')
+        .build()
 
     then:
+    result.task(':idea').outcome == TaskOutcome.SUCCESS
+    result.task(':ideaModule').outcome == TaskOutcome.SUCCESS
     hasAnnotationProcessingConfigured()
     // TODO: check IML for content roots and dependencies
+
+    where:
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9']
   }
 
-  def 'tooling api'() {
+  @Unroll
+  def "tooling api, with Gradle #gradleVersion"() {
     setup:
     def mavenRepo = new GradleDependencyGenerator(
         new DependencyGraphBuilder()
@@ -117,18 +146,11 @@ class IdeaIntegrationSpec extends IntegrationSpec {
                 .addDependency('leaf:testCompile:2.0')
                 .build())
             .build(),
-        directory('repo').path)
+        testProjectDir.newFolder('repo').path)
         .generateTestMavenRepo()
 
     buildFile << """\
-        buildscript {
-          dependencies {
-            classpath files('${System.getProperty('plugin')}')
-          }
-        }
-        apply plugin: 'net.ltgt.apt'
         apply plugin: 'java'
-        apply plugin: 'idea'
         repositories {
           maven { url file('${mavenRepo}') }
         }
@@ -144,17 +166,18 @@ class IdeaIntegrationSpec extends IntegrationSpec {
 
     when:
     ProjectConnection connection = GradleConnector.newConnector()
-        .forProjectDirectory(projectDir)
+        .forProjectDirectory(testProjectDir.root)
+        .useGradleVersion(gradleVersion)
         .connect()
     def ideaModule = connection.getModel(IdeaProject).modules[0]
 
     then:
     ideaModule.contentRoots*.generatedSourceDirectories*.directory.flatten()
-        .contains(new File(projectDir, 'build/generated/source/apt/main'))
+        .contains(new File(testProjectDir.root, 'build/generated/source/apt/main'))
     ideaModule.contentRoots*.generatedTestDirectories*.directory.flatten()
-        .contains(new File(projectDir, 'build/generated/source/apt/test'))
+        .contains(new File(testProjectDir.root, 'build/generated/source/apt/test'))
     !ideaModule.contentRoots*.excludeDirectories.flatten()
-        .contains(new File(projectDir, 'build'))
+        .contains(new File(testProjectDir.root, 'build'))
     // XXX: We can't test buildDir subdirectories unless we also build the project, should we?
 
     def dependencies = ideaModule.dependencies.collect {
@@ -174,5 +197,8 @@ class IdeaIntegrationSpec extends IntegrationSpec {
 
     cleanup:
     connection.close()
+
+    where:
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9']
   }
 }
