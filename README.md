@@ -23,6 +23,21 @@ The `*Only` configurations are used to specificy compile-time only dependencies 
 
 The `*Only` configurations are part of the `classpath` of the `JavaCompile` tasks, whereas the `apt` and`testApt` configurations are turned into `-processorpath` compiler arguments. Note that if those configurations are empty, an empty processor path (`-processorpath :`) will be passed to `javac`; this is a breaking change compared to the normal behavior of Gradle, as it means annotation processors won't be looked up in the tasks' `classpath`.
 
+### Example usage
+
+After applying the plugin following the above instructions, those added configurations can be used when declaring dependencies:
+
+```gradle
+dependencies {
+  compile "com.google.dagger:dagger:2.0.2"
+  apt     "com.google.dagger:dagger-compiler:2.0.2"
+
+  // auto-factory contains both annotations and their processor, neither is needed at runtime
+  compileOnly "com.google.auto.factory:auto-factory:1.0-beta3"
+  apt         "com.google.auto.factory:auto-factory:1.0-beta3"
+}
+```
+
 ## Usage with IDEs
 
 When the `idea` or `eclipse` plugins are applied, the `idea` and `eclipse` tasks will auto-configure the generated files to enable annotation processing in the corresponding IDE.
