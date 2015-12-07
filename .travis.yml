@@ -3,3 +3,9 @@ sudo: false
 jdk:
   - openjdk7
   - oraclejdk8
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.gradle/native/
+    - $HOME/.gradle/daemon/native/
