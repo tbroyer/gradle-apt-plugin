@@ -41,7 +41,8 @@ dependencies {
 
     testCompile libs.junit
     testCompile libs.assertj
-}```
+}
+```
 
 ## Usage with IDEs
 
