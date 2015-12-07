@@ -41,7 +41,8 @@ class EclipseIntegrationSpec extends Specification {
 
     then:
     result.task(':eclipse').outcome == TaskOutcome.SUCCESS
-    result.task(':eclipseJdt') == null
+    result.task(':eclipseJdtApt') == null
+    result.task(':eclipseFactorypath') == null
     !new File(testProjectDir.root, '.factorypath').exists()
 
     where:
@@ -97,7 +98,8 @@ class EclipseIntegrationSpec extends Specification {
 
     then:
     result.task(':eclipse').outcome == TaskOutcome.SUCCESS
-    result.task(':eclipseJdt').outcome == TaskOutcome.SUCCESS
+    result.task(':eclipseJdtApt').outcome == TaskOutcome.SUCCESS
+    result.task(':eclipseFactorypath').outcome == TaskOutcome.SUCCESS
     def factorypath = new File(testProjectDir.root, '.factorypath')
     factorypath.exists()
     def entries = new XmlSlurper().parse(factorypath).factorypathentry
@@ -119,6 +121,20 @@ class EclipseIntegrationSpec extends Specification {
     aptSettings.getProperty('org.eclipse.jdt.apt.aptEnabled') == 'true'
     aptSettings.getProperty('org.eclipse.jdt.apt.genSrcDir') == '.apt_generated'
     aptSettings.getProperty('org.eclipse.jdt.apt.reconcileEnabled') == 'true'
+
+    when:
+    def result2 = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
+        .withProjectDir(testProjectDir.root)
+        .withArguments('cleanEclipse')
+        .build()
+
+    then:
+    result2.task(':cleanEclipse').outcome == TaskOutcome.SUCCESS
+    result2.task(':cleanEclipseJdtApt').outcome == TaskOutcome.SUCCESS
+    result2.task(':cleanEclipseFactorypath').outcome == TaskOutcome.SUCCESS
+    !factorypath.exists()
+    !new File(testProjectDir.root, '.settings/org.eclipse.jdt.apt.core.prefs').exists()
 
     where:
     gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9']

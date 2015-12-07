@@ -6,6 +6,7 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.plugins.ide.eclipse.EclipsePlugin
@@ -94,29 +95,49 @@ class AptPlugin implements Plugin<Project> {
           noExportConfigurations += [ compileOnlyConfiguration, testCompileOnlyConfiguration ]
         }
       }
-
-      project.tasks.eclipseJdt.doLast {
-        def aptPrefs = project.file('.settings/org.eclipse.jdt.apt.core.prefs')
-        project.mkdir(aptPrefs.parentFile)
-        aptPrefs.text = """\
-          eclipse.preference.version=1
-          org.eclipse.jdt.apt.aptEnabled=true
-          org.eclipse.jdt.apt.genSrcDir=.apt_generated
-          org.eclipse.jdt.apt.reconcileEnabled=true
-        """.stripIndent()
-
-        project.file('.factorypath').withWriter {
-          new groovy.xml.MarkupBuilder(it).'factorypath' {
-            [ aptConfiguration, testAptConfiguration ]*.each {
-              factorypathentry(
-                  kind: 'EXTJAR',
-                  id: it.absolutePath,
-                  enabled: true,
-                  runInBatchMode: false,
-              )
+      if (!project.tasks.findByName('eclipseJdtApt')) {
+        def task = project.tasks.create('eclipseJdtApt') {
+          ext.aptPrefs = project.file('.settings/org.eclipse.jdt.apt.core.prefs')
+          outputs.file(aptPrefs)
+          doLast {
+            project.mkdir(aptPrefs.parentFile)
+            aptPrefs.text = """\
+              eclipse.preference.version=1
+              org.eclipse.jdt.apt.aptEnabled=true
+              org.eclipse.jdt.apt.genSrcDir=.apt_generated
+              org.eclipse.jdt.apt.reconcileEnabled=true
+            """.stripIndent()
+          }
+        }
+        project.tasks.eclipse.dependsOn task
+        def cleanTask = project.tasks.create('cleanEclipseJdtApt', Delete)
+        cleanTask.delete task.outputs
+        project.tasks.cleanEclipse.dependsOn cleanTask
+      }
+      if (!project.tasks.findByName('eclipseFactorypath')) {
+        def task = project.tasks.create('eclipseFactorypath') {
+          ext.factorypath = project.file('.factorypath')
+          inputs.files aptConfiguration, testAptConfiguration
+          outputs.file factorypath
+          doLast {
+            factorypath.withWriter {
+              new groovy.xml.MarkupBuilder(it).'factorypath' {
+                [aptConfiguration, testAptConfiguration]*.each {
+                  factorypathentry(
+                      kind: 'EXTJAR',
+                      id: it.absolutePath,
+                      enabled: true,
+                      runInBatchMode: false,
+                  )
+                }
+              }
             }
           }
         }
+        project.tasks.eclipse.dependsOn task
+        def cleanTask = project.tasks.create('cleanEclipseFactorypath', Delete)
+        cleanTask.delete task.outputs
+        project.tasks.cleanEclipse.dependsOn cleanTask
       }
     }
   }
