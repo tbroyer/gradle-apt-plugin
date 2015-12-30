@@ -67,7 +67,7 @@ class AptPluginIntegrationSpec extends Specification {
     result.task(':compileTestJava').outcome == TaskOutcome.SUCCESS
 
     where:
-    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9']
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10']
   }
 
   @Unroll
@@ -133,6 +133,6 @@ class AptPluginIntegrationSpec extends Specification {
     result.task(':core:javadoc').outcome == TaskOutcome.SUCCESS
 
     where:
-    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9']
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10']
   }
 }

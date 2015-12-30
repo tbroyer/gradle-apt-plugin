@@ -51,7 +51,7 @@ class IdeaIntegrationSpec extends Specification {
     hasAnnotationProcessingConfigured()
 
     where:
-    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9']
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10']
   }
 
   void hasAnnotationProcessingConfigured() {
@@ -121,7 +121,7 @@ class IdeaIntegrationSpec extends Specification {
     // TODO: check IML for content roots and dependencies
 
     where:
-    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9']
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10']
   }
 
   @Unroll
@@ -199,6 +199,6 @@ class IdeaIntegrationSpec extends Specification {
     connection.close()
 
     where:
-    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9']
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10']
   }
 }
