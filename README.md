@@ -40,6 +40,5 @@ dependencies {
 
 ## Usage with IDEs
 
-When the `idea` or `eclipse` plugins are applied, the `idea` and `eclipse` tasks will auto-configure the generated files to enable annotation processing in the corresponding IDE.
+When the `idea` or `eclipse` plugins are applied, the `idea` and `eclipse` tasks will auto-configure the generated files to enable annotation processing in the corresponding IDE. IntelliJ's Gradle integration will also work automatically if the project format is directory-based (the default).
 
-When using the Gradle integration in IntelliJ IDEA however, rather than the `idea` task, you'll have to manually enable annotation processing: in Settings… → Build, Execution, Deployment → Compiler → Annotation Processors, check `Enable annotation processing` and `Obtain processors from project classpath`. To mimic the Gradle behavior and generated files behavior, you can configure the production and test sources directories to `build/generated/source/apt/main` and `build/generated/source/apt/test` respectively and choose to `Store generated sources relative to:` `Module content root`.

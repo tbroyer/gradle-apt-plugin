@@ -48,14 +48,18 @@ class IdeaIntegrationSpec extends Specification {
     result.task(':idea').outcome == TaskOutcome.SUCCESS
     result.task(':ideaProject').outcome == TaskOutcome.SUCCESS
     result.task(':ideaModule').outcome == TaskOutcome.SUCCESS
-    hasAnnotationProcessingConfigured()
+    hasAnnotationProcessingConfiguredIn(ipr())
 
     where:
     gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10']
   }
 
-  void hasAnnotationProcessingConfigured() {
-    with (new XmlSlurper().parse(new File(testProjectDir.root, "${moduleName}.ipr")).component.find { it.@name == 'CompilerConfiguration' }
+  File ipr() {
+    new File(testProjectDir.root, "${moduleName}.ipr")
+  }
+
+  void hasAnnotationProcessingConfiguredIn(File xmlFile) {
+    with (new XmlSlurper().parse(xmlFile).component.find { it.@name == 'CompilerConfiguration' }
               .annotationProcessing.profile) {
       assert it.size() == 1
       assert it.@default == true
@@ -117,11 +121,51 @@ class IdeaIntegrationSpec extends Specification {
     then:
     result.task(':idea').outcome == TaskOutcome.SUCCESS
     result.task(':ideaModule').outcome == TaskOutcome.SUCCESS
-    hasAnnotationProcessingConfigured()
+    hasAnnotationProcessingConfiguredIn(ipr())
     // TODO: check IML for content roots and dependencies
 
     where:
     gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10']
+  }
+
+  @Unroll
+  def 'compiler.xml, any task'() {
+    setup:
+    compilerXml().parentFile.mkdir()
+    compilerXml() << """\
+        <?xml version="1.0" encoding="UTF-8"?>
+        <project version="4">
+          <component name="CompilerConfiguration">
+            <annotationProcessing/>
+          </component>
+        </project>
+    """.stripIndent()
+
+    buildFile << """\
+        buildscript {
+          dependencies {
+            classpath files('${System.getProperty('plugin')}')
+          }
+        }
+        apply plugin: 'net.ltgt.apt'
+    """.stripIndent()
+
+    when:
+    def result = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
+        .withProjectDir(testProjectDir.root)
+        .withArguments('tasks')
+        .build()
+
+    then:
+    hasAnnotationProcessingConfiguredIn(compilerXml())
+
+    where:
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10']
+  }
+
+  File compilerXml() {
+    new File(testProjectDir.root, ".idea/compiler.xml")
   }
 
   @Unroll

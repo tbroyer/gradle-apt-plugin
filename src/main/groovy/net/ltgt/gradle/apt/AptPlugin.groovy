@@ -181,21 +181,37 @@ class AptPlugin implements Plugin<Project> {
 
   private void configureIdeaProject(Project project) {
     if (project.parent == null) {
+      // .ipr format
       project.plugins.withType(IdeaPlugin) {
         project.idea.project.ipr.withXml {
-          def compilerConfiguration = it.node.component.find { it.@name == 'CompilerConfiguration' }
-          compilerConfiguration.remove(compilerConfiguration.annotationProcessing)
-          compilerConfiguration.append(new NodeBuilder().annotationProcessing() {
-            profile(name: 'Default', enabled: true, default: true) {
-              // XXX: this assumes that all subprojects use the same name for their buildDir
-              sourceOutputDir(name: "${project.relativePath(project.buildDir)}/generated/source/apt/$SourceSet.MAIN_SOURCE_SET_NAME")
-              sourceTestOutputDir(name: "${project.relativePath(project.buildDir)}/generated/source/apt/$SourceSet.TEST_SOURCE_SET_NAME")
-              outputRelativeToContentRoot(value: true)
-              processorPath(useClasspath: true)
-            }
-          })
+          updateIdeaProjectConfiguration(project, it.node)
+        }
+      }
+      // Directory-based format
+      File compilerXml = project.file('.idea/compiler.xml')
+      if (compilerXml.isFile()) {
+        Node config = (new XmlParser()).parse(compilerXml)
+        updateIdeaProjectConfiguration(project, config)
+        compilerXml.withWriter { writer ->
+          XmlNodePrinter printer = new XmlNodePrinter(new PrintWriter(writer))
+          printer.setPreserveWhitespace(true)
+          printer.print(config)
         }
       }
     }
+  }
+
+  private void updateIdeaProjectConfiguration(Project project, Node config) {
+    def compilerConfiguration = config.component.find { it.@name == 'CompilerConfiguration' }
+    compilerConfiguration.remove(compilerConfiguration.annotationProcessing)
+    compilerConfiguration.append(new NodeBuilder().annotationProcessing() {
+      profile(name: 'Default', enabled: true, default: true) {
+        // XXX: this assumes that all subprojects use the same name for their buildDir
+        sourceOutputDir(name: "${project.relativePath(project.buildDir)}/generated/source/apt/$SourceSet.MAIN_SOURCE_SET_NAME")
+        sourceTestOutputDir(name: "${project.relativePath(project.buildDir)}/generated/source/apt/$SourceSet.TEST_SOURCE_SET_NAME")
+        outputRelativeToContentRoot(value: true)
+        processorPath(useClasspath: true)
+      }
+    })
   }
 }
