@@ -3,7 +3,7 @@
 This plugin does a few things to make it easier/safer to use Java annotation processors in a Gradle build:
 
 * it adds configurations for your compile-time only dependencies (annotations, generally) and annotation processors;
-* automatically configures the corresponding `JavaCompile` tasks to make use of these configurations, when the `java` plugin is applied;
+* automatically configures the corresponding `JavaCompile` and `GroovyCompile` tasks to make use of these configurations, when the `java` or `groovy` plugin is applied;
 * automatically configures IntelliJ IDEA and/or Eclipse when the `idea` or `eclipse` plugins are applied.
 
 ## Using the plugin
@@ -12,16 +12,16 @@ The plugin is published to the Plugin Portal; see instructions there: https://pl
 
 ## Added configurations
 
-The following configurations are added:
+The following configurations are added to any Java project:
 
 * `compileOnly`, extends `compile`
 * `apt`
 * `testCompileOnly`, extends `testCompile`
 * `testApt`
 
-The `*Only` configurations are used to specificy compile-time only dependencies such as annotations that will be processed by annotation processors. Annotation processors themselves are to be added to the `apt` and `testApt` configurations.
+The `*Only` configurations are used to specify compile-time only dependencies such as annotations that will be processed by annotation processors. Annotation processors themselves are to be added to the `apt` and `testApt` configurations.
 
-The `*Only` configurations are part of the `classpath` of the `JavaCompile` tasks, whereas the `apt` and`testApt` configurations are turned into `-processorpath` compiler arguments. Note that if those configurations are empty, an empty processor path (`-processorpath :`) will be passed to `javac`; this is a breaking change compared to the normal behavior of Gradle, as it means annotation processors won't be looked up in the tasks' `classpath`.
+The `*Only` configurations are part of the `classpath` of the `JavaCompile` and `GroovyCompile` tasks, whereas the `apt` and `testApt` configurations are turned into `-processorpath` compiler arguments. Note that if those configurations are empty, an empty processor path (`-processorpath :`) will be passed to `javac`; this is a breaking change compared to the normal behavior of Gradle, as it means annotation processors won't be looked up in the tasks' `classpath`.
 
 ### Example usage
 
@@ -35,6 +35,18 @@ dependencies {
   // auto-factory contains both annotations and their processor, neither is needed at runtime
   compileOnly "com.google.auto.factory:auto-factory:1.0-beta3"
   apt         "com.google.auto.factory:auto-factory:1.0-beta3"
+}
+```
+
+## Groovy support
+
+Starting with version 0.6, the plugin also configures `GroovyCompile` tasks added when the `groovy` plugin is applied.
+It does not however configure annotation processing for Groovy sources, only for Java sources used in joint compilation.
+Turn process annotations on Groovy sources, you'll have to configure your `GroovyCompile` tasks; e.g.
+
+```gradle
+compileGroovy {
+  groovyOptions.javaAnnotationProcessing = true
 }
 ```
 

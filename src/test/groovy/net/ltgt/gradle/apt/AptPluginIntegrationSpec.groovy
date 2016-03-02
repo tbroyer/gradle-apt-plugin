@@ -135,4 +135,124 @@ class AptPluginIntegrationSpec extends Specification {
     where:
     gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10', '2.11']
   }
+
+  @Unroll
+  def "simple groovy project, with Gradle #gradleVersion"() {
+    given:
+    buildFile << """\
+      apply plugin: 'net.ltgt.apt'
+      apply plugin: 'groovy'
+
+      dependencies {
+        compile localGroovy()
+      }
+    """.stripIndent()
+
+    def f = new File(testProjectDir.newFolder('src', 'main', 'groovy', 'simple'), 'HelloWorld.groovy')
+    f.createNewFile()
+    f << """\
+      package simple;
+
+      class HelloWorld {
+        String sayHello(String name) {
+          "Hello, \${name}!";
+        }
+      }
+    """.stripIndent()
+
+    f = new File(testProjectDir.newFolder('src', 'test', 'groovy', 'simple'), 'HelloWorldTest.groovy')
+    f.createNewFile()
+    f << """\
+      package simple;
+
+      class HelloWorldTest {
+        // Not a real unit-test
+        public static void main(String[] args) {
+          System.out.println(new HelloWorld().sayHello("World"));
+        }
+      }
+    """.stripIndent()
+
+    when:
+    def result = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
+        .withProjectDir(testProjectDir.root)
+        .withArguments('compileTestGroovy')
+        .build()
+
+    then:
+    result.task(':compileGroovy').outcome == TaskOutcome.SUCCESS
+    result.task(':compileTestGroovy').outcome == TaskOutcome.SUCCESS
+
+    where:
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10', '2.11']
+  }
+
+  @Unroll
+  def "simple groovy project with compile-only dependency, with Gradle #gradleVersion"() {
+    given:
+    def settingsFile = testProjectDir.newFile('settings.gradle')
+    settingsFile << """\
+      include 'annotations'
+      include 'core'
+    """.stripIndent()
+
+    buildFile << """\
+      project('annotations') {
+        apply plugin: 'java'
+      }
+      project('core') {
+        apply plugin: 'groovy'
+        apply plugin: 'net.ltgt.apt'
+
+        dependencies {
+          compile localGroovy()
+          compileOnly project(':annotations')
+        }
+      }
+    """.stripIndent()
+
+    def f = new File(testProjectDir.newFolder('annotations', 'src', 'main', 'java', 'annotations'), 'MyAnnotation.java')
+    f.createNewFile()
+    f << """\
+      package annotations;
+
+      import java.lang.annotation.Documented;
+
+      public @interface MyAnnotation {
+      }
+    """.stripIndent()
+
+    f = new File(testProjectDir.newFolder('core', 'src', 'main', 'groovy', 'core'), 'HelloWorld.groovy')
+    f.createNewFile()
+    f << """\
+      package core;
+
+      import annotations.MyAnnotation;
+
+      @MyAnnotation
+      class HelloWorld {
+        String sayHello(String name) {
+          "Hello, \${name}!";
+        }
+      }
+    """.stripIndent()
+
+    expect:
+
+    when:
+    def result = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
+        .withProjectDir(testProjectDir.root)
+        .withArguments(':core:groovydoc')
+        .build()
+
+    then:
+    result.task(':annotations:compileJava').outcome == TaskOutcome.SUCCESS
+    result.task(':core:compileGroovy').outcome == TaskOutcome.SUCCESS
+    result.task(':core:groovydoc').outcome == TaskOutcome.SUCCESS
+
+    where:
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10', '2.11']
+  }
 }

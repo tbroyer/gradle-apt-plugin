@@ -37,6 +37,23 @@ class AptPluginSpec extends PluginProjectSpec {
     project.tasks.compileTestJava.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/test').path, '-processorpath', ':' ])
   }
 
+  def 'empty groovy project'() {
+    when:
+    project.apply plugin: pluginName
+    project.apply plugin: 'groovy'
+    project.evaluate()
+
+    then:
+    project.configurations.findByName('apt')
+    project.configurations.findByName('testApt')
+    project.configurations.findByName('compileOnly')
+    project.configurations.findByName('testCompileOnly')
+    project.tasks.compileJava.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/main').path, '-processorpath', ':' ])
+    project.tasks.compileGroovy.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/main').path, '-processorpath', ':' ])
+    project.tasks.compileTestJava.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/test').path, '-processorpath', ':' ])
+    project.tasks.compileTestGroovy.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/test').path, '-processorpath', ':' ])
+  }
+
   def 'project with annotation processors'() {
     setup:
     def mavenRepo = new GradleDependencyGenerator(
@@ -61,7 +78,7 @@ class AptPluginSpec extends PluginProjectSpec {
 
     when:
     project.apply plugin: pluginName
-    project.apply plugin: 'java'
+    project.apply plugin: 'groovy'
     project.repositories {
       maven { url mavenRepo }
     }
@@ -78,7 +95,15 @@ class AptPluginSpec extends PluginProjectSpec {
       compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/main').path, '-processorpath', project.configurations.apt.asPath ])
       !compilerArgs.any { arg -> project.configurations.compile.files.any { arg.contains(it.path) } }
     }
+    with(project.tasks.compileGroovy.options) {
+      compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/main').path, '-processorpath', project.configurations.apt.asPath ])
+      !compilerArgs.any { arg -> project.configurations.compile.files.any { arg.contains(it.path) } }
+    }
     with(project.tasks.compileTestJava.options) {
+      compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/test').path, '-processorpath', project.configurations.testApt.asPath ])
+      !compilerArgs.any { arg -> project.configurations.testCompile.files.any { arg.contains(it.path) } }
+    }
+    with(project.tasks.compileTestGroovy.options) {
       compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/test').path, '-processorpath', project.configurations.testApt.asPath ])
       !compilerArgs.any { arg -> project.configurations.testCompile.files.any { arg.contains(it.path) } }
     }
@@ -112,7 +137,7 @@ class AptPluginSpec extends PluginProjectSpec {
 
     when:
     project.apply plugin: pluginName
-    project.apply plugin: 'java'
+    project.apply plugin: 'groovy'
     project.repositories {
       maven { url mavenRepo }
     }
@@ -128,8 +153,11 @@ class AptPluginSpec extends PluginProjectSpec {
     project.sourceSets.main.compileClasspath == project.configurations.compileOnly
     project.sourceSets.test.compileClasspath.files == project.files(project.sourceSets.main.output, project.configurations.testCompileOnly).files
     project.tasks.compileJava.classpath == project.sourceSets.main.compileClasspath
+    project.tasks.compileGroovy.classpath == project.sourceSets.main.compileClasspath
     project.tasks.compileTestJava.classpath == project.sourceSets.test.compileClasspath
+    project.tasks.compileTestGroovy.classpath == project.sourceSets.test.compileClasspath
     project.tasks.javadoc.classpath.files == project.sourceSets.main.output.plus(project.configurations.compileOnly).files
+    project.tasks.groovydoc.classpath.files == project.sourceSets.main.output.plus(project.configurations.compileOnly).files
     project.configurations.compile.resolvedConfiguration.resolvedArtifacts*.moduleVersion.id.collect { "$it.group:$it.name:$it.version" as String }.toSet()
         .equals([ 'compile:compile:1.0', 'leaf:compile:1.0' ] as Set)
     project.configurations.compileOnly.resolvedConfiguration.resolvedArtifacts*.moduleVersion.id.collect { "$it.group:$it.name:$it.version" as String }.toSet()

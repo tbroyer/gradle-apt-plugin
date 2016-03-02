@@ -3,12 +3,13 @@ package net.ltgt.gradle.apt
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.plugins.GroovyBasePlugin
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.SourceSet
-import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.compile.AbstractCompile
 import org.gradle.plugins.ide.eclipse.EclipsePlugin
 import org.gradle.plugins.ide.idea.IdeaPlugin
 
@@ -25,7 +26,7 @@ class AptPlugin implements Plugin<Project> {
     testCompileOnlyConfiguration.extendsFrom compileOnlyConfiguration
 
     project.plugins.withType(JavaBasePlugin) {
-      def javaConvention = project.convention.plugins.get("java") as JavaPluginConvention
+      def javaConvention = project.convention.getPlugin(JavaPluginConvention)
       javaConvention.sourceSets.all { SourceSet sourceSet ->
         def configuration = project.configurations.maybeCreate(sourceSet.compileConfigurationName + "Only")
         configuration.visible = false
@@ -39,7 +40,7 @@ class AptPlugin implements Plugin<Project> {
       }
     }
     project.plugins.withType(JavaPlugin) {
-      def javaConvention = project.convention.plugins.get("java") as JavaPluginConvention
+      def javaConvention = project.convention.getPlugin(JavaPluginConvention)
       javaConvention.sourceSets.getByName(SourceSet.TEST_SOURCE_SET_NAME) { SourceSet sourceSet ->
         sourceSet.compileClasspath = project.files(
             javaConvention.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).output,
@@ -48,6 +49,12 @@ class AptPlugin implements Plugin<Project> {
 
       configureEclipse(project, compileOnlyConfiguration, aptConfiguration, testCompileOnlyConfiguration, testAptConfiguration)
       configureIdeaModule(project, outputDir, compileOnlyConfiguration, aptConfiguration, testOutputDir, testCompileOnlyConfiguration, testAptConfiguration)
+    }
+    project.plugins.withType(GroovyBasePlugin) {
+      def javaConvention = project.convention.getPlugin(JavaPluginConvention)
+      javaConvention.sourceSets.all { SourceSet sourceSet ->
+        configureCompileTask(project, sourceSet.getCompileTaskName("groovy"), getGeneratedSourceDir(project, sourceSet.name), getAptConfiguration(project, sourceSet))
+      }
     }
     configureIdeaProject(project)
   }
@@ -62,7 +69,7 @@ class AptPlugin implements Plugin<Project> {
   }
 
   private void configureCompileTask(Project project, String taskName, File outputDir, Configuration aptConfiguration) {
-    def task = project.tasks.withType(JavaCompile).getByName(taskName)
+    def task = project.tasks.withType(AbstractCompile).getByName(taskName)
 
     task.inputs.files aptConfiguration
     task.outputs.dir outputDir
