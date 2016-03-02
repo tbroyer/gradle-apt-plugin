@@ -16,10 +16,7 @@ class AptPluginSpec extends PluginProjectSpec {
     project.evaluate()
 
     then:
-    project.configurations.findByName('apt')
-    project.configurations.findByName('testApt')
-    project.configurations.findByName('compileOnly')
-    project.configurations.findByName('testCompileOnly')
+    project.configurations.empty
   }
 
   def 'empty java project'() {

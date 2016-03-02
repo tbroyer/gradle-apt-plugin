@@ -16,19 +16,10 @@ import org.gradle.plugins.ide.idea.IdeaPlugin
 class AptPlugin implements Plugin<Project> {
   @Override
   void apply(Project project) {
-    def aptConfiguration = project.configurations.maybeCreate("apt")
-    def compileOnlyConfiguration = project.configurations.maybeCreate("compileOnly")
-    def testAptConfiguration = project.configurations.maybeCreate("testApt")
-    def testCompileOnlyConfiguration = project.configurations.maybeCreate("testCompileOnly")
-    def outputDir = getGeneratedSourceDir(project, SourceSet.MAIN_SOURCE_SET_NAME)
-    def testOutputDir = getGeneratedSourceDir(project, SourceSet.TEST_SOURCE_SET_NAME)
-
-    testCompileOnlyConfiguration.extendsFrom compileOnlyConfiguration
-
     project.plugins.withType(JavaBasePlugin) {
       def javaConvention = project.convention.getPlugin(JavaPluginConvention)
       javaConvention.sourceSets.all { SourceSet sourceSet ->
-        def configuration = project.configurations.maybeCreate(sourceSet.compileConfigurationName + "Only")
+        def configuration = project.configurations.maybeCreate(getCompileOnlyConfigurationName(sourceSet))
         configuration.visible = false
         configuration.description = "Compile-only classpath for ${sourceSet}."
         configuration.extendsFrom project.configurations.findByName(sourceSet.compileConfigurationName)
@@ -36,24 +27,36 @@ class AptPlugin implements Plugin<Project> {
         // in the JavaPlugin picks the appropriate compileClasspath.
         sourceSet.compileClasspath = configuration
 
-        configureCompileTask(project, sourceSet.compileJavaTaskName, getGeneratedSourceDir(project, sourceSet.name), getAptConfiguration(project, sourceSet))
+        def aptConfiguration = project.configurations.maybeCreate(getAptConfigurationName(sourceSet))
+        configureCompileTask(project, sourceSet.compileJavaTaskName, getGeneratedSourceDir(project, sourceSet.name), aptConfiguration)
       }
     }
     project.plugins.withType(JavaPlugin) {
       def javaConvention = project.convention.getPlugin(JavaPluginConvention)
-      javaConvention.sourceSets.getByName(SourceSet.TEST_SOURCE_SET_NAME) { SourceSet sourceSet ->
-        sourceSet.compileClasspath = project.files(
-            javaConvention.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).output,
-            testCompileOnlyConfiguration)
-      }
+
+      def mainSourceSet = javaConvention.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
+      def compileOnlyConfiguration = project.configurations.getByName(getCompileOnlyConfigurationName(mainSourceSet));
+      def aptConfiguration = project.configurations.getByName(getAptConfigurationName(mainSourceSet))
+
+      def testSourceSet = javaConvention.sourceSets.getByName(SourceSet.TEST_SOURCE_SET_NAME)
+      def testCompileOnlyConfiguration = project.configurations.getByName(getCompileOnlyConfigurationName(testSourceSet));
+      def testAptConfiguration = project.configurations.getByName(getAptConfigurationName(testSourceSet))
+
+      testSourceSet.compileClasspath = project.files(mainSourceSet.output, testCompileOnlyConfiguration)
+
+      testCompileOnlyConfiguration.extendsFrom compileOnlyConfiguration
 
       configureEclipse(project, compileOnlyConfiguration, aptConfiguration, testCompileOnlyConfiguration, testAptConfiguration)
+
+      def outputDir = getGeneratedSourceDir(project, SourceSet.MAIN_SOURCE_SET_NAME)
+      def testOutputDir = getGeneratedSourceDir(project, SourceSet.TEST_SOURCE_SET_NAME)
       configureIdeaModule(project, outputDir, compileOnlyConfiguration, aptConfiguration, testOutputDir, testCompileOnlyConfiguration, testAptConfiguration)
     }
     project.plugins.withType(GroovyBasePlugin) {
       def javaConvention = project.convention.getPlugin(JavaPluginConvention)
       javaConvention.sourceSets.all { SourceSet sourceSet ->
-        configureCompileTask(project, sourceSet.getCompileTaskName("groovy"), getGeneratedSourceDir(project, sourceSet.name), getAptConfiguration(project, sourceSet))
+        def aptConfiguration = project.configurations.getByName(getAptConfigurationName(sourceSet))
+        configureCompileTask(project, sourceSet.getCompileTaskName("groovy"), getGeneratedSourceDir(project, sourceSet.name), aptConfiguration)
       }
     }
     configureIdeaProject(project)
@@ -63,9 +66,13 @@ class AptPlugin implements Plugin<Project> {
     return project.file("${project.buildDir}/generated/source/apt/${sourceSetName}")
   }
 
-  private Configuration getAptConfiguration(Project project, SourceSet sourceSet) {
+  private String getCompileOnlyConfigurationName(SourceSet sourceSet) {
+    return sourceSet.compileConfigurationName + "Only"
+  }
+
+  private String getAptConfigurationName(SourceSet sourceSet) {
     // HACK: we use the same naming logic/scheme as for tasks, so just use SourceSet#getTaskName
-    return project.configurations.maybeCreate(sourceSet.getTaskName("", "apt"))
+    return sourceSet.getTaskName("", "apt")
   }
 
   private void configureCompileTask(Project project, String taskName, File outputDir, Configuration aptConfiguration) {
