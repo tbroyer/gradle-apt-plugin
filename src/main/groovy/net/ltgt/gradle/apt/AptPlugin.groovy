@@ -19,15 +19,22 @@ class AptPlugin implements Plugin<Project> {
     project.plugins.withType(JavaBasePlugin) {
       def javaConvention = project.convention.getPlugin(JavaPluginConvention)
       javaConvention.sourceSets.all { SourceSet sourceSet ->
-        def configuration = project.configurations.maybeCreate(getCompileOnlyConfigurationName(sourceSet))
-        configuration.visible = false
-        configuration.description = "Compile-only classpath for ${sourceSet}."
-        configuration.extendsFrom project.configurations.findByName(sourceSet.compileConfigurationName)
-        // NOTE: must be done when JavaBasePlugin is applied such that the javadoc task configured
-        // in the JavaPlugin picks the appropriate compileClasspath.
-        sourceSet.compileClasspath = configuration
+        def compileOnlyConfigurationName = getCompileOnlyConfigurationName(sourceSet);
+        // Gradle 2.12 already creates such a configuration in the JavaBasePlugin
+        def configuration = project.configurations.findByName(compileOnlyConfigurationName)
+        if (configuration == null) {
+          configuration = project.configurations.create(compileOnlyConfigurationName)
+          configuration.visible = false
+          configuration.description = "Compile-only classpath for ${sourceSet}."
+          configuration.extendsFrom project.configurations.findByName(sourceSet.compileConfigurationName)
+          // NOTE: must be done when JavaBasePlugin is applied such that the javadoc task configured
+          // in the JavaPlugin picks the appropriate compileClasspath.
+          sourceSet.compileClasspath = configuration
+        }
 
-        def aptConfiguration = project.configurations.maybeCreate(getAptConfigurationName(sourceSet))
+        def aptConfiguration = project.configurations.create(getAptConfigurationName(sourceSet))
+        aptConfiguration.visible = false
+        aptConfiguration.description = "Processor path for ${sourceSet}"
         configureCompileTask(project, sourceSet.compileJavaTaskName, getGeneratedSourceDir(project, sourceSet.name), aptConfiguration)
       }
     }
