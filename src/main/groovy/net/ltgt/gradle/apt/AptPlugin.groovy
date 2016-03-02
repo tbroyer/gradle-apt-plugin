@@ -44,8 +44,6 @@ class AptPlugin implements Plugin<Project> {
 
       testSourceSet.compileClasspath = project.files(mainSourceSet.output, testCompileOnlyConfiguration)
 
-      testCompileOnlyConfiguration.extendsFrom compileOnlyConfiguration
-
       configureEclipse(project, compileOnlyConfiguration, aptConfiguration, testCompileOnlyConfiguration, testAptConfiguration)
 
       def outputDir = getGeneratedSourceDir(project, SourceSet.MAIN_SOURCE_SET_NAME)

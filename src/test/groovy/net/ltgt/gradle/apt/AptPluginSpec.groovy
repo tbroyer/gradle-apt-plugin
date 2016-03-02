@@ -164,7 +164,7 @@ class AptPluginSpec extends PluginProjectSpec {
     project.configurations.testCompile.resolvedConfiguration.resolvedArtifacts*.moduleVersion.id.collect { "$it.group:$it.name:$it.version" as String }.toSet()
         .equals([ 'compile:compile:1.0', 'leaf:compile:1.0', 'testCompile:testCompile:1.0', 'leaf:testCompile:1.0' ] as Set)
     project.configurations.testCompileOnly.resolvedConfiguration.resolvedArtifacts*.moduleVersion.id.collect { "$it.group:$it.name:$it.version" as String }.toSet()
-        .equals([ 'compile:compile:1.0', 'leaf:compile:2.0', 'annotations:compile:1.0',
+        .equals([ 'compile:compile:1.0', 'leaf:compile:2.0',
                   'testCompile:testCompile:1.0', 'leaf:testCompile:2.0', 'annotations:testCompile:1.0' ] as Set)
     project.configurations.testRuntime.resolvedConfiguration.resolvedArtifacts*.moduleVersion.id.collect { "$it.group:$it.name:$it.version" as String }.toSet()
         .equals([ 'compile:compile:1.0', 'leaf:compile:1.0', 'testCompile:testCompile:1.0', 'leaf:testCompile:1.0' ] as Set)
