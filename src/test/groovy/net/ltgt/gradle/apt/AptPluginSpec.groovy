@@ -147,7 +147,7 @@ class AptPluginSpec extends PluginProjectSpec {
     project.evaluate()
 
     then:
-    project.sourceSets.main.compileClasspath == project.configurations.compileOnly
+    project.sourceSets.main.compileClasspath.files == project.configurations.compileOnly.files
     project.sourceSets.test.compileClasspath.files == project.files(project.sourceSets.main.output, project.configurations.testCompileOnly).files
     project.tasks.compileJava.classpath == project.sourceSets.main.compileClasspath
     project.tasks.compileGroovy.classpath == project.sourceSets.main.compileClasspath
