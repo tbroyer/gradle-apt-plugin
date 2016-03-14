@@ -27,9 +27,17 @@ class AptPlugin implements Plugin<Project> {
           configuration.visible = false
           configuration.description = "Compile-only classpath for ${sourceSet}."
           configuration.extendsFrom project.configurations.findByName(sourceSet.compileConfigurationName)
-          // NOTE: must be done when JavaBasePlugin is applied such that the javadoc task configured
-          // in the JavaPlugin picks the appropriate compileClasspath.
+
           sourceSet.compileClasspath = configuration
+
+          // Special-case the JavaPlugin's 'test' source set, only if we created the testCompileOnly configuration
+          // Note that Gradle 2.12 actually creates a testCompilationClasspath configuration that extends testCompileOnly
+          // and sets it as sourceSets.test.compileClasspath; rather than directly using the testCompileOnly configuration.
+          if (sourceSet.name == SourceSet.TEST_SOURCE_SET_NAME) {
+            project.plugins.withType(JavaPlugin) {
+              sourceSet.compileClasspath = project.files(javaConvention.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).output, configuration)
+            }
+          }
         }
 
         def aptConfiguration = project.configurations.create(getAptConfigurationName(sourceSet))
@@ -48,8 +56,6 @@ class AptPlugin implements Plugin<Project> {
       def testSourceSet = javaConvention.sourceSets.getByName(SourceSet.TEST_SOURCE_SET_NAME)
       def testCompileOnlyConfiguration = project.configurations.getByName(getCompileOnlyConfigurationName(testSourceSet));
       def testAptConfiguration = project.configurations.getByName(getAptConfigurationName(testSourceSet))
-
-      testSourceSet.compileClasspath = project.files(mainSourceSet.output, testCompileOnlyConfiguration)
 
       configureEclipse(project, compileOnlyConfiguration, aptConfiguration, testCompileOnlyConfiguration, testAptConfiguration)
 
