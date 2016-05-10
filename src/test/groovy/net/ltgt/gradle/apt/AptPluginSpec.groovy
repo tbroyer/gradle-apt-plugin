@@ -30,8 +30,10 @@ class AptPluginSpec extends PluginProjectSpec {
     project.configurations.findByName('testApt')
     project.configurations.findByName('compileOnly')
     project.configurations.findByName('testCompileOnly')
-    project.tasks.compileJava.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/main').path, '-processorpath', File.pathSeparator ])
-    project.tasks.compileTestJava.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/test').path, '-processorpath', File.pathSeparator ])
+    project.tasks.compileJava.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/main').path ])
+    !project.tasks.compileJava.options.compilerArgs.contains('-processorpath')
+    project.tasks.compileTestJava.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/test').path ])
+    !project.tasks.compileTestJava.options.compilerArgs.contains('-processorpath')
   }
 
   def 'empty groovy project'() {
@@ -45,10 +47,22 @@ class AptPluginSpec extends PluginProjectSpec {
     project.configurations.findByName('testApt')
     project.configurations.findByName('compileOnly')
     project.configurations.findByName('testCompileOnly')
-    project.tasks.compileJava.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/main').path, '-processorpath', File.pathSeparator ])
-    project.tasks.compileGroovy.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/main').path, '-processorpath', File.pathSeparator ])
-    project.tasks.compileTestJava.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/test').path, '-processorpath', File.pathSeparator ])
-    project.tasks.compileTestGroovy.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/test').path, '-processorpath', File.pathSeparator ])
+    with(project.tasks.compileJava.options) {
+      compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/main').path ])
+      !compilerArgs.contains('-processorpath')
+    }
+    with(project.tasks.compileGroovy.options) {
+      compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/main').path ])
+      !compilerArgs.contains('-processorpath')
+    }
+    with(project.tasks.compileTestJava.options) {
+      compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/test').path ])
+      !compilerArgs.contains('-processorpath')
+    }
+    with(project.tasks.compileTestGroovy.options) {
+      compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/test').path ])
+      !compilerArgs.contains('-processorpath')
+    }
   }
 
   def 'project with annotation processors'() {
@@ -108,6 +122,125 @@ class AptPluginSpec extends PluginProjectSpec {
         .equals([ 'compile:compile:1.0', 'leaf:compile:1.0' ] as Set)
     project.configurations.testCompile.resolvedConfiguration.resolvedArtifacts*.moduleVersion.id.collect { "$it.group:$it.name:$it.version" as String }.toSet()
         .equals([ 'compile:compile:1.0', 'leaf:compile:1.0', 'testCompile:testCompile:1.0', 'leaf:testCompile:1.0' ] as Set)
+  }
+
+  def 'project with annotation processors through AptOptions'() {
+    setup:
+    def mavenRepo = new GradleDependencyGenerator(
+        new DependencyGraphBuilder()
+            .addModule('leaf:compile:1.0')
+            .addModule('leaf:testCompile:1.0')
+            .addModule(new ModuleBuilder('compile:compile:1.0')
+                .addDependency('leaf:compile:1.0')
+                .build())
+            .addModule(new ModuleBuilder('testCompile:testCompile:1.0')
+                .addDependency('leaf:testCompile:1.0')
+                .build())
+            .addModule(new ModuleBuilder('processor:compile:1.0')
+                .addDependency('leaf:compile:2.0')
+                .build())
+            .addModule(new ModuleBuilder('processor:testCompile:1.0')
+                .addDependency('leaf:testCompile:2.0')
+                .build())
+            .build(),
+        project.mkdir('repo').path)
+      .generateTestMavenRepo()
+
+    when:
+    project.apply plugin: pluginName
+    project.apply plugin: 'groovy'
+    project.repositories {
+      maven { url mavenRepo }
+    }
+    project.configurations {
+      annotationProcessor
+      testAnnotationProcessor
+    }
+    project.dependencies {
+      compile                 'compile:compile:1.0'
+      annotationProcessor     'processor:compile:1.0'
+      testCompile             'testCompile:testCompile:1.0'
+      testAnnotationProcessor 'processor:testCompile:1.0'
+    }
+    project.tasks.compileJava {
+      generatedSourcesDestinationDir = 'src/main/generated'
+      aptOptions.processorpath = project.configurations.annotationProcessor
+    }
+    project.tasks.compileGroovy {
+      generatedSourcesDestinationDir = 'src/main/generated'
+      aptOptions.processorpath = project.configurations.annotationProcessor
+    }
+    project.tasks.compileTestJava {
+      generatedSourcesDestinationDir = 'src/test/generated'
+      aptOptions.processorpath = project.configurations.testAnnotationProcessor
+    }
+    project.tasks.compileTestGroovy {
+      generatedSourcesDestinationDir = 'src/test/generated'
+      aptOptions.processorpath = project.configurations.testAnnotationProcessor
+    }
+    project.evaluate()
+
+    then:
+    project.tasks.compileJava.options.compilerArgs.containsAll([ '-s', new File(project.projectDir, 'src/main/generated').path, '-processorpath', project.configurations.annotationProcessor.asPath ])
+    project.tasks.compileGroovy.options.compilerArgs.containsAll([ '-s', new File(project.projectDir, 'src/main/generated').path, '-processorpath', project.configurations.annotationProcessor.asPath ])
+    project.tasks.compileTestJava.options.compilerArgs.containsAll([ '-s', new File(project.projectDir, 'src/test/generated').path, '-processorpath', project.configurations.testAnnotationProcessor.asPath ])
+    project.tasks.compileTestGroovy.options.compilerArgs.containsAll([ '-s', new File(project.projectDir, 'src/test/generated').path, '-processorpath', project.configurations.testAnnotationProcessor.asPath ])
+  }
+
+
+  def 'project with annotation processors through SourceSet'() {
+    setup:
+    def mavenRepo = new GradleDependencyGenerator(
+        new DependencyGraphBuilder()
+            .addModule('leaf:compile:1.0')
+            .addModule('leaf:testCompile:1.0')
+            .addModule(new ModuleBuilder('compile:compile:1.0')
+                .addDependency('leaf:compile:1.0')
+                .build())
+            .addModule(new ModuleBuilder('testCompile:testCompile:1.0')
+                .addDependency('leaf:testCompile:1.0')
+                .build())
+            .addModule(new ModuleBuilder('processor:compile:1.0')
+                .addDependency('leaf:compile:2.0')
+                .build())
+            .addModule(new ModuleBuilder('processor:testCompile:1.0')
+                .addDependency('leaf:testCompile:2.0')
+                .build())
+            .build(),
+        project.mkdir('repo').path)
+    .generateTestMavenRepo()
+
+    when:
+    project.apply plugin: pluginName
+    project.apply plugin: 'groovy'
+    project.repositories {
+      maven { url mavenRepo }
+    }
+    project.configurations {
+      annotationProcessor
+      testAnnotationProcessor
+    }
+    project.dependencies {
+      compile                 'compile:compile:1.0'
+      annotationProcessor     'processor:compile:1.0'
+      testCompile             'testCompile:testCompile:1.0'
+      testAnnotationProcessor 'processor:testCompile:1.0'
+    }
+    project.sourceSets.main {
+      output.generatedSourcesDir = 'src/main/generated'
+      processorpath = project.configurations.annotationProcessor
+    }
+    project.sourceSets.test {
+      output.generatedSourcesDir = 'src/test/generated'
+      processorpath = project.configurations.testAnnotationProcessor
+    }
+    project.evaluate()
+
+    then:
+    project.tasks.compileJava.options.compilerArgs.containsAll([ '-s', new File(project.projectDir, 'src/main/generated').path, '-processorpath', project.configurations.annotationProcessor.asPath ])
+    project.tasks.compileGroovy.options.compilerArgs.containsAll([ '-s', new File(project.projectDir, 'src/main/generated').path, '-processorpath', project.configurations.annotationProcessor.asPath ])
+    project.tasks.compileTestJava.options.compilerArgs.containsAll([ '-s', new File(project.projectDir, 'src/test/generated').path, '-processorpath', project.configurations.testAnnotationProcessor.asPath ])
+    project.tasks.compileTestGroovy.options.compilerArgs.containsAll([ '-s', new File(project.projectDir, 'src/test/generated').path, '-processorpath', project.configurations.testAnnotationProcessor.asPath ])
   }
 
   def 'project with compilation-only dependencies'() {

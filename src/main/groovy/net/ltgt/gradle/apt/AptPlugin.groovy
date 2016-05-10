@@ -3,6 +3,7 @@ package net.ltgt.gradle.apt
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.GroovyBasePlugin
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.plugins.JavaPlugin
@@ -10,17 +11,53 @@ import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.compile.AbstractCompile
+import org.gradle.api.tasks.compile.GroovyCompile
+import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.plugins.ide.eclipse.EclipsePlugin
 import org.gradle.plugins.ide.idea.IdeaPlugin
 
 class AptPlugin implements Plugin<Project> {
   @Override
   void apply(Project project) {
+    def cl = { AbstractCompile task ->
+      task.convention.plugins.put("net.ltgt.apt", new AptConvention(project))
+      task.inputs.files { task.convention.getPlugin(AptConvention).aptOptions?.processorpath }
+      task.outputs.dir { task.convention.getPlugin(AptConvention).generatedSourcesDestinationDir }
+      project.afterEvaluate {
+        def aptConvention = task.convention.getPlugin(AptConvention)
+        if (aptConvention.generatedSourcesDestinationDir != null) {
+          task.options.compilerArgs += ["-s", aptConvention.generatedSourcesDestinationDir.path]
+          task.doFirst {
+            project.mkdir(aptConvention.generatedSourcesDestinationDir)
+          }
+        }
+        if (aptConvention.aptOptions != null) {
+          if (!aptConvention.aptOptions.annotationProcessing) {
+            task.options.compilerArgs += ["-proc:none"]
+          }
+          if (aptConvention.aptOptions.processorpath != null && !aptConvention.aptOptions.processorpath.empty) {
+            task.options.compilerArgs += ["-processorpath", aptConvention.aptOptions.processorpath.asPath]
+          }
+          if (aptConvention.aptOptions.processors != null && !aptConvention.aptOptions.processors.empty) {
+            task.options.compilerArgs += ["-processor", aptConvention.aptOptions.processors.join(",")]
+          }
+          task.options.compilerArgs += aptConvention.aptOptions.processorArgs?.collect { key, value -> "-A$key=$value" }
+        }
+      }
+    }
+    project.tasks.withType(JavaCompile, cl)
+    project.tasks.withType(GroovyCompile, cl)
+
     project.plugins.withType(JavaBasePlugin) {
       def javaConvention = project.convention.getPlugin(JavaPluginConvention)
       javaConvention.sourceSets.all { SourceSet sourceSet ->
-        def compileOnlyConfigurationName = getCompileOnlyConfigurationName(sourceSet);
-        // Gradle 2.12 already creates such a configuration in the JavaBasePlugin
+        def convention = new AptSourceSetConvention(project, sourceSet)
+        sourceSet.convention.plugins.put("net.ltgt.apt", convention)
+
+        sourceSet.output.convention.plugins.put("net.ltgt.apt", new AptSourceSetOutputConvention(project, sourceSet))
+
+        def compileOnlyConfigurationName = convention.compileOnlyConfigurationName
+        // Gradle 2.12 already creates such a configuration in the JavaBasePlugin; our compileOnlyConfigurationName has the same value
         def configuration = project.configurations.findByName(compileOnlyConfigurationName)
         if (configuration == null) {
           configuration = project.configurations.create(compileOnlyConfigurationName)
@@ -40,68 +77,44 @@ class AptPlugin implements Plugin<Project> {
           }
         }
 
-        def aptConfiguration = project.configurations.create(getAptConfigurationName(sourceSet))
+        def aptConfiguration = project.configurations.create(convention.aptConfigurationName)
         aptConfiguration.visible = false
         aptConfiguration.description = "Processor path for ${sourceSet}"
-        configureCompileTask(project, sourceSet.compileJavaTaskName, getGeneratedSourceDir(project, sourceSet.name), aptConfiguration)
+
+        configureCompileTask(project, sourceSet, sourceSet.compileJavaTaskName)
       }
     }
     project.plugins.withType(JavaPlugin) {
       def javaConvention = project.convention.getPlugin(JavaPluginConvention)
 
       def mainSourceSet = javaConvention.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
-      def compileOnlyConfiguration = project.configurations.getByName(getCompileOnlyConfigurationName(mainSourceSet));
-      def aptConfiguration = project.configurations.getByName(getAptConfigurationName(mainSourceSet))
+      def compileOnlyConfiguration = project.configurations.getByName(mainSourceSet.compileOnlyConfigurationName);
+      def aptConfiguration = project.configurations.getByName(mainSourceSet.aptConfigurationName)
 
       def testSourceSet = javaConvention.sourceSets.getByName(SourceSet.TEST_SOURCE_SET_NAME)
-      def testCompileOnlyConfiguration = project.configurations.getByName(getCompileOnlyConfigurationName(testSourceSet));
-      def testAptConfiguration = project.configurations.getByName(getAptConfigurationName(testSourceSet))
+      def testCompileOnlyConfiguration = project.configurations.getByName(testSourceSet.compileOnlyConfigurationName);
+      def testAptConfiguration = project.configurations.getByName(testSourceSet.aptConfigurationName)
 
       configureEclipse(project, compileOnlyConfiguration, aptConfiguration, testCompileOnlyConfiguration, testAptConfiguration)
 
-      def outputDir = getGeneratedSourceDir(project, SourceSet.MAIN_SOURCE_SET_NAME)
-      def testOutputDir = getGeneratedSourceDir(project, SourceSet.TEST_SOURCE_SET_NAME)
+      def outputDir = mainSourceSet.output.generatedSourcesDir
+      def testOutputDir = testSourceSet.output.generatedSourcesDir
       configureIdeaModule(project, outputDir, compileOnlyConfiguration, aptConfiguration, testOutputDir, testCompileOnlyConfiguration, testAptConfiguration)
     }
     project.plugins.withType(GroovyBasePlugin) {
       def javaConvention = project.convention.getPlugin(JavaPluginConvention)
       javaConvention.sourceSets.all { SourceSet sourceSet ->
-        def aptConfiguration = project.configurations.getByName(getAptConfigurationName(sourceSet))
-        configureCompileTask(project, sourceSet.getCompileTaskName("groovy"), getGeneratedSourceDir(project, sourceSet.name), aptConfiguration)
+        configureCompileTask(project, sourceSet, sourceSet.getCompileTaskName("groovy"))
       }
     }
     configureIdeaProject(project)
   }
 
-  private File getGeneratedSourceDir(Project project, String sourceSetName) {
-    return project.file("${project.buildDir}/generated/source/apt/${sourceSetName}")
-  }
-
-  private String getCompileOnlyConfigurationName(SourceSet sourceSet) {
-    return sourceSet.compileConfigurationName + "Only"
-  }
-
-  private String getAptConfigurationName(SourceSet sourceSet) {
-    // HACK: we use the same naming logic/scheme as for tasks, so just use SourceSet#getTaskName
-    return sourceSet.getTaskName("", "apt")
-  }
-
-  private void configureCompileTask(Project project, String taskName, File outputDir, Configuration aptConfiguration) {
+  private void configureCompileTask(Project project, SourceSet sourceSet, String taskName) {
     def task = project.tasks.withType(AbstractCompile).getByName(taskName)
-
-    task.inputs.files aptConfiguration
-    task.outputs.dir outputDir
-
-    project.afterEvaluate {
-      task.options.compilerArgs += [
-          "-s", outputDir.path,
-          "-processorpath", aptConfiguration.asPath ?: File.pathSeparator,
-      ]
-    }
-
-    task.doFirst {
-      project.mkdir(outputDir)
-    }
+    def aptConvention = task.convention.getPlugin(AptConvention)
+    aptConvention.generatedSourcesDestinationDir = { sourceSet.output.convention.getPlugin(AptSourceSetOutputConvention).generatedSourcesDir }
+    aptConvention.aptOptions.processorpath = { sourceSet.convention.getPlugin(AptSourceSetConvention).processorpath }
   }
 
   /**
@@ -220,6 +233,113 @@ class AptPlugin implements Plugin<Project> {
           })
         }
       }
+    }
+  }
+
+  class AptConvention {
+    private final Project project
+
+    AptConvention(Project project) {
+      this.project = project
+      this.aptOptions = new AptOptions(project);
+    }
+
+    private Object generatedSourcesDestinationDir
+
+    public File getGeneratedSourcesDestinationDir() {
+      if (generatedSourcesDestinationDir == null) {
+        return null
+      }
+      return project.file(generatedSourcesDestinationDir)
+    }
+
+    public void setGeneratedSourcesDestinationDir(Object generatedSourcesDestinationDir) {
+      this.generatedSourcesDestinationDir = generatedSourcesDestinationDir
+    }
+
+    final AptOptions aptOptions
+  }
+
+  class AptOptions {
+    private final Project project
+
+    AptOptions(Project project) {
+      this.project = project
+    }
+
+    boolean annotationProcessing = true
+
+    private Object processorpath
+
+    public FileCollection getProcessorpath() {
+      if (processorpath == null) {
+        return null
+      }
+      return project.files(processorpath)
+    }
+
+    public void setProcessorpath(Object processorpath) {
+      this.processorpath = processorpath
+    }
+
+    List<?> processors = []
+    Map<String, ?> processorArgs = [:]
+  }
+
+  class AptSourceSetConvention {
+    private final Project project
+    private final SourceSet sourceSet
+
+    AptSourceSetConvention(Project project, SourceSet sourceSet) {
+      this.project = project
+      this.sourceSet = sourceSet
+      this.processorpath = { project.configurations.findByName(this.aptConfigurationName) }
+    }
+
+    private Object processorpath
+
+    public FileCollection getProcessorpath() {
+      if (processorpath == null) {
+        return null;
+      }
+      return project.files(processorpath)
+    }
+
+    public void setProcessorpath(Object processorpath) {
+      this.processorpath = processorpath
+    }
+
+    public String getCompileOnlyConfigurationName() {
+      return sourceSet.compileConfigurationName + "Only"
+    }
+
+    public String getAptConfigurationName() {
+      // HACK: we use the same naming logic/scheme as for tasks, so just use SourceSet#getTaskName
+      return sourceSet.getTaskName("", "apt")
+    }
+  }
+
+  class AptSourceSetOutputConvention {
+    private final Project project
+    private final SourceSet sourceSet
+
+    AptSourceSetOutputConvention(Project project, SourceSet sourceSet) {
+      this.project = project
+      this.sourceSet = sourceSet
+      this.generatedSourcesDir = { project.file("${project.buildDir}/generated/source/apt/${sourceSet.name}") }
+    }
+
+    private Object generatedSourcesDir
+
+    public File getGeneratedSourcesDir() {
+      if (generatedSourcesDir == null) {
+        return null
+      }
+      return project.file(generatedSourcesDir)
+    }
+
+    public void setGeneratedSourcesDir(Object generatedSourcesDir) {
+      this.generatedSourcesDir = generatedSourcesDir
     }
   }
 }
