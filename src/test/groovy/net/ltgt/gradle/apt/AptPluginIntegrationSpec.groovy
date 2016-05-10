@@ -67,7 +67,7 @@ class AptPluginIntegrationSpec extends Specification {
     result.task(':compileTestJava').outcome == TaskOutcome.SUCCESS
 
     where:
-    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10', '2.11','2.12']
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10', '2.11','2.12','2.13']
   }
 
   @Unroll
@@ -133,7 +133,7 @@ class AptPluginIntegrationSpec extends Specification {
     result.task(':core:javadoc').outcome == TaskOutcome.SUCCESS
 
     where:
-    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10', '2.11','2.12']
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10', '2.11','2.12','2.13']
   }
 
   @Unroll
@@ -185,7 +185,7 @@ class AptPluginIntegrationSpec extends Specification {
     result.task(':compileTestGroovy').outcome == TaskOutcome.SUCCESS
 
     where:
-    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10', '2.11','2.12']
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10', '2.11','2.12','2.13']
   }
 
   @Unroll
@@ -253,6 +253,6 @@ class AptPluginIntegrationSpec extends Specification {
     result.task(':core:groovydoc').outcome == TaskOutcome.SUCCESS
 
     where:
-    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10', '2.11','2.12']
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10', '2.11','2.12','2.13']
   }
 }

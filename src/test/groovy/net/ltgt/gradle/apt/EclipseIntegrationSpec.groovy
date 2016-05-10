@@ -46,7 +46,7 @@ class EclipseIntegrationSpec extends Specification {
     !new File(testProjectDir.root, '.factorypath').exists()
 
     where:
-    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10', '2.11','2.12']
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10', '2.11','2.12','2.13']
   }
 
   @Unroll
@@ -137,7 +137,7 @@ class EclipseIntegrationSpec extends Specification {
     !new File(testProjectDir.root, '.settings/org.eclipse.jdt.apt.core.prefs').exists()
 
     where:
-    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10', '2.11','2.12']
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10', '2.11','2.12','2.13']
   }
 
   def loadProperties(String path) {
@@ -213,6 +213,6 @@ class EclipseIntegrationSpec extends Specification {
     connection.close()
 
     where:
-    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10', '2.11','2.12']
+    gradleVersion << ['2.5', '2.6', '2.7', '2.8', '2.9', '2.10', '2.11','2.12','2.13']
   }
 }
