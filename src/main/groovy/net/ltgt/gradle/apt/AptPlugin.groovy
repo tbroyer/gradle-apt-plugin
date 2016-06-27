@@ -117,7 +117,6 @@ class AptPlugin implements Plugin<Project> {
       project.afterEvaluate {
         project.eclipse.classpath {
           plusConfigurations += [ compileOnlyConfiguration, testCompileOnlyConfiguration ]
-          noExportConfigurations += [ compileOnlyConfiguration, testCompileOnlyConfiguration ]
         }
       }
       if (!project.tasks.findByName('eclipseJdtApt')) {
