@@ -71,6 +71,7 @@ class AptPlugin implements Plugin<Project> {
       }
     }
     configureIdeaProject(project)
+    project.extensions.create('apt', AptExtension)
   }
 
   private File getGeneratedSourceDir(Project project, String sourceSetName) {
@@ -100,6 +101,9 @@ class AptPlugin implements Plugin<Project> {
     }
 
     task.doFirst {
+      if (project.apt.cleanGeneratedSourceDir) {
+        project.delete(outputDir)
+      }
       project.mkdir(outputDir)
     }
   }
