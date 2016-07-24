@@ -30,8 +30,8 @@ class AptPluginSpec extends PluginProjectSpec {
     project.configurations.findByName('testApt')
     project.configurations.findByName('compileOnly')
     project.configurations.findByName('testCompileOnly')
-    project.tasks.compileJava.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/main').path, '-processorpath', ':' ])
-    project.tasks.compileTestJava.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/test').path, '-processorpath', ':' ])
+    project.tasks.compileJava.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/main').path, '-processorpath', File.pathSeparator ])
+    project.tasks.compileTestJava.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/test').path, '-processorpath', File.pathSeparator ])
   }
 
   def 'empty groovy project'() {
@@ -45,10 +45,10 @@ class AptPluginSpec extends PluginProjectSpec {
     project.configurations.findByName('testApt')
     project.configurations.findByName('compileOnly')
     project.configurations.findByName('testCompileOnly')
-    project.tasks.compileJava.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/main').path, '-processorpath', ':' ])
-    project.tasks.compileGroovy.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/main').path, '-processorpath', ':' ])
-    project.tasks.compileTestJava.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/test').path, '-processorpath', ':' ])
-    project.tasks.compileTestGroovy.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/test').path, '-processorpath', ':' ])
+    project.tasks.compileJava.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/main').path, '-processorpath', File.pathSeparator ])
+    project.tasks.compileGroovy.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/main').path, '-processorpath', File.pathSeparator ])
+    project.tasks.compileTestJava.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/test').path, '-processorpath', File.pathSeparator ])
+    project.tasks.compileTestGroovy.options.compilerArgs.containsAll([ '-s', new File(project.buildDir, 'generated/source/apt/test').path, '-processorpath', File.pathSeparator ])
   }
 
   def 'project with annotation processors'() {

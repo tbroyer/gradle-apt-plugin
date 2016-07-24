@@ -22,7 +22,7 @@ class EclipseIntegrationSpec extends Specification {
     buildFile << """\
       buildscript {
         dependencies {
-          classpath files('${System.getProperty('plugin')}')
+          classpath files(\$/${System.getProperty('plugin')}/\$)
         }
       }
       apply plugin: 'net.ltgt.apt'
@@ -77,7 +77,7 @@ class EclipseIntegrationSpec extends Specification {
     buildFile << """\
       apply plugin: 'java'
       repositories {
-        maven { url file('${mavenRepo}') }
+        maven { url file(\$/${mavenRepo}/\$) }
       }
       dependencies {
         compile         'compile:compile:1.0'
@@ -112,7 +112,7 @@ class EclipseIntegrationSpec extends Specification {
         "$mavenRepo/leaf/testCompile/2.0/testCompile-2.0.jar",
         "$mavenRepo/annotations/testCompile/1.0/testCompile-1.0.jar",
         "$mavenRepo/processor/testCompile/1.0/testCompile-1.0.jar",
-    ] as Set)
+    ].collect { it.replace('/', File.separator) }.toSet())
 
     def jdtSettings = loadProperties('.settings/org.eclipse.jdt.core.prefs')
     jdtSettings.getProperty('org.eclipse.jdt.core.compiler.processAnnotations') == 'enabled'
@@ -176,7 +176,7 @@ class EclipseIntegrationSpec extends Specification {
     buildFile << """\
       apply plugin: 'java'
       repositories {
-        maven { url file('${mavenRepo}') }
+        maven { url file(\$/${mavenRepo}/\$) }
       }
       dependencies {
         compile         'compile:compile:1.0'

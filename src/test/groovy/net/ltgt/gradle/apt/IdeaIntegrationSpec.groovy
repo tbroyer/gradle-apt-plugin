@@ -27,7 +27,7 @@ class IdeaIntegrationSpec extends Specification {
     buildFile << """\
       buildscript {
         dependencies {
-          classpath files('${System.getProperty('plugin')}')
+          classpath files(\$/${System.getProperty('plugin')}/\$)
         }
       }
       apply plugin: 'net.ltgt.apt'
@@ -95,7 +95,7 @@ class IdeaIntegrationSpec extends Specification {
     buildFile << """\
         apply plugin: 'java'
         repositories {
-          maven { url file('${mavenRepo}') }
+          maven { url file(\$/${mavenRepo}/\$) }
         }
         dependencies {
           compile         'compile:compile:1.0'
@@ -152,7 +152,7 @@ class IdeaIntegrationSpec extends Specification {
     buildFile << """\
         apply plugin: 'java'
         repositories {
-          maven { url file('${mavenRepo}') }
+          maven { url file(\$/${mavenRepo}/\$) }
         }
         dependencies {
           compile         'compile:compile:1.0'

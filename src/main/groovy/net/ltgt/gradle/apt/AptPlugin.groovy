@@ -95,7 +95,7 @@ class AptPlugin implements Plugin<Project> {
     project.afterEvaluate {
       task.options.compilerArgs += [
           "-s", outputDir.path,
-          "-processorpath", aptConfiguration.asPath ?: ':',
+          "-processorpath", aptConfiguration.asPath ?: File.pathSeparator,
       ]
     }
 
