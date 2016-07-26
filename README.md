@@ -52,8 +52,13 @@ compileGroovy {
 }
 ```
 
-## Usage with IDEs
+## Eclipse
 
-When the `idea` or `eclipse` plugins are applied, the `idea` and `eclipse` tasks will auto-configure the generated files to enable annotation processing in the corresponding IDE.
+When the `eclipse` plugin is applied, the `eclipse` task will auto-configure the generated Eclipse projects to enable annotation processing.
 
-When using the Gradle integration in IntelliJ IDEA however, rather than the `idea` task, you'll have to manually enable annotation processing: in Settings… → Build, Execution, Deployment → Compiler → Annotation Processors, check `Enable annotation processing` and `Obtain processors from project classpath`. To mimic the Gradle behavior and generated files behavior, you can configure the production and test sources directories to `build/generated/source/apt/main` and `build/generated/source/apt/test` respectively and choose to `Store generated sources relative to:` `Module content root`.
+## IntelliJ
+
+If you are using [Gradle's IDEA plugin][] in your gradle.build, just run `gradle idea` as usual to generate your IntelliJ project; annotation processing will be automatically configured. If you are using [IntelliJ's Gradle plugin][], however, or if you want to import individual modules into another project, you'll have to manually enable annotation processing: in Settings… → Build, Execution, Deployment → Compiler → Annotation Processors, check `Enable annotation processing` and `Obtain processors from project classpath`. To mimic the Gradle behavior and generated files behavior, you can configure the production and test sources directories to `build/generated/source/apt/main` and `build/generated/source/apt/test` respectively and choose to `Store generated sources relative to:` `Module content root`.
+
+[Gradle's IDEA plugin]: https://docs.gradle.org/current/userguide/idea_plugin.html
+[IntelliJ's Gradle plugin]: https://www.jetbrains.com/idea/help/gradle.html
