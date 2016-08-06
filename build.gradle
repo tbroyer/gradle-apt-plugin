@@ -41,7 +41,7 @@ dependencies {
 }
 
 wrapper {
-  gradleVersion = "2.14"
+  gradleVersion = "3.0-rc-1"
 }
 
 test {
