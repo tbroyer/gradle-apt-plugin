@@ -2,7 +2,6 @@ package net.ltgt.gradle.apt
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.artifacts.Configuration
 import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.GroovyBasePlugin
 import org.gradle.api.plugins.JavaBasePlugin
@@ -86,20 +85,12 @@ class AptPlugin implements Plugin<Project> {
     }
     project.plugins.withType(JavaPlugin) {
       def javaConvention = project.convention.getPlugin(JavaPluginConvention)
-
       def mainSourceSet = javaConvention.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME)
-      def compileOnlyConfiguration = project.configurations.getByName(mainSourceSet.compileOnlyConfigurationName);
-      def aptConfiguration = project.configurations.getByName(mainSourceSet.aptConfigurationName)
-
       def testSourceSet = javaConvention.sourceSets.getByName(SourceSet.TEST_SOURCE_SET_NAME)
-      def testCompileOnlyConfiguration = project.configurations.getByName(testSourceSet.compileOnlyConfigurationName);
-      def testAptConfiguration = project.configurations.getByName(testSourceSet.aptConfigurationName)
 
-      configureEclipse(project, compileOnlyConfiguration, aptConfiguration, testCompileOnlyConfiguration, testAptConfiguration)
+      configureEclipse(project, mainSourceSet, testSourceSet)
 
-      def outputDir = mainSourceSet.output.generatedSourcesDir
-      def testOutputDir = testSourceSet.output.generatedSourcesDir
-      configureIdeaModule(project, outputDir, compileOnlyConfiguration, aptConfiguration, testOutputDir, testCompileOnlyConfiguration, testAptConfiguration)
+      configureIdeaModule(project, mainSourceSet, testSourceSet)
     }
     project.plugins.withType(GroovyBasePlugin) {
       def javaConvention = project.convention.getPlugin(JavaPluginConvention)
@@ -120,8 +111,7 @@ class AptPlugin implements Plugin<Project> {
   /**
    * Inspired by https://github.com/mkarneim/pojobuilder/wiki/Enabling-PojoBuilder-for-Eclipse-Using-Gradle
    */
-  private void configureEclipse(Project project, Configuration compileOnlyConfiguration, Configuration aptConfiguration,
-      Configuration testCompileOnlyConfiguration, Configuration testAptConfiguration) {
+  private void configureEclipse(Project project, SourceSet mainSourceSet, SourceSet testSourceSet) {
     project.plugins.withType(EclipsePlugin) {
       project.eclipse.jdt.file.withProperties {
         it.'org.eclipse.jdt.core.compiler.processAnnotations' = 'enabled'
@@ -129,7 +119,10 @@ class AptPlugin implements Plugin<Project> {
 
       project.afterEvaluate {
         project.eclipse.classpath {
-          plusConfigurations += [ compileOnlyConfiguration, testCompileOnlyConfiguration ]
+          plusConfigurations += [
+              project.configurations.getByName(mainSourceSet.compileOnlyConfigurationName),
+              project.configurations.getByName(testSourceSet.compileOnlyConfigurationName)
+          ]
         }
       }
       if (!project.tasks.findByName('eclipseJdtApt')) {
@@ -154,12 +147,14 @@ class AptPlugin implements Plugin<Project> {
       if (!project.tasks.findByName('eclipseFactorypath')) {
         def task = project.tasks.create('eclipseFactorypath') {
           ext.factorypath = project.file('.factorypath')
-          inputs.files aptConfiguration, testAptConfiguration
+          inputs.files project.configurations.getByName(mainSourceSet.aptConfigurationName),
+              project.configurations.getByName(testSourceSet.aptConfigurationName)
           outputs.file factorypath
           doLast {
             factorypath.withWriter {
               new groovy.xml.MarkupBuilder(it).'factorypath' {
-                [aptConfiguration, testAptConfiguration]*.each {
+                [project.configurations.getByName(mainSourceSet.aptConfigurationName),
+                 project.configurations.getByName(testSourceSet.aptConfigurationName)]*.each {
                   factorypathentry(
                       kind: 'EXTJAR',
                       id: it.absolutePath,
@@ -179,38 +174,45 @@ class AptPlugin implements Plugin<Project> {
     }
   }
 
-  private void configureIdeaModule(Project project,
-      File outputDir, Configuration compileOnlyConfiguration, Configuration aptConfiguration,
-      File testOutputDir, Configuration testCompileOnlyConfiguration, Configuration testAptConfiguration) {
+  private void configureIdeaModule(Project project, SourceSet mainSourceSet, SourceSet testSourceSet) {
     project.plugins.withType(IdeaPlugin) {
       project.afterEvaluate {
         project.idea.module {
-          if (excludeDirs.contains(project.buildDir)) {
+          def excl = [ mainSourceSet, testSourceSet ].collect { it.output.generatedSourcesDir }
+              .collect {
+                def ancestors = []
+                for (File f = it; f != null && f != project.projectDir; f = f.parentFile) {
+                  ancestors.add(f)
+                }
+                return ancestors
+              }
+              .flatten()
+
+          if (excl.contains(project.buildDir) && excludeDirs.contains(project.buildDir)) {
             excludeDirs -= project.buildDir
             // Race condition: many of these will actually be created afterwards…
-            def subdirs = project.buildDir.listFiles({ f -> f.directory && f.name != 'generated' } as FileFilter)
+            def subdirs = project.buildDir.listFiles({ f -> f.directory } as FileFilter)
             if (subdirs != null) {
               excludeDirs += subdirs as List
             }
-          } else {
-            excludeDirs -= [
-                project.file("$project.buildDir/generated"),
-                project.file("$project.buildDir/generated/source"),
-                project.file("$project.buildDir/generated/source/apt"),
-                outputDir,
-                testOutputDir
-            ]
           }
+          excludeDirs -= excl
 
-          sourceDirs += outputDir
-          testSourceDirs += testOutputDir
-          generatedSourceDirs += [ outputDir, testOutputDir ]
+          sourceDirs += mainSourceSet.output.generatedSourcesDir
+          testSourceDirs += testSourceSet.output.generatedSourcesDir
+          generatedSourceDirs += [ mainSourceSet.output.generatedSourcesDir, testSourceSet.output.generatedSourcesDir ]
 
           // NOTE: ideally we'd use PROVIDED for both, but then every transitive dependency in
           // compile or testCompile configurations that would also be in compileOnly and
           // testCompileOnly would end up in PROVIDED.
-          scopes.COMPILE.plus += [ compileOnlyConfiguration, aptConfiguration ]
-          scopes.TEST.plus += [ testCompileOnlyConfiguration, testAptConfiguration ]
+          scopes.COMPILE.plus += [
+              project.configurations.getByName(mainSourceSet.compileOnlyConfigurationName),
+              project.configurations.getByName(mainSourceSet.aptConfigurationName)
+          ]
+          scopes.TEST.plus += [
+              project.configurations.getByName(testSourceSet.compileOnlyConfigurationName),
+              project.configurations.getByName(testSourceSet.aptConfigurationName)
+          ]
         }
       }
     }
