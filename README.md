@@ -14,7 +14,12 @@ You can try snapshots using JitPack: https://jitpack.io/#tbroyer/gradle-apt-plug
 
 ## Added configurations
 
-The following configurations are added to any Java project:
+For each `SourceSet`, two configurations are added:
+
+* for Gradle ≥ 2.12: `<sourceSet>CompileOnly`, extends `<sourceSet>Compile` (Gradle ≥ 2.12 already provides those configurations; note that this plugin doesn't provide a `<sourceSet>CompileClasspath` like Gradle ≥ 2.12)
+* `<sourceSet>Apt`
+
+As a result, the following configurations are added to any Java project:
 
 * `compileOnly`, extends `compile`
 * `apt`
