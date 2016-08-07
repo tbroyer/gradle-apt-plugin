@@ -33,12 +33,15 @@ After applying the plugin following the above instructions, those added configur
 
 ```gradle
 dependencies {
-  compile "com.google.dagger:dagger:2.0.2"
-  apt     "com.google.dagger:dagger-compiler:2.0.2"
+  compile "com.google.dagger:dagger:2.6"
+  apt     "com.google.dagger:dagger-compiler:2.6"
 
   // auto-factory contains both annotations and their processor, neither is needed at runtime
   compileOnly "com.google.auto.factory:auto-factory:1.0-beta3"
   apt         "com.google.auto.factory:auto-factory:1.0-beta3"
+
+  compileOnly "org.immutables:value:2.2.10:annotations"
+  apt         "org.immutables:value:2.2.10"
 }
 ```
 
