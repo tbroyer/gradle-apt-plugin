@@ -59,6 +59,22 @@ compileGroovy {
 
 ## Usage with IDEs
 
-When the `idea` or `eclipse` plugins are applied, the `idea` and `eclipse` tasks will auto-configure the generated files to enable annotation processing in the corresponding IDE.
+IDE configuration is provided on a best-effort basis.
+
+### Eclipse
+
+When the `eclipse` plugin is applied, the `eclipse` task will auto-configure the generated files to enable annotation processing in Eclipse.
+
+When using Buildship, you'll have to manually run the `eclipseJdtApt` and `eclipseFactorypath` tasks to generate the Eclipse configuration files, then manually enable annotation processing: in the project properties → Java Compiler → Annotation Processing, check `Enable Annotation Processing`.
+
+In any case, the `eclipse` plugin has to be applied to the project.
+
+### IntelliJ IDEA
+
+When the `idea` plugin is applied, the `idea` task will auto-configure the generated files to enable annotation processing in intelliJ IDEA.
 
 When using the Gradle integration in IntelliJ IDEA however, rather than the `idea` task, you'll have to manually enable annotation processing: in Settings… → Build, Execution, Deployment → Compiler → Annotation Processors, check `Enable annotation processing` and `Obtain processors from project classpath`. To mimic the Gradle behavior and generated files behavior, you can configure the production and test sources directories to `build/generated/source/apt/main` and `build/generated/source/apt/test` respectively and choose to `Store generated sources relative to:` `Module content root`.
+
+Note that starting with IntelliJ IDEA 2016.1, you'll have to uncheck `Create separate module per source set` when importing the project.
+
+In any case, the `idea` plugin has to be applied to the project.
