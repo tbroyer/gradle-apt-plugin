@@ -1,6 +1,6 @@
 package net.ltgt.gradle.apt
 
 class IntegrationTestHelper {
-  static final GRADLE_VERSIONS = System.getProperty("test.gradle-versions", "2.5,2.6,2.7,2.8,2.9,2.10,2.11,2.12,2.13,2.14,3.0-rc-1")
+  static final GRADLE_VERSIONS = System.getProperty("test.gradle-versions", "2.5,2.6,2.7,2.8,2.9,2.10,2.11,2.12,2.13,2.14,3.0")
       .tokenize(',');
 }
