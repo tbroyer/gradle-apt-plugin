@@ -1,5 +1,6 @@
 package net.ltgt.gradle.apt
 
+import groovy.transform.PackageScope
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.file.FileCollection
@@ -20,28 +21,21 @@ class AptPlugin implements Plugin<Project> {
   void apply(Project project) {
     def cl = { AbstractCompile task ->
       task.convention.plugins.put("net.ltgt.apt", new AptConvention(project))
-      task.inputs.files { task.convention.getPlugin(AptConvention).aptOptions?.processorpath }
-      task.outputs.dir { task.convention.getPlugin(AptConvention).generatedSourcesDestinationDir }
-      project.afterEvaluate {
+      task.inputs.property("aptOptions.annotationProcessing", { task.convention.getPlugin(AptConvention).aptOptions.annotationProcessing })
+      task.inputs.property("aptOptions.processors", { task.convention.getPlugin(AptConvention).aptOptions.processors })
+      task.inputs.property("aptOptions.processorArgs", { task.convention.getPlugin(AptConvention).aptOptions.processorArgs })
+      def propBuilder = task.inputs.files { task.convention.getPlugin(AptConvention).aptOptions.processorpath }
+      if (!propBuilder.is(task.inputs)) {
+        propBuilder.withPropertyName("aptOptions.processorpath")
+      }
+      propBuilder = task.outputs.dir { task.convention.getPlugin(AptConvention).generatedSourcesDestinationDir }
+      if (!propBuilder.is(task.outputs)) {
+        propBuilder.withPropertyName("generatedSourcesDestinationDir")
+      }
+      task.doFirst {
         def aptConvention = task.convention.getPlugin(AptConvention)
-        if (aptConvention.generatedSourcesDestinationDir != null) {
-          task.options.compilerArgs += ["-s", aptConvention.generatedSourcesDestinationDir.path]
-          task.doFirst {
-            project.mkdir(aptConvention.generatedSourcesDestinationDir)
-          }
-        }
-        if (aptConvention.aptOptions != null) {
-          if (!aptConvention.aptOptions.annotationProcessing) {
-            task.options.compilerArgs += ["-proc:none"]
-          }
-          if (aptConvention.aptOptions.processorpath != null && !aptConvention.aptOptions.processorpath.empty) {
-            task.options.compilerArgs += ["-processorpath", aptConvention.aptOptions.processorpath.asPath]
-          }
-          if (aptConvention.aptOptions.processors != null && !aptConvention.aptOptions.processors.empty) {
-            task.options.compilerArgs += ["-processor", aptConvention.aptOptions.processors.join(",")]
-          }
-          task.options.compilerArgs += aptConvention.aptOptions.processorArgs?.collect { key, value -> "-A$key=$value" }
-        }
+        aptConvention.makeDirectories()
+        task.options.compilerArgs += aptConvention.buildCompilerArgs()
       }
     }
     project.tasks.withType(JavaCompile, cl)
@@ -260,6 +254,30 @@ class AptPlugin implements Plugin<Project> {
     }
 
     final AptOptions aptOptions
+
+    @PackageScope void makeDirectories() {
+      if (generatedSourcesDestinationDir != null) {
+        project.mkdir(generatedSourcesDestinationDir)
+      }
+    }
+
+    @PackageScope List<String> buildCompilerArgs() {
+      def result = []
+      if (generatedSourcesDestinationDir != null) {
+        result += ["-s", getGeneratedSourcesDestinationDir().path]
+      }
+      if (!aptOptions.annotationProcessing) {
+        result += ["-proc:none"]
+      }
+      if (aptOptions.processorpath != null && !aptOptions.processorpath.empty) {
+        result += ["-processorpath", aptOptions.processorpath.asPath]
+      }
+      if (aptOptions.processors != null && !aptOptions.processors.empty) {
+        result += ["-processor", aptOptions.processors.join(",")]
+      }
+      result += aptOptions.processorArgs?.collect { key, value -> "-A$key=$value" }
+      return result
+    }
   }
 
   class AptOptions {
