@@ -72,7 +72,7 @@ IDE configuration is provided on a best-effort basis.
 
 When the `eclipse` plugin is applied, the `eclipse` task will auto-configure the generated files to enable annotation processing in Eclipse.
 
-When using Buildship, you'll have to manually run the `eclipseJdtApt` and `eclipseFactorypath` tasks to generate the Eclipse configuration files, then manually enable annotation processing: in the project properties → Java Compiler → Annotation Processing, check `Enable Annotation Processing`.
+When using Buildship, you'll have to manually run the `eclipseJdt`, `eclipseJdtApt` and `eclipseFactorypath` tasks to generate the Eclipse configuration files, then manually clean and refresh the project.
 
 In any case, the `eclipse` plugin has to be applied to the project.
 
