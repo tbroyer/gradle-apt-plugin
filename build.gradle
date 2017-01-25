@@ -37,7 +37,7 @@ dependencies {
     compile gradleApi()
     compile localGroovy()
 
-    testCompile('com.netflix.nebula:nebula-test:4.2.2')
+    testCompile('com.netflix.nebula:nebula-test:5.0.0')
     testCompile('org.spockframework:spock-core:1.0-groovy-2.4') {
         exclude group: 'org.codehaus.groovy'
     }
@@ -45,7 +45,7 @@ dependencies {
 }
 
 wrapper {
-  gradleVersion = "3.2"
+  gradleVersion = "3.3"
 }
 
 test {
