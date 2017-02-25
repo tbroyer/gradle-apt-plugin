@@ -86,6 +86,8 @@ Note that starting with IntelliJ IDEA 2016.1, you'll have to uncheck `Create sep
 
 In any case, the `idea` plugin has to be applied to the project.
 
+An alternative, starting with IntelliJ IDEA 2016.3, is to delegate the IDE build actions to Gradle itself: https://www.jetbrains.com/idea/whatsnew/#v2016-3-gradle
+
 ## Configuration
 
 Starting with version 0.8, the plugin follows the [proposal to add first-class support for annotation processing to Gradle proper](https://github.com/gradle/gradle/blob/master/design-docs/java-annotation-processing.md), making many things configurable by enhancing source sets and tasks.
