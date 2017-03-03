@@ -30,7 +30,7 @@ class AptPlugin implements Plugin<Project> {
       }
       propBuilder = task.outputs.dir { task.convention.getPlugin(AptConvention).generatedSourcesDestinationDir }
       if (!propBuilder.is(task.outputs)) {
-        propBuilder.withPropertyName("generatedSourcesDestinationDir")
+        propBuilder.withPropertyName("generatedSourcesDestinationDir").optional()
       }
       task.doFirst {
         def aptConvention = task.convention.getPlugin(AptConvention)

@@ -23,6 +23,50 @@ class AptPluginIntegrationSpec extends Specification {
   }
 
   @Unroll
+  def "simple non-java project, with Gradle #gradleVersion"() {
+    given:
+    buildFile << """\
+      apply plugin: 'net.ltgt.apt'
+
+      task javaCompilationTask(type: JavaCompile) {
+        source 'src/'
+        include '**/*.java'
+        classpath = project.files()
+        destinationDir = project.file('build/classes')
+        sourceCompatibility = org.gradle.api.JavaVersion.current()
+        targetCompatibility = org.gradle.api.JavaVersion.current()
+        dependencyCacheDir = project.file('build/dependency-cache')
+      }
+    """.stripIndent()
+
+    def f = new File(testProjectDir.newFolder('src', 'simple'), 'HelloWorld.java')
+    f.createNewFile()
+    f << """\
+      package simple;
+
+      public class HelloWorld {
+        public String sayHello(String name) {
+          return "Hello, " + name + "!";
+        }
+      }
+    """.stripIndent()
+
+    when:
+    def result = GradleRunner.create()
+            .withGradleVersion(gradleVersion)
+            .withProjectDir(testProjectDir.root)
+            .withArguments('javaCompilationTask')
+            .build()
+
+    then:
+    result.task(':javaCompilationTask').outcome == TaskOutcome.SUCCESS
+    new File(testProjectDir.root, 'build/classes/simple/HelloWorld.class').exists()
+
+    where:
+    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
+  }
+
+  @Unroll
   def "simple java project, with Gradle #gradleVersion"() {
     given:
     buildFile << """\
@@ -131,6 +175,57 @@ class AptPluginIntegrationSpec extends Specification {
     result.task(':annotations:compileJava').outcome == TaskOutcome.SUCCESS
     result.task(':core:compileJava').outcome == TaskOutcome.SUCCESS
     result.task(':core:javadoc').outcome == TaskOutcome.SUCCESS
+
+    where:
+    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
+  }
+
+  @Unroll
+  def "simple non-groovy project, with Gradle #gradleVersion"() {
+    given:
+    buildFile << """\
+      apply plugin: 'net.ltgt.apt'
+
+      configurations {
+        groovy
+      }
+      dependencies {
+        groovy localGroovy()
+      }
+
+      task groovyCompilationTask(type: GroovyCompile) {
+        source 'src/'
+        include '**/*.groovy'
+        classpath = configurations.groovy
+        destinationDir = project.file('build/classes')
+        sourceCompatibility = org.gradle.api.JavaVersion.current()
+        targetCompatibility = org.gradle.api.JavaVersion.current()
+        groovyClasspath = configurations.groovy
+      }
+    """.stripIndent()
+
+    def f = new File(testProjectDir.newFolder('src', 'simple'), 'HelloWorld.groovy')
+    f.createNewFile()
+    f << """\
+      package simple;
+
+      class HelloWorld {
+        String sayHello(String name) {
+          "Hello, \${name}!";
+        }
+      }
+    """.stripIndent()
+
+    when:
+    def result = GradleRunner.create()
+            .withGradleVersion(gradleVersion)
+            .withProjectDir(testProjectDir.root)
+            .withArguments('groovyCompilationTask')
+            .build()
+
+    then:
+    result.task(':groovyCompilationTask').outcome == TaskOutcome.SUCCESS
+    new File(testProjectDir.root, 'build/classes/simple/HelloWorld.class').exists()
 
     where:
     gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
