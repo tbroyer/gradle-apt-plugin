@@ -15,6 +15,7 @@ import org.gradle.api.tasks.compile.GroovyCompile
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.plugins.ide.eclipse.EclipsePlugin
 import org.gradle.plugins.ide.idea.IdeaPlugin
+import org.gradle.util.GradleVersion
 
 class AptPlugin implements Plugin<Project> {
   @Override
@@ -196,17 +197,24 @@ class AptPlugin implements Plugin<Project> {
           testSourceDirs += testSourceSet.output.generatedSourcesDir
           generatedSourceDirs += [ mainSourceSet.output.generatedSourcesDir, testSourceSet.output.generatedSourcesDir ]
 
-          // NOTE: ideally we'd use PROVIDED for both, but then every transitive dependency in
-          // compile or testCompile configurations that would also be in compileOnly and
-          // testCompileOnly would end up in PROVIDED.
-          scopes.COMPILE.plus += [
-              project.configurations.getByName(mainSourceSet.compileOnlyConfigurationName),
-              project.configurations.getByName(mainSourceSet.aptConfigurationName)
-          ]
-          scopes.TEST.plus += [
-              project.configurations.getByName(testSourceSet.compileOnlyConfigurationName),
-              project.configurations.getByName(testSourceSet.aptConfigurationName)
-          ]
+          if (GradleVersion.current() >= GradleVersion.version("3.4")) {
+            // Gradle 3.4 changed IDEA mappings
+            // See https://docs.gradle.org/3.4/release-notes.html#idea-mapping-has-been-simplified
+            scopes.PROVIDED.plus += [ project.configurations.getByName(mainSourceSet.aptConfigurationName) ]
+            scopes.TEST.plus += [ project.configurations.getByName(testSourceSet.aptConfigurationName) ]
+          } else {
+            // NOTE: ideally we'd use PROVIDED for both, but then every transitive dependency in
+            // compile or testCompile configurations that would also be in compileOnly and
+            // testCompileOnly would end up in PROVIDED.
+            scopes.COMPILE.plus += [
+                    project.configurations.getByName(mainSourceSet.compileOnlyConfigurationName),
+                    project.configurations.getByName(mainSourceSet.aptConfigurationName)
+            ]
+            scopes.TEST.plus += [
+                    project.configurations.getByName(testSourceSet.compileOnlyConfigurationName),
+                    project.configurations.getByName(testSourceSet.aptConfigurationName)
+            ]
+          }
         }
       }
     }

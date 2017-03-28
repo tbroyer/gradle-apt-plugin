@@ -9,7 +9,7 @@ group: edge
 matrix:
   include:
     - jdk: openjdk7
-      env: TEST_GRADLE_VERSIONS=3.3
+      env: TEST_GRADLE_VERSIONS=3.4
     - jdk: oraclejdk8
       env: TEST_GRADLE_VERSIONS=2.5
     - jdk: oraclejdk8
@@ -37,9 +37,9 @@ matrix:
     - jdk: oraclejdk8
       env: TEST_GRADLE_VERSIONS=3.2
     - jdk: oraclejdk8
-      env: TEST_GRADLE_VERSIONS=3.3
+      env: TEST_GRADLE_VERSIONS=3.4
     - jdk: oraclejdk9
-      env: TEST_GRADLE_VERSIONS=3.3
+      env: TEST_GRADLE_VERSIONS=3.4
   allow_failures:
     - jdk: oraclejdk9
 install: true

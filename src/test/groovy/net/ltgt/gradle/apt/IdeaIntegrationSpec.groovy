@@ -8,6 +8,7 @@ import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.ProjectConnection
 import org.gradle.tooling.model.idea.IdeaProject
+import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
@@ -184,16 +185,31 @@ class IdeaIntegrationSpec extends Specification {
       "${it.gradleModuleVersion.group}:${it.gradleModuleVersion.name}:${it.gradleModuleVersion.version}:${it.scope.scope}" as String
     }
     // XXX: it's unfortunate that we have both versions of "leaf" artifacts, but we can't easily do otherwise
-    dependencies.contains('leaf:compile:1.0:COMPILE')
-    dependencies.contains('compile:compile:1.0:COMPILE')
-    dependencies.contains('annotations:compile:1.0:COMPILE')
-    dependencies.contains('leaf:compile:2.0:COMPILE')
-    dependencies.contains('processor:compile:1.0:COMPILE')
-    dependencies.contains('leaf:testCompile:1.0:TEST')
-    dependencies.contains('testCompile:testCompile:1.0:TEST')
-    dependencies.contains('annotations:testCompile:1.0:TEST')
-    dependencies.contains('leaf:testCompile:2.0:TEST')
-    dependencies.contains('processor:testCompile:1.0:TEST')
+    if (GradleVersion.version(gradleVersion) >= GradleVersion.version("3.4")) {
+      dependencies.contains('leaf:compile:1.0:PROVIDED')
+      dependencies.contains('compile:compile:1.0:PROVIDED')
+      dependencies.contains('annotations:compile:1.0:PROVIDED')
+      dependencies.contains('leaf:compile:2.0:PROVIDED')
+      dependencies.contains('processor:compile:1.0:PROVIDED')
+      dependencies.contains('leaf:compile:1.0:RUNTIME')
+      dependencies.contains('compile:compile:1.0:RUNTIME')
+      dependencies.contains('leaf:testCompile:1.0:TEST')
+      dependencies.contains('testCompile:testCompile:1.0:TEST')
+      dependencies.contains('annotations:testCompile:1.0:TEST')
+      dependencies.contains('leaf:testCompile:2.0:TEST')
+      dependencies.contains('processor:testCompile:1.0:TEST')
+    } else {
+      dependencies.contains('leaf:compile:1.0:COMPILE')
+      dependencies.contains('compile:compile:1.0:COMPILE')
+      dependencies.contains('annotations:compile:1.0:COMPILE')
+      dependencies.contains('leaf:compile:2.0:COMPILE')
+      dependencies.contains('processor:compile:1.0:COMPILE')
+      dependencies.contains('leaf:testCompile:1.0:TEST')
+      dependencies.contains('testCompile:testCompile:1.0:TEST')
+      dependencies.contains('annotations:testCompile:1.0:TEST')
+      dependencies.contains('leaf:testCompile:2.0:TEST')
+      dependencies.contains('processor:testCompile:1.0:TEST')
+    }
 
     cleanup:
     connection.close()
