@@ -141,8 +141,6 @@ class AptPluginIntegrationSpec extends Specification {
     f << """\
       package annotations;
 
-      import java.lang.annotation.Documented;
-
       public @interface MyAnnotation {
       }
     """.stripIndent()
@@ -311,8 +309,6 @@ class AptPluginIntegrationSpec extends Specification {
     f.createNewFile()
     f << """\
       package annotations;
-
-      import java.lang.annotation.Documented;
 
       public @interface MyAnnotation {
       }
