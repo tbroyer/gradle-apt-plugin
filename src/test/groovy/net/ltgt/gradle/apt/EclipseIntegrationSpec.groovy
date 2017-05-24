@@ -25,8 +25,7 @@ class EclipseIntegrationSpec extends Specification {
           classpath files(\$/${System.getProperty('plugin')}/\$)
         }
       }
-      apply plugin: 'net.ltgt.apt'
-      apply plugin: 'eclipse'
+      apply plugin: 'net.ltgt.apt-eclipse'
     """.stripIndent()
   }
 

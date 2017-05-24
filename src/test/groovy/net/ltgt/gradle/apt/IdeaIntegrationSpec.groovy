@@ -31,8 +31,7 @@ class IdeaIntegrationSpec extends Specification {
           classpath files(\$/${System.getProperty('plugin')}/\$)
         }
       }
-      apply plugin: 'net.ltgt.apt'
-      apply plugin: 'idea'
+      apply plugin: 'net.ltgt.apt-idea'
     """.stripIndent()
   }
 

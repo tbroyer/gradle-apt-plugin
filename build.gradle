@@ -72,6 +72,14 @@ pluginBundle {
             id = 'net.ltgt.apt'
             displayName = 'Gradle APT plugin'
         }
+        aptEclipsePlugin {
+            id = 'net.ltgt.apt-eclipse'
+            displayName = 'Gradle APT plugin (Eclipse integration)'
+        }
+        aptIdeaPlugin {
+            id = 'net.ltgt.apt-idea'
+            displayName = 'Gradle APT plugin (IDEA integration)'
+        }
     }
 
     mavenCoordinates {
