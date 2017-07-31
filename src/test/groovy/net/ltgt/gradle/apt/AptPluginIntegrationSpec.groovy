@@ -2,6 +2,7 @@ package net.ltgt.gradle.apt
 
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
+import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
@@ -35,9 +36,14 @@ class AptPluginIntegrationSpec extends Specification {
         destinationDir = project.file('build/classes')
         sourceCompatibility = org.gradle.api.JavaVersion.current()
         targetCompatibility = org.gradle.api.JavaVersion.current()
-        dependencyCacheDir = project.file('build/dependency-cache')
       }
     """.stripIndent()
+    if (GradleVersion.version(gradleVersion) < GradleVersion.version("3.0")) {
+      // dependencyCacheDir is required in Gradle 2.x, deprecated in 3.x, and removed in 4.x
+      buildFile << """\
+        javaCompilationTask.dependencyCacheDir = project.file('build/dependency-cache')
+      """.stripIndent()
+    }
 
     def f = new File(testProjectDir.newFolder('src', 'simple'), 'HelloWorld.java')
     f.createNewFile()
@@ -199,6 +205,9 @@ class AptPluginIntegrationSpec extends Specification {
           compileOnly project(':annotations')
           apt project(':processor')
         }
+
+        // Get Gradle 4.x to behave like previous versions
+        sourceSets.main.output.classesDir = new File(buildDir, 'classes/main')
       }
     """.stripIndent()
 
@@ -508,6 +517,9 @@ class AptPluginIntegrationSpec extends Specification {
         tasks.withType(GroovyCompile) {
           groovyOptions.javaAnnotationProcessing = true
         }
+
+        // Get Gradle 4.x to behave like previous versions
+        sourceSets.main.output.classesDir = new File(buildDir, 'classes/main')
       }
     """.stripIndent()
 
