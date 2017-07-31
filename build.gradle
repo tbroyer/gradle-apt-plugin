@@ -26,14 +26,12 @@ repositories {
 }
 
 dependencies {
-    compile gradleApi()
     compile localGroovy()
 
     testCompile('com.netflix.nebula:nebula-test:6.0.1')
     testCompile('org.spockframework:spock-core:1.1-groovy-2.4') {
         exclude group: 'org.codehaus.groovy'
     }
-    testCompile gradleTestKit()
 }
 
 wrapper {
@@ -50,6 +48,23 @@ test {
         showExceptions = true
         showStackTraces = true
         exceptionFormat = 'FULL'
+    }
+}
+
+gradlePlugin {
+    plugins {
+        aptPlugin {
+            id = 'net.ltgt.apt'
+            implementationClass = 'net.ltgt.gradle.apt.AptPlugin'
+        }
+        aptEclipsePlugin {
+            id = 'net.ltgt.apt-eclipse'
+            implementationClass = 'net.ltgt.gradle.apt.AptEclipsePlugin'
+        }
+        aptIdeaPlugin {
+            id = 'net.ltgt.apt-idea'
+            implementationClass = 'net.ltgt.gradle.apt.AptIdeaPlugin'
+        }
     }
 }
 
