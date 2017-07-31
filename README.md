@@ -56,7 +56,7 @@ dependencies {
 
 Starting with version 0.6, the plugin also configures `GroovyCompile` tasks added when the `groovy` plugin is applied.
 It does not however configure annotation processing for Groovy sources, only for Java sources used in joint compilation.
-Turn process annotations on Groovy sources, you'll have to configure your `GroovyCompile` tasks; e.g.
+To process annotations on Groovy sources, you'll have to configure your `GroovyCompile` tasks; e.g.
 
 ```gradle
 compileGroovy {
