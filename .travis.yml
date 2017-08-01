@@ -1,10 +1,6 @@
 language: java
 
-# Those lines enable using openjdk9
-# See https://github.com/travis-ci/travis-ci/issues/5520
-sudo: required
 dist: trusty
-group: edge
 
 matrix:
   include:
