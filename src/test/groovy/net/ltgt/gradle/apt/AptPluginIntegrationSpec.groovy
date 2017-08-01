@@ -38,8 +38,8 @@ class AptPluginIntegrationSpec extends Specification {
         targetCompatibility = org.gradle.api.JavaVersion.current()
       }
     """.stripIndent()
-    if (GradleVersion.version(gradleVersion) < GradleVersion.version("3.0")) {
-      // dependencyCacheDir is required in Gradle 2.x, deprecated in 3.x, and removed in 4.x
+    if (GradleVersion.version(gradleVersion) < GradleVersion.version("4.0")) {
+      // dependencyCacheDir is required up until Gradle 3.2, deprecated in 3.3, and removed in 4.x
       buildFile << """\
         javaCompilationTask.dependencyCacheDir = project.file('build/dependency-cache')
       """.stripIndent()
