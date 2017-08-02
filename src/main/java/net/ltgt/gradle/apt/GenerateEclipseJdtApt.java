@@ -99,7 +99,8 @@ public class GenerateEclipseJdtApt extends PropertiesGeneratorTask<GenerateEclip
       properties.setProperty("org.eclipse.jdt.apt.genSrcDir", genSrcDir);
       properties.setProperty("org.eclipse.jdt.apt.reconcileEnabled", Boolean.toString(reconcileEnabled));
       for (Map.Entry<String, String> option : processorOptions.entrySet()) {
-        properties.setProperty("org.eclipse.jdt.apt.processorOptions/" + option.getKey(), option.getValue());
+        properties.setProperty("org.eclipse.jdt.apt.processorOptions/" + option.getKey(), option.getValue() == null
+                ? "org.eclipse.jdt.apt.NULLVALUE" : option.getValue());
       }
     }
   }

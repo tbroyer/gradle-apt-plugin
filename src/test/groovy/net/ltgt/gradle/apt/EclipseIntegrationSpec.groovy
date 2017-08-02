@@ -156,6 +156,7 @@ class EclipseIntegrationSpec extends Specification {
         aptOptions.processorArgs = [
           'foo': 'bar',
           'baz': 'qux',
+          'hasNullValue': null,
         ]
       }
       compileTestJava {
@@ -188,6 +189,7 @@ class EclipseIntegrationSpec extends Specification {
     aptSettings.getProperty('org.eclipse.jdt.apt.reconcileEnabled') == 'false'
     aptSettings.getProperty('org.eclipse.jdt.apt.processorOptions/foo') == 'bar'
     aptSettings.getProperty('org.eclipse.jdt.apt.processorOptions/baz') == 'qux'
+    aptSettings.getProperty('org.eclipse.jdt.apt.processorOptions/hasNullValue') == 'org.eclipse.jdt.apt.NULLVALUE'
     !aptSettings.containsKey('org.eclipse.jdt.apt.processorOptions/ignoredOption')
 
     where:
