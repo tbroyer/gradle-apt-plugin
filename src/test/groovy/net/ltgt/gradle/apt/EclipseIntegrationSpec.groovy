@@ -148,6 +148,53 @@ class EclipseIntegrationSpec extends Specification {
   }
 
   @Unroll
+  def "eclipse task custom config, with Gradle #gradleVersion"() {
+    given:
+    buildFile << """\
+      apply plugin: 'java'
+      compileJava {
+        aptOptions.processorArgs = [
+          'foo': 'bar',
+          'baz': 'qux',
+        ]
+      }
+      compileTestJava {
+        aptOptions.processorArgs = [ 'ignoredOption': 'from compileTestJava' ]
+      }
+      eclipseJdtApt {
+        aptEnabled = false
+        genSrcDir = file('whatever')
+        reconcileEnabled = false
+      }
+    """.stripIndent()
+
+    when:
+    def result = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
+        .withProjectDir(testProjectDir.root)
+        .withArguments('eclipse')
+        .build()
+
+    then:
+    result.task(':eclipse').outcome == TaskOutcome.SUCCESS
+    result.task(':eclipseJdtApt').outcome == TaskOutcome.SUCCESS
+
+    def jdtSettings = loadProperties('.settings/org.eclipse.jdt.core.prefs')
+    jdtSettings.getProperty('org.eclipse.jdt.core.compiler.processAnnotations') == 'disabled'
+
+    def aptSettings = loadProperties('.settings/org.eclipse.jdt.apt.core.prefs')
+    aptSettings.getProperty('org.eclipse.jdt.apt.aptEnabled') == 'false'
+    aptSettings.getProperty('org.eclipse.jdt.apt.genSrcDir') == 'whatever'
+    aptSettings.getProperty('org.eclipse.jdt.apt.reconcileEnabled') == 'false'
+    aptSettings.getProperty('org.eclipse.jdt.apt.processorOptions/foo') == 'bar'
+    aptSettings.getProperty('org.eclipse.jdt.apt.processorOptions/baz') == 'qux'
+    !aptSettings.containsKey('org.eclipse.jdt.apt.processorOptions/ignoredOption')
+
+    where:
+    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
+  }
+
+  @Unroll
   def "tooling api, with Gradle #gradleVersion"() {
     given:
     def mavenRepo = new GradleDependencyGenerator(

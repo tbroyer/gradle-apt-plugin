@@ -27,7 +27,9 @@ class AptEclipsePlugin implements Plugin<Project> {
    */
   private void configureEclipse(Project project, SourceSet mainSourceSet, SourceSet testSourceSet) {
     project.eclipse.jdt.file.withProperties {
-      it.'org.eclipse.jdt.core.compiler.processAnnotations' = 'enabled'
+      it.'org.eclipse.jdt.core.compiler.processAnnotations' =
+          project.tasks.withType(GenerateEclipseJdtApt).findByName('eclipseJdtApt').aptEnabled \
+          ? 'enabled' : 'disabled'
     }
 
     project.afterEvaluate {
@@ -39,18 +41,15 @@ class AptEclipsePlugin implements Plugin<Project> {
       }
     }
     if (!project.tasks.findByName('eclipseJdtApt')) {
-      def task = project.tasks.create('eclipseJdtApt') {
-        ext.aptPrefs = project.file('.settings/org.eclipse.jdt.apt.core.prefs')
-        outputs.file(aptPrefs)
-        doLast {
-          project.mkdir(aptPrefs.parentFile)
-          aptPrefs.text = """\
-              eclipse.preferences.version=1
-              org.eclipse.jdt.apt.aptEnabled=true
-              org.eclipse.jdt.apt.genSrcDir=.apt_generated
-              org.eclipse.jdt.apt.reconcileEnabled=true
-            """.stripIndent()
-        }
+      def task = project.tasks.create('eclipseJdtApt', GenerateEclipseJdtApt) {
+        it.description = 'Generates the Eclipse JDT APT settings file.'
+        it.inputFile = it.outputFile = project.file('.settings/org.eclipse.jdt.apt.core.prefs')
+        it.aptEnabled = true
+        it.genSrcDir = project.file('.apt_generated')
+        it.reconcileEnabled = true
+        it.conventionMapping("processorOptions", {
+          project.tasks.findByName(mainSourceSet.compileJavaTaskName).aptOptions.processorArgs
+        })
       }
       project.tasks.eclipse.dependsOn task
       def cleanTask = project.tasks.create('cleanEclipseJdtApt', Delete)
