@@ -162,10 +162,14 @@ class EclipseIntegrationSpec extends Specification {
       compileTestJava {
         aptOptions.processorArgs = [ 'ignoredOption': 'from compileTestJava' ]
       }
-      eclipseJdtApt {
-        aptEnabled = false
-        genSrcDir = file('whatever')
-        reconcileEnabled = false
+      eclipse {
+        jdt {
+          apt {
+            aptEnabled = false
+            genSrcDir = file('whatever')
+            reconcileEnabled = false
+          }
+        }
       }
     """.stripIndent()
 

@@ -73,7 +73,27 @@ IDE configuration is provided on a best-effort basis.
 Starting with version 0.11, applying the `net.ltgt.apt-eclipse` plugin will auto-configure the generated files to enable annotation processing in Eclipse.
 In prior versions (until 0.10), that configuration would automatically happen whenever both the `net.ltgt.apt` and `eclipse` were applied (the new `net.ltgt.apt-eclipse` plugin will also automatically apply the `net.ltgt.apt` and `eclipse` plugins).
 
+From version 0.11 onwards, Eclipse annotation processing can be configured through a DSL, as an extension to the Eclipse JDT DSL (presented here with the default values):
+```gradle
+eclipse {
+  jdt {
+    apt {
+      // whether annotation processing is enabled in Eclipse
+      aptEnabled = compileJava.aptOptions.annotationProcessing
+      // where Eclipse will output the generated sources; value is interpreted as per project.file()
+      genSrcDir = file('.apt_generated')
+      // whether annotation processing is enabled in the editor
+      reconcileEnabled = true
+      // a map of annotation processor options; a null value will pass the argument as -Akey rather than -Akey=value
+      processorOptions = compileJava.aptOptions.processorArgs
+    }
+  }
+}
+```
+
 When using Buildship, you'll have to manually run the `eclipseJdtApt` and `eclipseFactorypath` tasks to generate the Eclipse configuration files, then either run the `eclipseJdt` task or manually enable annotation processing: in the project properties → Java Compiler → Annotation Processing, check `Enable Annotation Processing`. Note that while all those tasks are depended on by the `eclipse` task, that one is incompatible with Buildship, so you have to explicitly run the two or three aforementioned tasks and _not_ run the `eclipse` task.
+
+Note that Eclipse does not distinguish main and test sources, and will process all of them using the same factory path and processor options, and the same generated source directory.
 
 In any case, the `net.ltgt.apt-eclipse` plugin (or simply `eclipse` plugin up until version 0.10) has to be applied to the project.
 
