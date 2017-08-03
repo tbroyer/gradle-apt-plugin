@@ -1,29 +1,26 @@
 package net.ltgt.gradle.apt;
 
-import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import org.gradle.api.internal.PropertiesTransformer;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.Optional;
+import org.gradle.api.tasks.Internal;
 import org.gradle.plugins.ide.api.PropertiesGeneratorTask;
 import org.gradle.plugins.ide.internal.generator.PropertiesPersistableConfigurationObject;
 
 public class GenerateEclipseJdtApt extends PropertiesGeneratorTask<GenerateEclipseJdtApt.JdtApt> {
-  private boolean aptEnabled;
-  private File genSrcDir;
-  private boolean reconcileEnabled;
-  private Map<String, String> processorOptions;
+  private EclipseJdtApt jdtApt;
 
   @Override
   protected void configure(JdtApt jdtApt) {
-    jdtApt.aptEnabled = isAptEnabled();
-    jdtApt.genSrcDir = getProject().relativePath(getGenSrcDir());
-    jdtApt.reconcileEnabled = isReconcileEnabled();
+    jdtApt.aptEnabled = this.jdtApt.isAptEnabled();
+    jdtApt.genSrcDir = getProject().relativePath(this.jdtApt.getGenSrcDir());
+    jdtApt.reconcileEnabled = this.jdtApt.isReconcileEnabled();
     jdtApt.processorOptions.clear();
-    if (getProcessorOptions() != null) {
-      jdtApt.processorOptions.putAll(getProcessorOptions());
+    if (this.jdtApt.getProcessorOptions() != null) {
+      for (Map.Entry<String, ?> entry : this.jdtApt.getProcessorOptions().entrySet()) {
+        jdtApt.processorOptions.put(entry.getKey(), entry.getValue() == null ? null : entry.getValue().toString());
+      }
     }
   }
 
@@ -32,40 +29,13 @@ public class GenerateEclipseJdtApt extends PropertiesGeneratorTask<GenerateEclip
     return new JdtApt(getTransformer());
   }
 
-  @Input
-  public boolean isAptEnabled() {
-    return aptEnabled;
+  @Internal
+  public EclipseJdtApt getJdtApt() {
+    return this.jdtApt;
   }
 
-  public void setAptEnabled(boolean aptEnabled) {
-    this.aptEnabled = aptEnabled;
-  }
-
-  @Input
-  public File getGenSrcDir() {
-    return genSrcDir;
-  }
-
-  public void setGenSrcDir(File genSrcDir) {
-    this.genSrcDir = genSrcDir;
-  }
-
-  @Input
-  public boolean isReconcileEnabled() {
-    return reconcileEnabled;
-  }
-
-  public void setReconcileEnabled(boolean reconcileEnabled) {
-    this.reconcileEnabled = reconcileEnabled;
-  }
-
-  @Input @Optional
-  public Map<String, String> getProcessorOptions() {
-    return processorOptions;
-  }
-
-  public void setProcessorOptions(Map<String, String> processorOptions) {
-    this.processorOptions = processorOptions;
+  public void setJdtApt(EclipseJdtApt jdtApt) {
+    this.jdtApt = jdtApt;
   }
 
   static class JdtApt extends PropertiesPersistableConfigurationObject {

@@ -65,10 +65,7 @@ class AptEclipsePlugin implements Plugin<Project> {
       def task = project.tasks.create('eclipseJdtApt', GenerateEclipseJdtApt) {
         it.description = 'Generates the Eclipse JDT APT settings file.'
         it.inputFile = it.outputFile = project.file('.settings/org.eclipse.jdt.apt.core.prefs')
-        it.conventionMapping("aptEnabled", { jdtApt.aptEnabled })
-        it.conventionMapping("genSrcDir", { jdtApt.genSrcDir })
-        it.conventionMapping("reconcileEnabled", { jdtApt.reconcileEnabled })
-        it.conventionMapping("processorOptions", { jdtApt.processorOptions.collectEntries { k, v -> [k, v?.toString()] } })
+        it.jdtApt = jdtApt
       }
       project.tasks.eclipse.dependsOn task
       def cleanTask = project.tasks.create('cleanEclipseJdtApt', Delete)
