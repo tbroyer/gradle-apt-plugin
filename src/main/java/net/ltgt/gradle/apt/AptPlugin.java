@@ -1,5 +1,11 @@
 package net.ltgt.gradle.apt;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -21,166 +27,265 @@ import org.gradle.api.tasks.compile.CompileOptions;
 import org.gradle.api.tasks.compile.GroovyCompile;
 import org.gradle.api.tasks.compile.JavaCompile;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Callable;
-
 public class AptPlugin implements Plugin<Project> {
   @Override
   public void apply(final Project project) {
-    configureCompileTasks(project, JavaCompile.class, new GetCompileOptions<JavaCompile>() {
-      @Override
-      public CompileOptions getCompileOptions(JavaCompile task) {
-        return task.getOptions();
-      }
-    });
-    configureCompileTasks(project, GroovyCompile.class, new GetCompileOptions<GroovyCompile>() {
-      @Override
-      public CompileOptions getCompileOptions(GroovyCompile task) {
-        return task.getOptions();
-      }
-    });
-
-    project.getPlugins().withType(JavaBasePlugin.class, new Action<JavaBasePlugin>() {
-      @Override
-      public void execute(JavaBasePlugin javaBasePlugin) {
-        final JavaPluginConvention javaConvention = project.getConvention().getPlugin(JavaPluginConvention.class);
-        javaConvention.getSourceSets().all(new Action<SourceSet>() {
+    configureCompileTasks(
+        project,
+        JavaCompile.class,
+        new GetCompileOptions<JavaCompile>() {
           @Override
-          public void execute(final SourceSet sourceSet) {
-            AptSourceSetConvention convention = new AptSourceSetConvention(project, sourceSet);
-            new DslObject(sourceSet).getConvention().getPlugins().put("net.ltgt.apt", convention);
+          public CompileOptions getCompileOptions(JavaCompile task) {
+            return task.getOptions();
+          }
+        });
+    configureCompileTasks(
+        project,
+        GroovyCompile.class,
+        new GetCompileOptions<GroovyCompile>() {
+          @Override
+          public CompileOptions getCompileOptions(GroovyCompile task) {
+            return task.getOptions();
+          }
+        });
 
-            new DslObject(sourceSet.getOutput()).getConvention().getPlugins().put("net.ltgt.apt", new AptSourceSetOutputConvention(project, sourceSet));
+    project
+        .getPlugins()
+        .withType(
+            JavaBasePlugin.class,
+            new Action<JavaBasePlugin>() {
+              @Override
+              public void execute(JavaBasePlugin javaBasePlugin) {
+                final JavaPluginConvention javaConvention =
+                    project.getConvention().getPlugin(JavaPluginConvention.class);
+                javaConvention
+                    .getSourceSets()
+                    .all(
+                        new Action<SourceSet>() {
+                          @Override
+                          public void execute(final SourceSet sourceSet) {
+                            AptSourceSetConvention convention =
+                                new AptSourceSetConvention(project, sourceSet);
+                            new DslObject(sourceSet)
+                                .getConvention()
+                                .getPlugins()
+                                .put("net.ltgt.apt", convention);
 
-            String compileOnlyConfigurationName = convention.getCompileOnlyConfigurationName();
-            // Gradle 2.12 already creates such a configuration in the JavaBasePlugin; our compileOnlyConfigurationName has the same value
-            Configuration configuration = project.getConfigurations().findByName(compileOnlyConfigurationName);
-            if (configuration == null) {
-              configuration = project.getConfigurations().create(compileOnlyConfigurationName);
-              configuration.setVisible(false);
-              configuration.setDescription("Compile-only classpath for ${sourceSet}.");
-              configuration.extendsFrom(project.getConfigurations().findByName(sourceSet.getCompileConfigurationName()));
+                            new DslObject(sourceSet.getOutput())
+                                .getConvention()
+                                .getPlugins()
+                                .put(
+                                    "net.ltgt.apt",
+                                    new AptSourceSetOutputConvention(project, sourceSet));
 
-              sourceSet.setCompileClasspath(configuration);
+                            String compileOnlyConfigurationName =
+                                convention.getCompileOnlyConfigurationName();
+                            // Gradle 2.12 already creates such a configuration in the JavaBasePlugin; our compileOnlyConfigurationName has the same value
+                            Configuration configuration =
+                                project
+                                    .getConfigurations()
+                                    .findByName(compileOnlyConfigurationName);
+                            if (configuration == null) {
+                              configuration =
+                                  project.getConfigurations().create(compileOnlyConfigurationName);
+                              configuration.setVisible(false);
+                              configuration.setDescription(
+                                  "Compile-only classpath for ${sourceSet}.");
+                              configuration.extendsFrom(
+                                  project
+                                      .getConfigurations()
+                                      .findByName(sourceSet.getCompileConfigurationName()));
 
-              // Special-case the JavaPlugin's 'test' source set, only if we created the testCompileOnly configuration
-              // Note that Gradle 2.12 actually creates a testCompilationClasspath configuration that extends testCompileOnly
-              // and sets it as sourceSets.test.compileClasspath; rather than directly using the testCompileOnly configuration.
-              if (SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.getName())) {
-                final Configuration conf = configuration;
-                project.getPlugins().withType(JavaPlugin.class, new Action<JavaPlugin>() {
-                  @Override
-                  public void execute(JavaPlugin javaPlugin) {
-                    sourceSet.setCompileClasspath(project.files(javaConvention.getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME).getOutput(), conf));
-                  }
-                });
+                              sourceSet.setCompileClasspath(configuration);
+
+                              // Special-case the JavaPlugin's 'test' source set, only if we created the testCompileOnly configuration
+                              // Note that Gradle 2.12 actually creates a testCompilationClasspath configuration that extends testCompileOnly
+                              // and sets it as sourceSets.test.compileClasspath; rather than directly using the testCompileOnly configuration.
+                              if (SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.getName())) {
+                                final Configuration conf = configuration;
+                                project
+                                    .getPlugins()
+                                    .withType(
+                                        JavaPlugin.class,
+                                        new Action<JavaPlugin>() {
+                                          @Override
+                                          public void execute(JavaPlugin javaPlugin) {
+                                            sourceSet.setCompileClasspath(
+                                                project.files(
+                                                    javaConvention
+                                                        .getSourceSets()
+                                                        .getByName(SourceSet.MAIN_SOURCE_SET_NAME)
+                                                        .getOutput(),
+                                                    conf));
+                                          }
+                                        });
+                              }
+                            }
+
+                            Configuration aptConfiguration =
+                                project
+                                    .getConfigurations()
+                                    .create(convention.getAptConfigurationName());
+                            aptConfiguration.setVisible(false);
+                            aptConfiguration.setDescription("Processor path for ${sourceSet}");
+
+                            configureCompileTask(
+                                project, sourceSet, sourceSet.getCompileJavaTaskName());
+                          }
+                        });
               }
-            }
-
-            Configuration aptConfiguration = project.getConfigurations().create(convention.getAptConfigurationName());
-            aptConfiguration.setVisible(false);
-            aptConfiguration.setDescription("Processor path for ${sourceSet}");
-
-            configureCompileTask(project, sourceSet, sourceSet.getCompileJavaTaskName());
-          }
-        });
-      }
-    });
-    project.getPlugins().withType(GroovyBasePlugin.class, new Action<GroovyBasePlugin>() {
-      @Override
-      public void execute(GroovyBasePlugin groovyBasePlugin) {
-        JavaPluginConvention javaConvention = project.getConvention().getPlugin(JavaPluginConvention.class);
-        javaConvention.getSourceSets().all(new Action<SourceSet>() {
-          @Override
-          public void execute(SourceSet sourceSet) {
-            configureCompileTask(project, sourceSet, sourceSet.getCompileTaskName("groovy"));
-          }
-        });
-      }
-    });
+            });
+    project
+        .getPlugins()
+        .withType(
+            GroovyBasePlugin.class,
+            new Action<GroovyBasePlugin>() {
+              @Override
+              public void execute(GroovyBasePlugin groovyBasePlugin) {
+                JavaPluginConvention javaConvention =
+                    project.getConvention().getPlugin(JavaPluginConvention.class);
+                javaConvention
+                    .getSourceSets()
+                    .all(
+                        new Action<SourceSet>() {
+                          @Override
+                          public void execute(SourceSet sourceSet) {
+                            configureCompileTask(
+                                project, sourceSet, sourceSet.getCompileTaskName("groovy"));
+                          }
+                        });
+              }
+            });
   }
 
   private interface GetCompileOptions<T extends AbstractCompile> {
     CompileOptions getCompileOptions(T task);
   }
 
-  private <T extends AbstractCompile> void configureCompileTasks(final Project project, Class<T> compileTaskClass, final GetCompileOptions<T> getCompileOptions) {
-    project.getTasks().withType(compileTaskClass, new Action<T>() {
-      @Override
-      public void execute(final T task) {
-        task.getConvention().getPlugins().put("net.ltgt.apt", new AptConvention(project));
-        task.getInputs().property("aptOptions.annotationProcessing", new Callable<Object>() {
-          @Override
-          public Object call() throws Exception {
-            return task.getConvention().getPlugin(AptConvention.class).getAptOptions().isAnnotationProcessing();
-          }
-        });
-        task.getInputs().property("aptOptions.processors", new Callable<Object>() {
-          @Override
-          public Object call() throws Exception {
-            return task.getConvention().getPlugin(AptConvention.class).getAptOptions().getProcessors();
-          }
-        });
-        task.getInputs().property("aptOptions.processorArgs", new Callable<Object>() {
-          @Override
-          public Object call() throws Exception {
-            return task.getConvention().getPlugin(AptConvention.class).getAptOptions().getProcessorArgs();
-          }
-        });
+  private <T extends AbstractCompile> void configureCompileTasks(
+      final Project project,
+      Class<T> compileTaskClass,
+      final GetCompileOptions<T> getCompileOptions) {
+    project
+        .getTasks()
+        .withType(
+            compileTaskClass,
+            new Action<T>() {
+              @Override
+              public void execute(final T task) {
+                task.getConvention().getPlugins().put("net.ltgt.apt", new AptConvention(project));
+                task.getInputs()
+                    .property(
+                        "aptOptions.annotationProcessing",
+                        new Callable<Object>() {
+                          @Override
+                          public Object call() throws Exception {
+                            return task.getConvention()
+                                .getPlugin(AptConvention.class)
+                                .getAptOptions()
+                                .isAnnotationProcessing();
+                          }
+                        });
+                task.getInputs()
+                    .property(
+                        "aptOptions.processors",
+                        new Callable<Object>() {
+                          @Override
+                          public Object call() throws Exception {
+                            return task.getConvention()
+                                .getPlugin(AptConvention.class)
+                                .getAptOptions()
+                                .getProcessors();
+                          }
+                        });
+                task.getInputs()
+                    .property(
+                        "aptOptions.processorArgs",
+                        new Callable<Object>() {
+                          @Override
+                          public Object call() throws Exception {
+                            return task.getConvention()
+                                .getPlugin(AptConvention.class)
+                                .getAptOptions()
+                                .getProcessorArgs();
+                          }
+                        });
 
-        TaskInputs inputs = task.getInputs().files(new Callable<Object>() {
-          @Override
-          public Object call() throws Exception {
-            return task.getConvention().getPlugin(AptConvention.class).getAptOptions().getProcessorpath();
-          }
-        });
-        if (inputs != task.getInputs()) {
-          ((TaskInputFilePropertyBuilder) inputs).withPropertyName("aptOptions.processorpath");
-        }
+                TaskInputs inputs =
+                    task.getInputs()
+                        .files(
+                            new Callable<Object>() {
+                              @Override
+                              public Object call() throws Exception {
+                                return task.getConvention()
+                                    .getPlugin(AptConvention.class)
+                                    .getAptOptions()
+                                    .getProcessorpath();
+                              }
+                            });
+                if (inputs != task.getInputs()) {
+                  ((TaskInputFilePropertyBuilder) inputs)
+                      .withPropertyName("aptOptions.processorpath");
+                }
 
-        TaskOutputs outputs = task.getOutputs().dir(new Callable<Object>() {
-          @Override
-          public Object call() throws Exception {
-            return task.getConvention().getPlugin(AptConvention.class).getGeneratedSourcesDestinationDir();
-          }
-        });
-        if (outputs != task.getOutputs()) {
-          ((TaskOutputFilePropertyBuilder) outputs).withPropertyName("generatedSourcesDestinationDir").optional();
-        }
+                TaskOutputs outputs =
+                    task.getOutputs()
+                        .dir(
+                            new Callable<Object>() {
+                              @Override
+                              public Object call() throws Exception {
+                                return task.getConvention()
+                                    .getPlugin(AptConvention.class)
+                                    .getGeneratedSourcesDestinationDir();
+                              }
+                            });
+                if (outputs != task.getOutputs()) {
+                  ((TaskOutputFilePropertyBuilder) outputs)
+                      .withPropertyName("generatedSourcesDestinationDir")
+                      .optional();
+                }
 
-        task.doFirst(new Action<Task>() {
-          @Override
-          @SuppressWarnings("unchecked")
-          public void execute(Task task) {
-            AptConvention aptConvention = task.getConvention().getPlugin(AptConvention.class);
-            aptConvention.makeDirectories();
-            getCompileOptions.getCompileOptions((T) task).getCompilerArgs().addAll(aptConvention.buildCompilerArgs());
-          }
-        });
-      }
-    });
+                task.doFirst(
+                    new Action<Task>() {
+                      @Override
+                      @SuppressWarnings("unchecked")
+                      public void execute(Task task) {
+                        AptConvention aptConvention =
+                            task.getConvention().getPlugin(AptConvention.class);
+                        aptConvention.makeDirectories();
+                        getCompileOptions
+                            .getCompileOptions((T) task)
+                            .getCompilerArgs()
+                            .addAll(aptConvention.buildCompilerArgs());
+                      }
+                    });
+              }
+            });
   }
 
   private void configureCompileTask(Project project, final SourceSet sourceSet, String taskName) {
     AbstractCompile task = project.getTasks().withType(AbstractCompile.class).getByName(taskName);
     AptConvention aptConvention = task.getConvention().getPlugin(AptConvention.class);
-    aptConvention.setGeneratedSourcesDestinationDir(new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
-        return new DslObject(sourceSet.getOutput()).getConvention().getPlugin(AptSourceSetOutputConvention.class).getGeneratedSourcesDir();
-      }
-    });
-    aptConvention.aptOptions.setProcessorpath(new Callable<Object>() {
-      @Override
-      public Object call() throws Exception {
-        return new DslObject(sourceSet).getConvention().getPlugin(AptSourceSetConvention.class).getProcessorpath();
-      }
-    });
+    aptConvention.setGeneratedSourcesDestinationDir(
+        new Callable<Object>() {
+          @Override
+          public Object call() throws Exception {
+            return new DslObject(sourceSet.getOutput())
+                .getConvention()
+                .getPlugin(AptSourceSetOutputConvention.class)
+                .getGeneratedSourcesDir();
+          }
+        });
+    aptConvention.aptOptions.setProcessorpath(
+        new Callable<Object>() {
+          @Override
+          public Object call() throws Exception {
+            return new DslObject(sourceSet)
+                .getConvention()
+                .getPlugin(AptSourceSetConvention.class)
+                .getProcessorpath();
+          }
+        });
   }
 
   public static class AptConvention {
@@ -310,12 +415,13 @@ public class AptPlugin implements Plugin<Project> {
     public AptSourceSetConvention(final Project project, SourceSet sourceSet) {
       this.project = project;
       this.sourceSet = sourceSet;
-      this.processorpath = new Callable<Object>() {
-        @Override
-        public Object call() throws Exception {
-          return project.getConfigurations().findByName(getAptConfigurationName());
-        }
-      };
+      this.processorpath =
+          new Callable<Object>() {
+            @Override
+            public Object call() throws Exception {
+              return project.getConfigurations().findByName(getAptConfigurationName());
+            }
+          };
     }
 
     private Object processorpath;
@@ -346,12 +452,13 @@ public class AptPlugin implements Plugin<Project> {
 
     public AptSourceSetOutputConvention(final Project project, final SourceSet sourceSet) {
       this.project = project;
-      this.generatedSourcesDir = new Callable<Object>() {
-        @Override
-        public Object call() throws Exception {
-          return new File(project.getBuildDir(), "generated/source/apt/" + sourceSet.getName());
-        }
-      };
+      this.generatedSourcesDir =
+          new Callable<Object>() {
+            @Override
+            public Object call() throws Exception {
+              return new File(project.getBuildDir(), "generated/source/apt/" + sourceSet.getName());
+            }
+          };
     }
 
     private Object generatedSourcesDir;

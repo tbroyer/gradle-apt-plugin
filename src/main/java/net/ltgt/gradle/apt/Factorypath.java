@@ -1,13 +1,12 @@
 package net.ltgt.gradle.apt;
 
 import groovy.util.Node;
-import org.gradle.internal.xml.XmlTransformer;
-import org.gradle.plugins.ide.internal.generator.XmlPersistableConfigurationObject;
-
 import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.gradle.internal.xml.XmlTransformer;
+import org.gradle.plugins.ide.internal.generator.XmlPersistableConfigurationObject;
 
 public class Factorypath extends XmlPersistableConfigurationObject {
   private List<File> entries;
@@ -16,14 +15,13 @@ public class Factorypath extends XmlPersistableConfigurationObject {
     super(xmlTransformer);
   }
 
-    @Override
+  @Override
   protected String getDefaultResourceName() {
     return "defaultFactorypath.xml";
   }
 
   @Override
-  protected void load(Node xml) {
-  }
+  protected void load(Node xml) {}
 
   @Override
   protected void store(Node xml) {

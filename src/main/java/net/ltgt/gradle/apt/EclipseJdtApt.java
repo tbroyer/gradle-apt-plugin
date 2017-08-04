@@ -1,15 +1,13 @@
 package net.ltgt.gradle.apt;
 
 import groovy.lang.Closure;
+import java.io.File;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.plugins.ide.api.PropertiesFileContentMerger;
 import org.gradle.util.ConfigureUtil;
-
-import java.io.File;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Properties;
 
 public class EclipseJdtApt {
   private final Project project;

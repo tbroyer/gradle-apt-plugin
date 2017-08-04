@@ -1,11 +1,10 @@
 package net.ltgt.gradle.apt;
 
-import org.gradle.api.internal.PropertiesTransformer;
-import org.gradle.plugins.ide.internal.generator.PropertiesPersistableConfigurationObject;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
+import org.gradle.api.internal.PropertiesTransformer;
+import org.gradle.plugins.ide.internal.generator.PropertiesPersistableConfigurationObject;
 
 public class JdtApt extends PropertiesPersistableConfigurationObject {
 
@@ -24,8 +23,7 @@ public class JdtApt extends PropertiesPersistableConfigurationObject {
   }
 
   @Override
-  protected void load(Properties properties) {
-  }
+  protected void load(Properties properties) {}
 
   @Override
   protected void store(Properties properties) {
@@ -36,10 +34,12 @@ public class JdtApt extends PropertiesPersistableConfigurationObject {
     properties.setProperty("org.eclipse.jdt.apt.aptEnabled", Boolean.toString(isAptEnabled()));
 
     properties.setProperty("org.eclipse.jdt.apt.genSrcDir", getGenSrcDir());
-    properties.setProperty("org.eclipse.jdt.apt.reconcileEnabled", Boolean.toString(isReconcileEnabled()));
+    properties.setProperty(
+        "org.eclipse.jdt.apt.reconcileEnabled", Boolean.toString(isReconcileEnabled()));
     for (Map.Entry<String, String> option : getProcessorOptions().entrySet()) {
-      properties.setProperty("org.eclipse.jdt.apt.processorOptions/" + option.getKey(), option.getValue() == null
-              ? "org.eclipse.jdt.apt.NULLVALUE" : option.getValue());
+      properties.setProperty(
+          "org.eclipse.jdt.apt.processorOptions/" + option.getKey(),
+          option.getValue() == null ? "org.eclipse.jdt.apt.NULLVALUE" : option.getValue());
     }
   }
 

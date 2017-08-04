@@ -1,13 +1,12 @@
 package net.ltgt.gradle.apt;
 
 import groovy.lang.Closure;
+import java.util.ArrayList;
+import java.util.Collection;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.plugins.ide.api.XmlFileContentMerger;
 import org.gradle.util.ConfigureUtil;
-
-import java.util.ArrayList;
-import java.util.Collection;
 
 public class EclipseFactorypath {
   private final XmlFileContentMerger file;

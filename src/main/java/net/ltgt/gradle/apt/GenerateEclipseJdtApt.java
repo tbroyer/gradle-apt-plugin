@@ -1,13 +1,15 @@
 package net.ltgt.gradle.apt;
 
 import java.util.Map;
-
 import org.gradle.api.tasks.Internal;
 import org.gradle.plugins.ide.api.PropertiesFileContentMerger;
 import org.gradle.plugins.ide.api.PropertiesGeneratorTask;
 
 public class GenerateEclipseJdtApt extends PropertiesGeneratorTask<JdtApt> {
-  private EclipseJdtApt jdtApt = getInstantiator().newInstance(EclipseJdtApt.class, getProject(), new PropertiesFileContentMerger(getTransformer()));
+  private EclipseJdtApt jdtApt =
+      getInstantiator()
+          .newInstance(
+              EclipseJdtApt.class, getProject(), new PropertiesFileContentMerger(getTransformer()));
 
   @Override
   @SuppressWarnings("unchecked")
@@ -20,7 +22,9 @@ public class GenerateEclipseJdtApt extends PropertiesGeneratorTask<JdtApt> {
     jdtApt.getProcessorOptions().clear();
     if (jdtAptModel.getProcessorOptions() != null) {
       for (Map.Entry<String, ?> entry : jdtAptModel.getProcessorOptions().entrySet()) {
-        jdtApt.getProcessorOptions().put(entry.getKey(), entry.getValue() == null ? null : entry.getValue().toString());
+        jdtApt
+            .getProcessorOptions()
+            .put(entry.getKey(), entry.getValue() == null ? null : entry.getValue().toString());
       }
     }
     jdtAptModel.getFile().getWhenMerged().execute(jdtApt);
@@ -39,5 +43,4 @@ public class GenerateEclipseJdtApt extends PropertiesGeneratorTask<JdtApt> {
   public void setJdtApt(EclipseJdtApt jdtApt) {
     this.jdtApt = jdtApt;
   }
-
 }
