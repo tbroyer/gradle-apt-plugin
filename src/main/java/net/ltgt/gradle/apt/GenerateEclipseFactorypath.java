@@ -23,15 +23,11 @@ public class GenerateEclipseFactorypath extends XmlGeneratorTask<Factorypath> {
     EclipseFactorypath factorypathModel = getFactorypath();
     factorypathModel.getFile().getBeforeMerged().execute(factorypath);
     Set<File> entries = new LinkedHashSet<>();
-    if (factorypathModel.getPlusConfigurations() != null) {
-      for (Configuration configuration : factorypathModel.getPlusConfigurations()) {
-        entries.addAll(configuration.getFiles());
-      }
+    for (Configuration configuration : factorypathModel.getPlusConfigurations()) {
+      entries.addAll(configuration.getFiles());
     }
-    if (factorypathModel.getMinusConfigurations() != null) {
-      for (Configuration configuration : factorypathModel.getMinusConfigurations()) {
-        entries.removeAll(configuration.getFiles());
-      }
+    for (Configuration configuration : factorypathModel.getMinusConfigurations()) {
+      entries.removeAll(configuration.getFiles());
     }
     factorypath.setEntries(new ArrayList<>(entries));
     factorypathModel.getFile().getWhenMerged().execute(factorypath);

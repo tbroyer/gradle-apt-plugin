@@ -6,6 +6,7 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.plugins.ide.api.XmlFileContentMerger;
 import org.gradle.util.ConfigureUtil;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 public class EclipseFactorypath {
@@ -15,8 +16,8 @@ public class EclipseFactorypath {
     this.file = file;
   }
 
-  private Collection<Configuration> plusConfigurations;
-  private Collection<Configuration> minusConfigurations;
+  private Collection<Configuration> plusConfigurations = new ArrayList<>();
+  private Collection<Configuration> minusConfigurations = new ArrayList<>();
 
   public Collection<Configuration> getPlusConfigurations() {
     return plusConfigurations;
