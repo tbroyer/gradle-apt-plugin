@@ -96,20 +96,20 @@ eclipse {
           // you can tinker with the Properties here
         }
       }
+    }
+  }
 
-      factorypath {
-        plusConfigurations = [ configurations.apt, configurations.testApt ]
-        minusConfigurations = []
+  factorypath {
+    plusConfigurations = [ configurations.apt, configurations.testApt ]
+    minusConfigurations = []
 
-        file {
-          whenMerged { factorypath ->
-            // you can tinker with the Factorypath here
-          }
+    file {
+      whenMerged { factorypath ->
+        // you can tinker with the Factorypath here
+      }
 
-          withXml { node ->
-            // you can tinker with the Node here
-          }
-        }
+      withXml { node ->
+        // you can tinker with the Node here
       }
     }
   }

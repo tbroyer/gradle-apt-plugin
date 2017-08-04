@@ -68,7 +68,7 @@ class AptEclipsePlugin implements Plugin<Project> {
         it.inputFile = it.outputFile = project.file('.factorypath')
 
         def factorypath = it.factorypath
-        project.eclipse.jdt.apt.factorypath = factorypath
+        project.eclipse.convention.plugins.put("net.ltgt.apt-eclipse", new FactorypathConvention(factorypath))
         factorypath.plusConfigurations = [
             project.configurations.getByName(mainSourceSet.aptConfigurationName),
             project.configurations.getByName(testSourceSet.aptConfigurationName),
@@ -94,6 +94,22 @@ class AptEclipsePlugin implements Plugin<Project> {
 
     void apt(Action<? super EclipseJdtApt> action) {
       action.execute(apt)
+    }
+  }
+
+  class FactorypathConvention {
+    final EclipseFactorypath factorypath
+
+    FactorypathConvention(EclipseFactorypath factorypath) {
+      this.factorypath = factorypath
+    }
+
+    void factorypath(Closure<? super EclipseFactorypath> closure) {
+      ConfigureUtil.configure(closure, factorypath)
+    }
+
+    void factorypath(Action<? super EclipseFactorypath> action) {
+      action.execute(factorypath)
     }
   }
 }

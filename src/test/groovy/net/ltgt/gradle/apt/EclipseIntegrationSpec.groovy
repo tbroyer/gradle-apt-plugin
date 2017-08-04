@@ -171,12 +171,12 @@ class EclipseIntegrationSpec extends Specification {
             file.whenMerged {
               processorOptions.baz = 'qux'
             }
+          }
+        }
 
-            factorypath {
-              file.whenMerged {
-                entries << file('some/processor.jar')
-              }
-            }
+        factorypath {
+          file.whenMerged {
+            entries << file('some/processor.jar')
           }
         }
       }
