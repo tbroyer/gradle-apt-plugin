@@ -17,7 +17,6 @@ import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.Delete;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.plugins.ide.eclipse.EclipsePlugin;
-import org.gradle.plugins.ide.eclipse.model.EclipseClasspath;
 import org.gradle.plugins.ide.eclipse.model.EclipseModel;
 import org.gradle.util.ConfigureUtil;
 
@@ -59,30 +58,25 @@ public class AptEclipsePlugin implements Plugin<Project> {
         new Action<Project>() {
           @Override
           public void execute(final Project project) {
-            eclipseModel.classpath(
-                new Action<EclipseClasspath>() {
-                  @Override
-                  public void execute(EclipseClasspath eclipseClasspath) {
-                    eclipseClasspath
-                        .getPlusConfigurations()
-                        .addAll(
-                            Arrays.asList(
-                                project
-                                    .getConfigurations()
-                                    .getByName(
-                                        new DslObject(mainSourceSet)
-                                            .getConvention()
-                                            .getPlugin(AptPlugin.AptSourceSetConvention.class)
-                                            .getCompileOnlyConfigurationName()),
-                                project
-                                    .getConfigurations()
-                                    .getByName(
-                                        new DslObject(testSourceSet)
-                                            .getConvention()
-                                            .getPlugin(AptPlugin.AptSourceSetConvention.class)
-                                            .getCompileOnlyConfigurationName())));
-                  }
-                });
+            eclipseModel
+                .getClasspath()
+                .getPlusConfigurations()
+                .addAll(
+                    Arrays.asList(
+                        project
+                            .getConfigurations()
+                            .getByName(
+                                new DslObject(mainSourceSet)
+                                    .getConvention()
+                                    .getPlugin(AptPlugin.AptSourceSetConvention.class)
+                                    .getCompileOnlyConfigurationName()),
+                        project
+                            .getConfigurations()
+                            .getByName(
+                                new DslObject(testSourceSet)
+                                    .getConvention()
+                                    .getPlugin(AptPlugin.AptSourceSetConvention.class)
+                                    .getCompileOnlyConfigurationName())));
           }
         });
     if (project.getTasks().findByName("eclipseJdtApt") == null) {
