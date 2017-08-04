@@ -155,7 +155,7 @@ class EclipseIntegrationSpec extends Specification {
       compileJava {
         aptOptions.processorArgs = [
           'foo': 'bar',
-          'baz': 'qux',
+          'baz': 'willBeOverwritten',
           'hasNullValue': null,
         ]
       }
@@ -168,6 +168,9 @@ class EclipseIntegrationSpec extends Specification {
             aptEnabled = false
             genSrcDir = file('whatever')
             reconcileEnabled = false
+            file.whenMerged {
+              processorOptions.baz = 'qux'
+            }
           }
         }
       }

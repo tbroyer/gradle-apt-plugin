@@ -86,6 +86,16 @@ eclipse {
       reconcileEnabled = true
       // a map of annotation processor options; a null value will pass the argument as -Akey rather than -Akey=value
       processorOptions = compileJava.aptOptions.processorArgs
+
+      file {
+        whenMerged { jdtApt ->
+          // you can tinker with the JdtApt here
+        }
+
+        withProperties { properties ->
+          // you can tinker with the Properties here
+        }
+      }
     }
   }
 }

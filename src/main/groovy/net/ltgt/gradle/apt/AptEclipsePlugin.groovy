@@ -7,19 +7,10 @@ import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.SourceSet
-import org.gradle.internal.reflect.Instantiator
 import org.gradle.plugins.ide.eclipse.EclipsePlugin
 import org.gradle.util.ConfigureUtil
 
-import javax.inject.Inject
-
 class AptEclipsePlugin implements Plugin<Project> {
-  private Instantiator instantiator
-
-  @Inject
-  AptEclipsePlugin(Instantiator instantiator) {
-    this.instantiator = instantiator
-  }
 
   @Override
   void apply(Project project) {
@@ -39,20 +30,6 @@ class AptEclipsePlugin implements Plugin<Project> {
    * Inspired by https://github.com/mkarneim/pojobuilder/wiki/Enabling-PojoBuilder-for-Eclipse-Using-Gradle
    */
   private void configureEclipse(Project project, SourceSet mainSourceSet, SourceSet testSourceSet) {
-    def jdtApt = instantiator.newInstance(EclipseJdtApt, project)
-    project.eclipse.jdt.convention.plugins.put("net.ltgt.apt-eclipse", new JdtAptConvention(jdtApt))
-    jdtApt.conventionMapping.map("aptEnabled", {
-      project.tasks.findByName(mainSourceSet.compileJavaTaskName).aptOptions.annotationProcessing
-    })
-    jdtApt.conventionMapping.map("genSrcDir", { project.file('.apt_generated') })
-    jdtApt.conventionMapping.map("processorOptions", {
-      project.tasks.findByName(mainSourceSet.compileJavaTaskName).aptOptions.processorArgs
-    })
-
-    project.eclipse.jdt.file.withProperties {
-      it.'org.eclipse.jdt.core.compiler.processAnnotations' = jdtApt.aptEnabled ? 'enabled' : 'disabled'
-    }
-
     project.afterEvaluate {
       project.eclipse.classpath {
         plusConfigurations += [
@@ -65,7 +42,20 @@ class AptEclipsePlugin implements Plugin<Project> {
       def task = project.tasks.create('eclipseJdtApt', GenerateEclipseJdtApt) {
         it.description = 'Generates the Eclipse JDT APT settings file.'
         it.inputFile = it.outputFile = project.file('.settings/org.eclipse.jdt.apt.core.prefs')
-        it.jdtApt = jdtApt
+
+        def jdtApt = it.jdtApt
+        project.eclipse.jdt.convention.plugins.put("net.ltgt.apt-eclipse", new JdtAptConvention(jdtApt))
+        jdtApt.conventionMapping.map("aptEnabled", {
+          project.tasks.findByName(mainSourceSet.compileJavaTaskName).aptOptions.annotationProcessing
+        })
+        jdtApt.conventionMapping.map("genSrcDir", { project.file('.apt_generated') })
+        jdtApt.conventionMapping.map("processorOptions", {
+          project.tasks.findByName(mainSourceSet.compileJavaTaskName).aptOptions.processorArgs
+        })
+
+        project.eclipse.jdt.file.withProperties {
+          it.'org.eclipse.jdt.core.compiler.processAnnotations' = jdtApt.aptEnabled ? 'enabled' : 'disabled'
+        }
       }
       project.tasks.eclipse.dependsOn task
       def cleanTask = project.tasks.create('cleanEclipseJdtApt', Delete)
