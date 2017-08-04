@@ -2,6 +2,14 @@ plugins {
     id "java-gradle-plugin"
     id "groovy"
     id "com.gradle.plugin-publish" version "0.9.7"
+
+    id "net.ltgt.errorprone" version "0.0.11" apply false
+}
+if (JavaVersion.current() == JavaVersion.VERSION_1_8) {
+    apply plugin: 'net.ltgt.errorprone'
+    dependencies {
+        errorprone 'com.google.errorprone:error_prone_core:2.0.21'
+    }
 }
 
 group = 'net.ltgt.gradle'
