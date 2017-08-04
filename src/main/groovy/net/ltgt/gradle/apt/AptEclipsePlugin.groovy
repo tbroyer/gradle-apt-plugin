@@ -63,26 +63,16 @@ class AptEclipsePlugin implements Plugin<Project> {
       project.tasks.cleanEclipse.dependsOn cleanTask
     }
     if (!project.tasks.findByName('eclipseFactorypath')) {
-      def task = project.tasks.create('eclipseFactorypath') {
-        ext.factorypath = project.file('.factorypath')
-        inputs.files project.configurations.getByName(mainSourceSet.aptConfigurationName),
-            project.configurations.getByName(testSourceSet.aptConfigurationName)
-        outputs.file factorypath
-        doLast {
-          factorypath.withWriter {
-            new groovy.xml.MarkupBuilder(it).'factorypath' {
-              [project.configurations.getByName(mainSourceSet.aptConfigurationName),
-               project.configurations.getByName(testSourceSet.aptConfigurationName)]*.each {
-                factorypathentry(
-                    kind: 'EXTJAR',
-                    id: it.absolutePath,
-                    enabled: true,
-                    runInBatchMode: false,
-                )
-              }
-            }
-          }
-        }
+      def task = project.tasks.create('eclipseFactorypath', GenerateEclipseFactorypath) {
+        it.description = 'Generates the Eclipse factorypath file.'
+        it.inputFile = it.outputFile = project.file('.factorypath')
+
+        def factorypath = it.factorypath
+        project.eclipse.jdt.apt.factorypath = factorypath
+        factorypath.plusConfigurations = [
+            project.configurations.getByName(mainSourceSet.aptConfigurationName),
+            project.configurations.getByName(testSourceSet.aptConfigurationName),
+        ]
       }
       project.tasks.eclipse.dependsOn task
       def cleanTask = project.tasks.create('cleanEclipseFactorypath', Delete)

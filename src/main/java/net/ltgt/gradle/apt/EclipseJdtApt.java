@@ -63,6 +63,24 @@ public class EclipseJdtApt {
     this.processorOptions = processorOptions;
   }
 
+  private EclipseFactorypath factorypath;
+
+  public EclipseFactorypath getFactorypath() {
+    return factorypath;
+  }
+
+  public void setFactorypath(EclipseFactorypath factorypath) {
+    this.factorypath = factorypath;
+  }
+
+  public void factorypath(Closure<? super EclipseFactorypath> closure) {
+    ConfigureUtil.configure(closure, this.factorypath);
+  }
+
+  public void factorypath(Action<? super EclipseFactorypath> action) {
+    action.execute(this.factorypath);
+  }
+
   public PropertiesFileContentMerger getFile() {
     return this.file;
   }

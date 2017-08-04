@@ -171,6 +171,12 @@ class EclipseIntegrationSpec extends Specification {
             file.whenMerged {
               processorOptions.baz = 'qux'
             }
+
+            factorypath {
+              file.whenMerged {
+                entries << file('some/processor.jar')
+              }
+            }
           }
         }
       }
@@ -186,6 +192,15 @@ class EclipseIntegrationSpec extends Specification {
     then:
     result.task(':eclipse').outcome == TaskOutcome.SUCCESS
     result.task(':eclipseJdtApt').outcome == TaskOutcome.SUCCESS
+    result.task(':eclipseFactorypath').outcome == TaskOutcome.SUCCESS
+    def factorypath = new File(testProjectDir.root, '.factorypath')
+    factorypath.exists()
+    def entries = new XmlSlurper().parse(factorypath).factorypathentry
+    entries.size() == 1
+    entries.every { it.@kind == 'EXTJAR' && it.@enabled == true && it.@runInBatchMode == false }
+    (entries.@id as Set).equals([
+        "${testProjectDir.root}/some/processor.jar",
+    ].collect { it.replace('/', File.separator) }.toSet())
 
     def jdtSettings = loadProperties('.settings/org.eclipse.jdt.core.prefs')
     jdtSettings.getProperty('org.eclipse.jdt.core.compiler.processAnnotations') == 'disabled'
