@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import org.codehaus.groovy.runtime.MethodClosure;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -146,14 +147,17 @@ public class AptEclipsePlugin implements Plugin<Project> {
                           .getJdt()
                           .getFile()
                           .withProperties(
-                              new Action<Properties>() {
-                                @Override
-                                public void execute(Properties properties) {
-                                  properties.setProperty(
-                                      "org.eclipse.jdt.core.compiler.processAnnotations",
-                                      jdtApt.isAptEnabled() ? "enabled" : "disabled");
-                                }
-                              });
+                              // withProperties(Action) overload was added in Gradle 2.14
+                              new MethodClosure(
+                                  new Action<Properties>() {
+                                    @Override
+                                    public void execute(Properties properties) {
+                                      properties.setProperty(
+                                          "org.eclipse.jdt.core.compiler.processAnnotations",
+                                          jdtApt.isAptEnabled() ? "enabled" : "disabled");
+                                    }
+                                  },
+                                  "execute"));
                     }
                   });
       project.getTasks().getByName("eclipse").dependsOn(task);
