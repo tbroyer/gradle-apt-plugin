@@ -1,5 +1,7 @@
 package net.ltgt.gradle.apt;
 
+import static net.ltgt.gradle.apt.CompatibilityUtils.*;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -18,9 +20,7 @@ import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.TaskInputFilePropertyBuilder;
 import org.gradle.api.tasks.TaskInputs;
-import org.gradle.api.tasks.TaskOutputFilePropertyBuilder;
 import org.gradle.api.tasks.TaskOutputs;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.api.tasks.compile.CompileOptions;
@@ -158,10 +158,6 @@ public class AptPlugin implements Plugin<Project> {
             });
   }
 
-  private interface GetCompileOptions<T extends AbstractCompile> {
-    CompileOptions getCompileOptions(T task);
-  }
-
   private <T extends AbstractCompile> void configureCompileTasks(
       final Project project,
       Class<T> compileTaskClass,
@@ -174,7 +170,7 @@ public class AptPlugin implements Plugin<Project> {
               @Override
               public void execute(final T task) {
                 task.getConvention().getPlugins().put("net.ltgt.apt", new AptConvention(project));
-                task.getInputs()
+                getInputs(task)
                     .property(
                         "aptOptions.annotationProcessing",
                         new Callable<Object>() {
@@ -186,7 +182,7 @@ public class AptPlugin implements Plugin<Project> {
                                 .isAnnotationProcessing();
                           }
                         });
-                task.getInputs()
+                getInputs(task)
                     .property(
                         "aptOptions.processors",
                         new Callable<Object>() {
@@ -198,7 +194,7 @@ public class AptPlugin implements Plugin<Project> {
                                 .getProcessors();
                           }
                         });
-                task.getInputs()
+                getInputs(task)
                     .property(
                         "aptOptions.processorArgs",
                         new Callable<Object>() {
@@ -212,38 +208,32 @@ public class AptPlugin implements Plugin<Project> {
                         });
 
                 TaskInputs inputs =
-                    task.getInputs()
-                        .files(
-                            new Callable<Object>() {
-                              @Override
-                              public Object call() throws Exception {
-                                return task.getConvention()
-                                    .getPlugin(AptConvention.class)
-                                    .getAptOptions()
-                                    .getProcessorpath();
-                              }
-                            });
-                if (inputs != task.getInputs()) {
-                  ((TaskInputFilePropertyBuilder) inputs)
-                      .withPropertyName("aptOptions.processorpath");
-                }
+                    files(
+                        getInputs(task),
+                        new Callable<Object>() {
+                          @Override
+                          public Object call() throws Exception {
+                            return task.getConvention()
+                                .getPlugin(AptConvention.class)
+                                .getAptOptions()
+                                .getProcessorpath();
+                          }
+                        });
+                withPropertyName(inputs, "aptOptions.processorpath");
 
                 TaskOutputs outputs =
-                    task.getOutputs()
-                        .dir(
-                            new Callable<Object>() {
-                              @Override
-                              public Object call() throws Exception {
-                                return task.getConvention()
-                                    .getPlugin(AptConvention.class)
-                                    .getGeneratedSourcesDestinationDir();
-                              }
-                            });
-                if (outputs != task.getOutputs()) {
-                  ((TaskOutputFilePropertyBuilder) outputs)
-                      .withPropertyName("generatedSourcesDestinationDir")
-                      .optional();
-                }
+                    dir(
+                        getOutputs(task),
+                        new Callable<Object>() {
+                          @Override
+                          public Object call() throws Exception {
+                            return task.getConvention()
+                                .getPlugin(AptConvention.class)
+                                .getGeneratedSourcesDestinationDir();
+                          }
+                        });
+                withPropertyName(outputs, "generatedSourcesDestinationDir");
+                optional(outputs);
 
                 task.doFirst(
                     new Action<Task>() {
@@ -288,15 +278,19 @@ public class AptPlugin implements Plugin<Project> {
         });
   }
 
+  private interface GetCompileOptions<T extends AbstractCompile> {
+    CompileOptions getCompileOptions(T task);
+  }
+
   public static class AptConvention {
     private final Project project;
+    private final AptOptions aptOptions;
+    private Object generatedSourcesDestinationDir;
 
     public AptConvention(Project project) {
       this.project = project;
       this.aptOptions = new AptOptions(project);
     }
-
-    private Object generatedSourcesDestinationDir;
 
     public File getGeneratedSourcesDestinationDir() {
       if (generatedSourcesDestinationDir == null) {
@@ -308,8 +302,6 @@ public class AptPlugin implements Plugin<Project> {
     public void setGeneratedSourcesDestinationDir(Object generatedSourcesDestinationDir) {
       this.generatedSourcesDestinationDir = generatedSourcesDestinationDir;
     }
-
-    private final AptOptions aptOptions;
 
     public AptOptions getAptOptions() {
       return aptOptions;
@@ -359,12 +351,14 @@ public class AptPlugin implements Plugin<Project> {
 
   public static class AptOptions {
     private final Project project;
+    private boolean annotationProcessing = true;
+    private Object processorpath;
+    private List<?> processors = new ArrayList<>();
+    private Map<String, ?> processorArgs = new LinkedHashMap<>();
 
     public AptOptions(Project project) {
       this.project = project;
     }
-
-    private boolean annotationProcessing = true;
 
     public boolean isAnnotationProcessing() {
       return annotationProcessing;
@@ -373,8 +367,6 @@ public class AptPlugin implements Plugin<Project> {
     public void setAnnotationProcessing(boolean annotationProcessing) {
       this.annotationProcessing = annotationProcessing;
     }
-
-    private Object processorpath;
 
     public FileCollection getProcessorpath() {
       if (processorpath == null) {
@@ -387,8 +379,6 @@ public class AptPlugin implements Plugin<Project> {
       this.processorpath = processorpath;
     }
 
-    private List<?> processors = new ArrayList<>();
-
     public List<?> getProcessors() {
       return processors;
     }
@@ -396,8 +386,6 @@ public class AptPlugin implements Plugin<Project> {
     public void setProcessors(List<?> processors) {
       this.processors = processors;
     }
-
-    private Map<String, ?> processorArgs = new LinkedHashMap<>();
 
     public Map<String, ?> getProcessorArgs() {
       return processorArgs;
@@ -411,6 +399,7 @@ public class AptPlugin implements Plugin<Project> {
   public static class AptSourceSetConvention {
     private final Project project;
     private final SourceSet sourceSet;
+    private Object processorpath;
 
     public AptSourceSetConvention(final Project project, SourceSet sourceSet) {
       this.project = project;
@@ -423,8 +412,6 @@ public class AptPlugin implements Plugin<Project> {
             }
           };
     }
-
-    private Object processorpath;
 
     public FileCollection getProcessorpath() {
       if (processorpath == null) {
@@ -449,6 +436,7 @@ public class AptPlugin implements Plugin<Project> {
 
   public static class AptSourceSetOutputConvention {
     private final Project project;
+    private Object generatedSourcesDir;
 
     public AptSourceSetOutputConvention(final Project project, final SourceSet sourceSet) {
       this.project = project;
@@ -460,8 +448,6 @@ public class AptPlugin implements Plugin<Project> {
             }
           };
     }
-
-    private Object generatedSourcesDir;
 
     public File getGeneratedSourcesDir() {
       if (generatedSourcesDir == null) {

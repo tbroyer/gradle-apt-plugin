@@ -1,5 +1,8 @@
 package net.ltgt.gradle.apt;
 
+import static net.ltgt.gradle.apt.CompatibilityUtils.getBeforeMerged;
+import static net.ltgt.gradle.apt.CompatibilityUtils.getWhenMerged;
+
 import java.util.Map;
 import org.gradle.api.tasks.Internal;
 import org.gradle.plugins.ide.api.PropertiesFileContentMerger;
@@ -12,10 +15,9 @@ public class GenerateEclipseJdtApt extends PropertiesGeneratorTask<JdtApt> {
               EclipseJdtApt.class, getProject(), new PropertiesFileContentMerger(getTransformer()));
 
   @Override
-  @SuppressWarnings("unchecked")
   protected void configure(JdtApt jdtApt) {
     EclipseJdtApt jdtAptModel = getJdtApt();
-    jdtAptModel.getFile().getBeforeMerged().execute(jdtApt);
+    getBeforeMerged(jdtAptModel.getFile()).execute(jdtApt);
     jdtApt.setAptEnabled(jdtAptModel.isAptEnabled());
     jdtApt.setGenSrcDir(getProject().relativePath(jdtAptModel.getGenSrcDir()));
     jdtApt.setReconcileEnabled(jdtAptModel.isReconcileEnabled());
@@ -27,7 +29,7 @@ public class GenerateEclipseJdtApt extends PropertiesGeneratorTask<JdtApt> {
             .put(entry.getKey(), entry.getValue() == null ? null : entry.getValue().toString());
       }
     }
-    jdtAptModel.getFile().getWhenMerged().execute(jdtApt);
+    getWhenMerged(jdtAptModel.getFile()).execute(jdtApt);
   }
 
   @Override

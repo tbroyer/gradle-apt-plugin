@@ -1,5 +1,8 @@
 package net.ltgt.gradle.apt;
 
+import static net.ltgt.gradle.apt.CompatibilityUtils.getBeforeMerged;
+import static net.ltgt.gradle.apt.CompatibilityUtils.getWhenMerged;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -19,10 +22,9 @@ public class GenerateEclipseFactorypath extends XmlGeneratorTask<Factorypath> {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
   protected void configure(Factorypath factorypath) {
     EclipseFactorypath factorypathModel = getFactorypath();
-    factorypathModel.getFile().getBeforeMerged().execute(factorypath);
+    getBeforeMerged(factorypathModel.getFile()).execute(factorypath);
     Set<File> entries = new LinkedHashSet<>();
     for (Configuration configuration : factorypathModel.getPlusConfigurations()) {
       entries.addAll(configuration.getFiles());
@@ -31,7 +33,7 @@ public class GenerateEclipseFactorypath extends XmlGeneratorTask<Factorypath> {
       entries.removeAll(configuration.getFiles());
     }
     factorypath.setEntries(new ArrayList<>(entries));
-    factorypathModel.getFile().getWhenMerged().execute(factorypath);
+    getWhenMerged(factorypathModel.getFile()).execute(factorypath);
   }
 
   @Internal

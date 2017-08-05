@@ -1,5 +1,7 @@
 package net.ltgt.gradle.apt;
 
+import static net.ltgt.gradle.apt.CompatibilityUtils.getOutputs;
+
 import groovy.lang.Closure;
 import java.io.File;
 import java.util.ArrayList;
@@ -156,7 +158,7 @@ public class AptEclipsePlugin implements Plugin<Project> {
                   });
       project.getTasks().getByName("eclipse").dependsOn(task);
       Delete cleanTask = project.getTasks().create("cleanEclipseJdtApt", Delete.class);
-      cleanTask.delete(task.getOutputs());
+      cleanTask.delete(getOutputs(task));
       project.getTasks().getByName("cleanEclipse").dependsOn(cleanTask);
     }
     if (project.getTasks().findByName("eclipseFactorypath") == null) {
@@ -200,7 +202,7 @@ public class AptEclipsePlugin implements Plugin<Project> {
                   });
       project.getTasks().getByName("eclipse").dependsOn(task);
       Delete cleanTask = project.getTasks().create("cleanEclipseFactorypath", Delete.class);
-      cleanTask.delete(task.getOutputs());
+      cleanTask.delete(getOutputs(task));
       project.getTasks().getByName("cleanEclipse").dependsOn(cleanTask);
     }
   }
