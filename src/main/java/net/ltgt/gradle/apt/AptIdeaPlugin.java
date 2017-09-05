@@ -213,7 +213,8 @@ public class AptIdeaPlugin implements Plugin<Project> {
                         profileAttributes.put("default", true);
                         Node profile =
                             annotationProcessing.appendNode("profile", profileAttributes);
-                        // XXX: this assumes that all subprojects use the same name for their buildDir
+                        // XXX: this assumes that all subprojects use the same name for their
+                        // buildDir
                         profile.appendNode(
                             "sourceOutputDir",
                             Collections.singletonMap(

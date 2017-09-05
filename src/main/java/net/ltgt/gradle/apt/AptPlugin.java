@@ -80,7 +80,8 @@ public class AptPlugin implements Plugin<Project> {
 
                             String compileOnlyConfigurationName =
                                 convention.getCompileOnlyConfigurationName();
-                            // Gradle 2.12 already creates such a configuration in the JavaBasePlugin; our compileOnlyConfigurationName has the same value
+                            // Gradle 2.12 already creates such a configuration in the
+                            // JavaBasePlugin; our compileOnlyConfigurationName has the same value
                             Configuration configuration =
                                 project
                                     .getConfigurations()
@@ -98,9 +99,12 @@ public class AptPlugin implements Plugin<Project> {
 
                               sourceSet.setCompileClasspath(configuration);
 
-                              // Special-case the JavaPlugin's 'test' source set, only if we created the testCompileOnly configuration
-                              // Note that Gradle 2.12 actually creates a testCompilationClasspath configuration that extends testCompileOnly
-                              // and sets it as sourceSets.test.compileClasspath; rather than directly using the testCompileOnly configuration.
+                              // Special-case the JavaPlugin's 'test' source set, only if we created
+                              // the testCompileOnly configuration
+                              // Note that Gradle 2.12 actually creates a testCompilationClasspath
+                              // configuration that extends testCompileOnly and sets it as
+                              // sourceSets.test.compileClasspath; rather than directly using the
+                              // testCompileOnly configuration.
                               if (SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.getName())) {
                                 final Configuration conf = configuration;
                                 project
