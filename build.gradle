@@ -48,10 +48,6 @@ dependencies {
     }
 }
 
-wrapper {
-  gradleVersion = "4.0.2"
-}
-
 test {
     inputs.file tasks.jar
     systemProperty("plugin", tasks.jar.archivePath)
