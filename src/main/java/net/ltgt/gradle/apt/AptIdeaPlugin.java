@@ -76,8 +76,8 @@ public class AptIdeaPlugin implements Plugin<Project> {
             // We need to copy the values and then assign it back.
             Set<File> excludeDirs = new LinkedHashSet<>(ideaModule.getExcludeDirs());
             if (excl.contains(project.getBuildDir())
-                && ideaModule.getExcludeDirs().contains(project.getBuildDir())) {
-              ideaModule.getExcludeDirs().remove(project.getBuildDir());
+                && excludeDirs.contains(project.getBuildDir())) {
+              excludeDirs.remove(project.getBuildDir());
               // Race condition: many of these will actually be created afterwards…
               File[] subdirs =
                   project
