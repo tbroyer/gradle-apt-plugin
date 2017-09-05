@@ -67,7 +67,7 @@ public class AptIdeaPlugin implements Plugin<Project> {
                       .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
                       .getGeneratedSourcesDir();
               for (File f = generatedSourcesDir;
-                  f != null && f != project.getProjectDir();
+                  f != null && !f.equals(project.getProjectDir());
                   f = f.getParentFile()) {
                 excl.add(f);
               }
