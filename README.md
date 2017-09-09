@@ -128,9 +128,46 @@ Starting with version 0.11, applying the `net.ltgt.apt-idea` plugin will auto-co
 In prior versions (until 0.10), that configuration would automatically happen whenever both the `net.ltgt.apt` and `idea` were applied (the new `net.ltgt.apt-idea` plugin will also automatically apply the `net.ltgt.apt` and `idea` plugins).
 
 When using the Gradle integration in IntelliJ IDEA (rather than the `ida` task), it is recommended to delegate the IDE build actions to Gradle itself starting with IDEA 2016.3: https://www.jetbrains.com/idea/whatsnew/#v2016-3-gradle
-Otherwise, you'll have to manually enable annotation processing: in Settings… → Build, Execution, Deployment → Compiler → Annotation Processors, check `Enable annotation processing` and `Obtain processors from project classpath`. To mimic the Gradle behavior and generated files behavior, you can configure the production and test sources directories to `build/generated/source/apt/main` and `build/generated/source/apt/test` respectively and choose to `Store generated sources relative to:` `Module content root`.
+Otherwise, you'll have to manually enable annotation processing: in Settings… → Build, Execution, Deployment → Compiler → Annotation Processors, check `Enable annotation processing` and `Obtain processors from project classpath` (you'll have to make sure `idea.module.apt.addAptDependencies` is enabled, starting with version 0.12). To mimic the Gradle behavior and generated files behavior, you can configure the production and test sources directories to `build/generated/source/apt/main` and `build/generated/source/apt/test` respectively and choose to `Store generated sources relative to:` `Module content root`.
 
 Note that starting with IntelliJ IDEA 2016.1, and unless you delegate build actions to Gradle, you'll have to uncheck `Create separate module per source set` when importing the project.
+
+From version 0.12 onwards, IntelliJ IDEA annotation processing can be configured through a DSL, as an extension to the IDEA DSL (presented here with the default values):
+```gradle
+idea {
+  project {
+    // experimental: whether annotation processing will be configured in the IDE; only actually used with the 'idea' task.
+    configureAnnotationProcessing = true
+  }
+  module {
+    apt {
+      // whether generated sources dirs are added as generated sources root
+      addGeneratedSourcesDirs = true
+      // whether the apt and testApt dependencies are added as module dependencies
+      addAptDependencies = true
+
+      // The following are mostly internal details; you shouldn't ever need to configure them.
+      // whether the compileOnly and testCompileOnly dependencies are added as module dependencies
+      addCompileOnlyDependencies = false // defaults to true in Gradle < 2.12
+      // the dependency scope used for apt and/or compileOnly dependencies (when enabled above)
+      mainDependenciesScope = "PROVIDED" // defaults to "COMPILE" in Gradle < 3.4
+    }
+  }
+}
+```
+
+If you always delegate build actions to Gradle, you can thus disable `idea.module.apt.addAptDependencies` system-wide (there's unfortunately no way to detect this when importing the project in IDEA, so the plugin cannot configure itself automatically), by putting the following in an [init script](https://docs.gradle.org/current/userguide/init_scripts.html), e.g. `~/.gradle/init.d/apt-idea.gradle`:
+```gradle
+allprojects { project ->
+  project.plugins.withType(JavaPlugin) {
+    project.plugins.withId("net.ltgt.apt-idea") {
+      project.afterEvaluate {
+        project.idea.module.apt.addAptDependencies = false
+      }
+    }
+  }
+}
+```
 
 In any case, the `net.ltgt.apt-idea` plugin (or simply `idea` plugin up until version 0.10) has to be applied to the project.
 

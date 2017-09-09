@@ -1,13 +1,16 @@
 package net.ltgt.gradle.apt;
 
+import groovy.lang.Closure;
 import groovy.util.Node;
 import groovy.util.NodeList;
 import java.io.File;
 import java.io.FileFilter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -16,6 +19,7 @@ import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.XmlProvider;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
@@ -24,6 +28,7 @@ import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
 import org.gradle.plugins.ide.idea.model.IdeaModule;
 import org.gradle.plugins.ide.idea.model.IdeaProject;
+import org.gradle.util.ConfigureUtil;
 import org.gradle.util.GradleVersion;
 
 public class AptIdeaPlugin implements Plugin<Project> {
@@ -53,125 +58,114 @@ public class AptIdeaPlugin implements Plugin<Project> {
 
   private void configureIdeaModule(
       Project project, final SourceSet mainSourceSet, final SourceSet testSourceSet) {
+    final IdeaModule ideaModule = project.getExtensions().getByType(IdeaModel.class).getModule();
+    final ModuleApt apt = new ModuleApt();
+    new DslObject(ideaModule)
+        .getConvention()
+        .getPlugins()
+        .put("net.ltgt.apt-idea", new ModuleAptConvention(apt));
     project.afterEvaluate(
         new Action<Project>() {
           @Override
           public void execute(Project project) {
-            final IdeaModule ideaModule =
-                project.getExtensions().getByType(IdeaModel.class).getModule();
-            Set<File> excl = new LinkedHashSet<>();
-            for (SourceSet sourceSet : new SourceSet[] {mainSourceSet, testSourceSet}) {
-              File generatedSourcesDir =
-                  new DslObject(sourceSet.getOutput())
+            if (apt.isAddGeneratedSourcesDirs()) {
+              Set<File> excl = new LinkedHashSet<>();
+              for (SourceSet sourceSet : new SourceSet[] {mainSourceSet, testSourceSet}) {
+                File generatedSourcesDir =
+                    new DslObject(sourceSet.getOutput())
+                        .getConvention()
+                        .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
+                        .getGeneratedSourcesDir();
+                for (File f = generatedSourcesDir;
+                    f != null && !f.equals(project.getProjectDir());
+                    f = f.getParentFile()) {
+                  excl.add(f);
+                }
+              }
+              // For some reason, modifying the existing collections doesn't work.
+              // We need to copy the values and then assign it back.
+              Set<File> excludeDirs = new LinkedHashSet<>(ideaModule.getExcludeDirs());
+              if (excl.contains(project.getBuildDir())
+                  && excludeDirs.contains(project.getBuildDir())) {
+                excludeDirs.remove(project.getBuildDir());
+                // Race condition: many of these will actually be created afterwards…
+                File[] subdirs =
+                    project
+                        .getBuildDir()
+                        .listFiles(
+                            new FileFilter() {
+                              @Override
+                              public boolean accept(File pathname) {
+                                return pathname.isDirectory();
+                              }
+                            });
+                if (subdirs != null) {
+                  excludeDirs.addAll(Arrays.asList(subdirs));
+                }
+              }
+              excludeDirs.removeAll(excl);
+              ideaModule.setExcludeDirs(excludeDirs);
+
+              File mainGeneratedSourcesDir =
+                  new DslObject(mainSourceSet.getOutput())
                       .getConvention()
                       .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
                       .getGeneratedSourcesDir();
-              for (File f = generatedSourcesDir;
-                  f != null && !f.equals(project.getProjectDir());
-                  f = f.getParentFile()) {
-                excl.add(f);
-              }
+              File testGeneratedSourcesDir =
+                  new DslObject(testSourceSet.getOutput())
+                      .getConvention()
+                      .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
+                      .getGeneratedSourcesDir();
+              // For some reason, modifying the existing collections doesn't work.
+              // We need to copy the values and then assign it back.
+              ideaModule.setSourceDirs(
+                  addToSet(ideaModule.getSourceDirs(), mainGeneratedSourcesDir));
+              ideaModule.setTestSourceDirs(
+                  addToSet(ideaModule.getTestSourceDirs(), testGeneratedSourcesDir));
+              ideaModule.setGeneratedSourceDirs(
+                  addToSet(
+                      ideaModule.getGeneratedSourceDirs(),
+                      mainGeneratedSourcesDir,
+                      testGeneratedSourcesDir));
             }
-            // For some reason, modifying the existing collections doesn't work.
-            // We need to copy the values and then assign it back.
-            Set<File> excludeDirs = new LinkedHashSet<>(ideaModule.getExcludeDirs());
-            if (excl.contains(project.getBuildDir())
-                && excludeDirs.contains(project.getBuildDir())) {
-              excludeDirs.remove(project.getBuildDir());
-              // Race condition: many of these will actually be created afterwards…
-              File[] subdirs =
-                  project
-                      .getBuildDir()
-                      .listFiles(
-                          new FileFilter() {
-                            @Override
-                            public boolean accept(File pathname) {
-                              return pathname.isDirectory();
-                            }
-                          });
-              if (subdirs != null) {
-                excludeDirs.addAll(Arrays.asList(subdirs));
+
+            if (apt.isAddCompileOnlyDependencies() || apt.isAddAptDependencies()) {
+              final AptPlugin.AptSourceSetConvention mainSourceSetConvention =
+                  new DslObject(mainSourceSet)
+                      .getConvention()
+                      .getPlugin(AptPlugin.AptSourceSetConvention.class);
+              final AptPlugin.AptSourceSetConvention testSourceSetConvention =
+                  new DslObject(testSourceSet)
+                      .getConvention()
+                      .getPlugin(AptPlugin.AptSourceSetConvention.class);
+              List<Configuration> mainConfigurations = new ArrayList<>();
+              List<Configuration> testConfigurations = new ArrayList<>();
+              if (apt.isAddCompileOnlyDependencies()) {
+                mainConfigurations.add(
+                    project
+                        .getConfigurations()
+                        .getByName(mainSourceSetConvention.getCompileOnlyConfigurationName()));
+                testConfigurations.add(
+                    project
+                        .getConfigurations()
+                        .getByName(testSourceSetConvention.getCompileOnlyConfigurationName()));
               }
-            }
-            excludeDirs.removeAll(excl);
-            ideaModule.setExcludeDirs(excludeDirs);
-
-            File mainGeneratedSourcesDir =
-                new DslObject(mainSourceSet.getOutput())
-                    .getConvention()
-                    .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
-                    .getGeneratedSourcesDir();
-            File testGeneratedSourcesDir =
-                new DslObject(testSourceSet.getOutput())
-                    .getConvention()
-                    .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
-                    .getGeneratedSourcesDir();
-            // For some reason, modifying the existing collections doesn't work.
-            // We need to copy the values and then assign it back.
-            ideaModule.setSourceDirs(addToSet(ideaModule.getSourceDirs(), mainGeneratedSourcesDir));
-            ideaModule.setTestSourceDirs(
-                addToSet(ideaModule.getTestSourceDirs(), testGeneratedSourcesDir));
-            ideaModule.setGeneratedSourceDirs(
-                addToSet(
-                    ideaModule.getGeneratedSourceDirs(),
-                    mainGeneratedSourcesDir,
-                    testGeneratedSourcesDir));
-
-            final AptPlugin.AptSourceSetConvention mainSourceSetConvention =
-                new DslObject(mainSourceSet)
-                    .getConvention()
-                    .getPlugin(AptPlugin.AptSourceSetConvention.class);
-            final AptPlugin.AptSourceSetConvention testSourceSetConvention =
-                new DslObject(testSourceSet)
-                    .getConvention()
-                    .getPlugin(AptPlugin.AptSourceSetConvention.class);
-            if (GradleVersion.current().compareTo(GradleVersion.version("3.4")) >= 0) {
-              // Gradle 3.4 changed IDEA mappings
-              // See https://docs.gradle.org/3.4/release-notes.html#idea-mapping-has-been-simplified
+              if (apt.isAddAptDependencies()) {
+                mainConfigurations.add(
+                    project
+                        .getConfigurations()
+                        .getByName(mainSourceSetConvention.getAptConfigurationName()));
+                testConfigurations.add(
+                    project
+                        .getConfigurations()
+                        .getByName(testSourceSetConvention.getAptConfigurationName()));
+              }
               ideaModule
                   .getScopes()
-                  .get("PROVIDED")
+                  .get(apt.getMainDependenciesScope())
                   .get("plus")
-                  .add(
-                      project
-                          .getConfigurations()
-                          .getByName(mainSourceSetConvention.getAptConfigurationName()));
-              ideaModule
-                  .getScopes()
-                  .get("TEST")
-                  .get("plus")
-                  .add(
-                      project
-                          .getConfigurations()
-                          .getByName(testSourceSetConvention.getAptConfigurationName()));
-            } else {
-              // NOTE: ideally we'd use PROVIDED for both, but then every transitive dependency in
-              // compile or testCompile configurations that would also be in compileOnly and
-              // testCompileOnly would end up in PROVIDED.
-              ideaModule
-                  .getScopes()
-                  .get("COMPILE")
-                  .get("plus")
-                  .addAll(
-                      Arrays.asList(
-                          project
-                              .getConfigurations()
-                              .getByName(mainSourceSetConvention.getCompileOnlyConfigurationName()),
-                          project
-                              .getConfigurations()
-                              .getByName(mainSourceSetConvention.getAptConfigurationName())));
-              ideaModule
-                  .getScopes()
-                  .get("TEST")
-                  .get("plus")
-                  .addAll(
-                      Arrays.asList(
-                          project
-                              .getConfigurations()
-                              .getByName(testSourceSetConvention.getCompileOnlyConfigurationName()),
-                          project
-                              .getConfigurations()
-                              .getByName(testSourceSetConvention.getAptConfigurationName())));
+                  .addAll(mainConfigurations);
+              ideaModule.getScopes().get("TEST").get("plus").addAll(testConfigurations);
             }
           }
 
@@ -187,6 +181,8 @@ public class AptIdeaPlugin implements Plugin<Project> {
     if (project.getParent() == null) {
       final IdeaProject ideaProject =
           project.getExtensions().getByType(IdeaModel.class).getProject();
+      final ProjectAptConvention apt = new ProjectAptConvention();
+      new DslObject(ideaProject).getConvention().getPlugins().put("net.ltgt.apt-idea", apt);
       ideaProject
           .getIpr()
           .withXml(
@@ -195,6 +191,10 @@ public class AptIdeaPlugin implements Plugin<Project> {
                   new Action<XmlProvider>() {
                     @Override
                     public void execute(XmlProvider xmlProvider) {
+                      if (!apt.isConfigureAnnotationProcessing()) {
+                        return;
+                      }
+
                       for (Object it : (NodeList) xmlProvider.asNode().get("component")) {
                         Node compilerConfiguration = (Node) it;
                         if (!Objects.equals(
@@ -237,6 +237,86 @@ public class AptIdeaPlugin implements Plugin<Project> {
                     }
                   },
                   "execute"));
+    }
+  }
+
+  public static class ModuleAptConvention {
+    private final ModuleApt apt;
+
+    public ModuleAptConvention(ModuleApt apt) {
+      this.apt = apt;
+    }
+
+    public ModuleApt getApt() {
+      return apt;
+    }
+
+    public void apt(Closure<? super ModuleApt> closure) {
+      ConfigureUtil.configure(closure, apt);
+    }
+
+    public void apt(Action<? super ModuleApt> action) {
+      action.execute(apt);
+    }
+  }
+
+  public static class ModuleApt {
+    private boolean addGeneratedSourcesDirs = true;
+    private boolean addCompileOnlyDependencies =
+        GradleVersion.current().compareTo(GradleVersion.version("2.12")) < 0;
+    private boolean addAptDependencies = true;
+    private String mainDependenciesScope =
+        (GradleVersion.current().compareTo(GradleVersion.version("3.4")) >= 0)
+            // Gradle 3.4 changed IDEA mappings
+            // See https://docs.gradle.org/3.4/release-notes.html#idea-mapping-has-been-simplified
+            ? "PROVIDED"
+            // NOTE: ideally we'd use PROVIDED for both, but then every transitive dependency in
+            // compile or testCompile configurations that would also be in compileOnly and
+            // testCompileOnly would end up in PROVIDED.
+            : "COMPILE";
+
+    public boolean isAddGeneratedSourcesDirs() {
+      return addGeneratedSourcesDirs;
+    }
+
+    public void setAddGeneratedSourcesDirs(boolean addGeneratedSourcesDirs) {
+      this.addGeneratedSourcesDirs = addGeneratedSourcesDirs;
+    }
+
+    public boolean isAddCompileOnlyDependencies() {
+      return addCompileOnlyDependencies;
+    }
+
+    public void setAddCompileOnlyDependencies(boolean addCompileOnlyDependencies) {
+      this.addCompileOnlyDependencies = addCompileOnlyDependencies;
+    }
+
+    public boolean isAddAptDependencies() {
+      return addAptDependencies;
+    }
+
+    public void setAddAptDependencies(boolean addAptDependencies) {
+      this.addAptDependencies = addAptDependencies;
+    }
+
+    public String getMainDependenciesScope() {
+      return mainDependenciesScope;
+    }
+
+    public void setMainDependenciesScope(String mainDependenciesScope) {
+      this.mainDependenciesScope = mainDependenciesScope;
+    }
+  }
+
+  private static class ProjectAptConvention {
+    private boolean configureAnnotationProcessing = true;
+
+    public boolean isConfigureAnnotationProcessing() {
+      return configureAnnotationProcessing;
+    }
+
+    public void setConfigureAnnotationProcessing(boolean configureAnnotationProcessing) {
+      this.configureAnnotationProcessing = configureAnnotationProcessing;
     }
   }
 }
