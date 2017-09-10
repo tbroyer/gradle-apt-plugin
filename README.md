@@ -150,7 +150,7 @@ idea {
       // whether the compileOnly and testCompileOnly dependencies are added as module dependencies
       addCompileOnlyDependencies = false // defaults to true in Gradle < 2.12
       // the dependency scope used for apt and/or compileOnly dependencies (when enabled above)
-      mainDependenciesScope = "PROVIDED" // defaults to "COMPILE" in Gradle < 3.4
+      mainDependenciesScope = "PROVIDED" // defaults to "COMPILE" in Gradle < 3.4, or when using the Gradle integration in IntelliJ IDEA
     }
   }
 }

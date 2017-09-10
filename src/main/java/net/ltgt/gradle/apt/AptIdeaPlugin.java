@@ -32,6 +32,18 @@ import org.gradle.util.ConfigureUtil;
 import org.gradle.util.GradleVersion;
 
 public class AptIdeaPlugin implements Plugin<Project> {
+  private static final boolean isIdeaImport =
+      Boolean.getBoolean("idea.active") && System.getProperty("idea.version") != null;
+
+  private static boolean classExists(String name) {
+    try {
+      Class.forName(name);
+      return true;
+    } catch (ClassNotFoundException e) {
+      return false;
+    }
+  }
+
   @Override
   public void apply(final Project project) {
     project.getPlugins().apply(AptPlugin.class);
@@ -266,14 +278,17 @@ public class AptIdeaPlugin implements Plugin<Project> {
         GradleVersion.current().compareTo(GradleVersion.version("2.12")) < 0;
     private boolean addAptDependencies = true;
     private String mainDependenciesScope =
-        (GradleVersion.current().compareTo(GradleVersion.version("3.4")) >= 0)
-            // Gradle 3.4 changed IDEA mappings
-            // See https://docs.gradle.org/3.4/release-notes.html#idea-mapping-has-been-simplified
-            ? "PROVIDED"
-            // NOTE: ideally we'd use PROVIDED for both, but then every transitive dependency in
-            // compile or testCompile configurations that would also be in compileOnly and
-            // testCompileOnly would end up in PROVIDED.
-            : "COMPILE";
+        isIdeaImport
+            // Gradle integration in IDEA uses COMPILE scope
+            ? "COMPILE"
+            : (GradleVersion.current().compareTo(GradleVersion.version("3.4")) >= 0)
+                // Gradle 3.4 changed IDEA mappings; see
+                // https://docs.gradle.org/3.4/release-notes.html#idea-mapping-has-been-simplified
+                ? "PROVIDED"
+                // NOTE: ideally we'd use PROVIDED for both, but then every transitive dependency in
+                // compile or testCompile configurations that would also be in compileOnly and
+                // testCompileOnly would end up in PROVIDED.
+                : "COMPILE";
 
     public boolean isAddGeneratedSourcesDirs() {
       return addGeneratedSourcesDirs;
