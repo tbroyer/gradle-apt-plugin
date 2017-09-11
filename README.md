@@ -122,6 +122,16 @@ Note that Eclipse does not distinguish main and test sources, and will process a
 
 In any case, the `net.ltgt.apt-eclipse` plugin (or simply `eclipse` plugin up until version 0.10) has to be applied to the project.
 
+This can be configured system-wide for all projects using the `net.ltgt.apt` plugin by using an init script similar to the following:
+```gradle
+allprojects { project ->
+  project.plugins.withId("net.ltgt.apt") {
+    // automatically apply net.ltgt.apt-eclipse whenever net.ltgt.apt is used
+    project.apply plugin: "net.ltgt.apt-eclipse"
+  }
+}
+```
+
 ### IntelliJ IDEA
 
 Starting with version 0.11, applying the `net.ltgt.apt-idea` plugin will auto-configure the generated files to enable annotation processing in IntelliJ IDEA.
@@ -170,6 +180,22 @@ allprojects { project ->
 ```
 
 In any case, the `net.ltgt.apt-idea` plugin (or simply `idea` plugin up until version 0.10) has to be applied to the project.
+
+This can be configured system-wide for all projects using the `net.ltgt.apt` plugin by using an init script similar to the following:
+```gradle
+allprojects { project ->
+  project.plugins.withId("net.ltgt.apt") {
+    // automatically apply net.ltgt.apt-idea whenever net.ltgt.apt is used
+    project.apply plugin: "net.ltgt.apt-idea"
+    // disable addAptDependencies (if you delegate build actions to Gradle)
+    project.plugins.withType(JavaPlugin) {
+      project.afterEvaluate {
+        project.idea.module.apt.addAptDependencies = false
+      }
+    }
+  }
+}
+```
 
 ## Configuration
 
