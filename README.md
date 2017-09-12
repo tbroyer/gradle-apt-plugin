@@ -204,7 +204,7 @@ One notable exception is that the proposed new `CompileOptions` properties are a
 
 Each source set gains a few properties:
 
-* for Gradle ≥ 2.12: `compileOnlyConfigurationName` (read-only `String`) returning the `<sourceSet>CompileOnly` configuration name; Gradle ≥ 2.12 already provides that property
+* for Gradle < 2.12: `compileOnlyConfigurationName` (read-only `String`) returning the `<sourceSet>CompileOnly` configuration name; Gradle ≥ 2.12 already provides that property
 * `aptConfigurationName` (read-only `String`) returning the `<sourceSet>Apt` configuration name
 * `processorpath`, a `FileCollection` defaulting to the `<sourceSet>Apt` configuration
 
