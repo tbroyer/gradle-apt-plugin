@@ -26,8 +26,12 @@ import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.api.tasks.compile.CompileOptions;
 import org.gradle.api.tasks.compile.GroovyCompile;
 import org.gradle.api.tasks.compile.JavaCompile;
+import org.gradle.util.GradleVersion;
 
 public class AptPlugin implements Plugin<Project> {
+  private static boolean HAS_ANNOTATION_PROCESSOR_PATH =
+      GradleVersion.current().compareTo(GradleVersion.version("3.4")) >= 0;
+
   @Override
   public void apply(final Project project) {
     configureCompileTasks(
@@ -249,10 +253,19 @@ public class AptPlugin implements Plugin<Project> {
                         AptConvention aptConvention =
                             task.getConvention().getPlugin(AptConvention.class);
                         aptConvention.makeDirectories();
-                        getCompileOptions
-                            .getCompileOptions((T) task)
+
+                        boolean doUseAnnotationProcessorPath =
+                            HAS_ANNOTATION_PROCESSOR_PATH && (task instanceof JavaCompile);
+
+                        CompileOptions compileOptions =
+                            getCompileOptions.getCompileOptions((T) task);
+                        if (doUseAnnotationProcessorPath) {
+                          compileOptions.setAnnotationProcessorPath(
+                              aptConvention.aptOptions.getProcessorpath());
+                        }
+                        compileOptions
                             .getCompilerArgs()
-                            .addAll(aptConvention.buildCompilerArgs());
+                            .addAll(aptConvention.buildCompilerArgs(!doUseAnnotationProcessorPath));
                       }
                     });
               }
@@ -319,7 +332,7 @@ public class AptPlugin implements Plugin<Project> {
       }
     }
 
-    List<String> buildCompilerArgs() {
+    List<String> buildCompilerArgs(boolean shouldAddProcessorPath) {
       List<String> result = new ArrayList<>();
       if (generatedSourcesDestinationDir != null) {
         result.add("-s");
@@ -328,7 +341,9 @@ public class AptPlugin implements Plugin<Project> {
       if (!aptOptions.isAnnotationProcessing()) {
         result.add("-proc:none");
       }
-      if (aptOptions.processorpath != null && !aptOptions.getProcessorpath().isEmpty()) {
+      if (shouldAddProcessorPath
+          && aptOptions.processorpath != null
+          && !aptOptions.getProcessorpath().isEmpty()) {
         result.add("-processorpath");
         result.add(aptOptions.getProcessorpath().getAsPath());
       }
