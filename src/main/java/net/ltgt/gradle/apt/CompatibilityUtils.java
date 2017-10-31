@@ -17,6 +17,7 @@ class CompatibilityUtils {
   private static final Method taskGetInputsMethod;
   private static final Method taskGetOutputsMethod;
   private static final Method taskInputsFilesMethod;
+  private static final Method taskInputsPropertyMethod;
   private static final Method taskOutputsDirMethod;
   private static final Method taskInputFilePropertyBuilderWithPropertyNameMethod;
   private static final Method taskOutputFilePropertyBuilderWithPropertyNameMethod;
@@ -29,6 +30,7 @@ class CompatibilityUtils {
     taskGetOutputsMethod = getMethod(Task.class, "getOutputs");
 
     taskInputsFilesMethod = getMethod(TaskInputs.class, "files", Object[].class);
+    taskInputsPropertyMethod = getMethod(TaskInputs.class, "property", String.class, Object.class);
     taskOutputsDirMethod = getMethod(TaskOutputs.class, "dir", Object.class);
 
     Class<?> taskInputFilePropertyBuilderClass =
@@ -91,6 +93,15 @@ class CompatibilityUtils {
   static TaskInputs files(TaskInputs inputs, Object... args) {
     try {
       return (TaskInputs) taskInputsFilesMethod.invoke(inputs, new Object[] {args});
+    } catch (IllegalAccessException | InvocationTargetException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /** {@link TaskInputs#property(String, Object)} changed return type in Gradle 4.3. */
+  static TaskInputs property(TaskInputs inputs, String name, Object value) {
+    try {
+      return (TaskInputs) taskInputsPropertyMethod.invoke(inputs, new Object[] {name, value});
     } catch (IllegalAccessException | InvocationTargetException e) {
       throw new RuntimeException(e);
     }

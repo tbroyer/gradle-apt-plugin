@@ -174,42 +174,42 @@ public class AptPlugin implements Plugin<Project> {
               @Override
               public void execute(final T task) {
                 task.getConvention().getPlugins().put("net.ltgt.apt", new AptConvention(project));
-                getInputs(task)
-                    .property(
-                        "aptOptions.annotationProcessing",
-                        new Callable<Object>() {
-                          @Override
-                          public Object call() throws Exception {
-                            return task.getConvention()
-                                .getPlugin(AptConvention.class)
-                                .getAptOptions()
-                                .isAnnotationProcessing();
-                          }
-                        });
-                getInputs(task)
-                    .property(
-                        "aptOptions.processors",
-                        new Callable<Object>() {
-                          @Override
-                          public Object call() throws Exception {
-                            return task.getConvention()
-                                .getPlugin(AptConvention.class)
-                                .getAptOptions()
-                                .getProcessors();
-                          }
-                        });
-                getInputs(task)
-                    .property(
-                        "aptOptions.processorArgs",
-                        new Callable<Object>() {
-                          @Override
-                          public Object call() throws Exception {
-                            return task.getConvention()
-                                .getPlugin(AptConvention.class)
-                                .getAptOptions()
-                                .getProcessorArgs();
-                          }
-                        });
+                property(
+                    getInputs(task),
+                    "aptOptions.annotationProcessing",
+                    new Callable<Object>() {
+                      @Override
+                      public Object call() throws Exception {
+                        return task.getConvention()
+                            .getPlugin(AptConvention.class)
+                            .getAptOptions()
+                            .isAnnotationProcessing();
+                      }
+                    });
+                property(
+                    getInputs(task),
+                    "aptOptions.processors",
+                    new Callable<Object>() {
+                      @Override
+                      public Object call() throws Exception {
+                        return task.getConvention()
+                            .getPlugin(AptConvention.class)
+                            .getAptOptions()
+                            .getProcessors();
+                      }
+                    });
+                property(
+                    getInputs(task),
+                    "aptOptions.processorArgs",
+                    new Callable<Object>() {
+                      @Override
+                      public Object call() throws Exception {
+                        return task.getConvention()
+                            .getPlugin(AptConvention.class)
+                            .getAptOptions()
+                            .getProcessorArgs();
+                      }
+                    });
 
                 TaskInputs inputs =
                     files(

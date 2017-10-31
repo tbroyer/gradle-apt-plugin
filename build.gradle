@@ -49,7 +49,7 @@ dependencies {
 }
 
 test {
-    inputs.file tasks.jar
+    inputs.files tasks.jar
     systemProperty("plugin", tasks.jar.archivePath)
     if (project.hasProperty("test.gradle-versions")) {
         systemProperty("test.gradle-versions", project.property("test.gradle-versions"))
