@@ -18,7 +18,8 @@ class CompatibilityUtils {
   private static final Method taskGetOutputsMethod;
   private static final Method taskInputsFilesMethod;
   private static final Method taskOutputsDirMethod;
-  private static final Method taskPropertyBuilderWithPropertyNameMethod;
+  private static final Method taskInputFilePropertyBuilderWithPropertyNameMethod;
+  private static final Method taskOutputFilePropertyBuilderWithPropertyNameMethod;
   private static final Method taskOutputFilePropertyBuilderOptionalMethod;
   private static final Method fileContentMergerGetBeforeMergedMethod;
   private static final Method fileContentMergerGetWhenMergedMethod;
@@ -30,14 +31,19 @@ class CompatibilityUtils {
     taskInputsFilesMethod = getMethod(TaskInputs.class, "files", Object[].class);
     taskOutputsDirMethod = getMethod(TaskOutputs.class, "dir", Object.class);
 
-    Class<?> taskPropertyBuilderClass = classForName("org.gradle.api.tasks.TaskPropertyBuilder");
-    taskPropertyBuilderWithPropertyNameMethod =
-        taskPropertyBuilderClass == null
+    Class<?> taskInputFilePropertyBuilderClass =
+        classForName("org.gradle.api.tasks.TaskInputFilePropertyBuilder");
+    taskInputFilePropertyBuilderWithPropertyNameMethod =
+        taskInputFilePropertyBuilderClass == null
             ? null
-            : getMethod(taskPropertyBuilderClass, "withPropertyName", String.class);
+            : getMethod(taskInputFilePropertyBuilderClass, "withPropertyName", String.class);
 
     Class<?> taskOutputFilePropertyBuilderClass =
         classForName("org.gradle.api.tasks.TaskOutputFilePropertyBuilder");
+    taskOutputFilePropertyBuilderWithPropertyNameMethod =
+        taskOutputFilePropertyBuilderClass == null
+            ? null
+            : getMethod(taskOutputFilePropertyBuilderClass, "withPropertyName", String.class);
     taskOutputFilePropertyBuilderOptionalMethod =
         taskOutputFilePropertyBuilderClass == null
             ? null
@@ -99,26 +105,28 @@ class CompatibilityUtils {
     }
   }
 
-  /** {@link org.gradle.api.tasks.TaskPropertyBuilder} was introduced in Gradle 3.0. */
-  private static void withPropertyName(Object taskPropertyBuilder, String propertyName) {
-    if (taskPropertyBuilderWithPropertyNameMethod == null) {
+  /** {@link org.gradle.api.tasks.TaskInputFilePropertyBuilder} was introduced in Gradle 3.0. */
+  static void withPropertyName(TaskInputs inputs, String propertyName) {
+    if (taskInputFilePropertyBuilderWithPropertyNameMethod == null) {
       return;
     }
     try {
-      taskPropertyBuilderWithPropertyNameMethod.invoke(taskPropertyBuilder, propertyName);
+      taskInputFilePropertyBuilderWithPropertyNameMethod.invoke(inputs, propertyName);
     } catch (IllegalAccessException | InvocationTargetException e) {
       throw new RuntimeException(e);
     }
   }
 
-  /** {@link org.gradle.api.tasks.TaskPropertyBuilder} was introduced in Gradle 3.0. */
-  static void withPropertyName(TaskInputs inputs, String propertyName) {
-    withPropertyName((Object) inputs, propertyName);
-  }
-
-  /** {@link org.gradle.api.tasks.TaskPropertyBuilder} was introduced in Gradle 3.0. */
+  /** {@link org.gradle.api.tasks.TaskOutputFilePropertyBuilder} was introduced in Gradle 3.0. */
   static void withPropertyName(TaskOutputs outputs, String propertyName) {
-    withPropertyName((Object) outputs, propertyName);
+    if (taskOutputFilePropertyBuilderWithPropertyNameMethod == null) {
+      return;
+    }
+    try {
+      taskOutputFilePropertyBuilderWithPropertyNameMethod.invoke(outputs, propertyName);
+    } catch (IllegalAccessException | InvocationTargetException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /** {@link org.gradle.api.tasks.TaskOutputFilePropertyBuilder} was introduced in Gradle 3.0. */
