@@ -1,20 +1,20 @@
 plugins {
     id "java-gradle-plugin"
     id "groovy"
-    id "com.gradle.plugin-publish" version "0.9.7"
+    id "com.gradle.plugin-publish" version "0.9.9"
 
-    id "net.ltgt.errorprone" version "0.0.11" apply false
+    id "net.ltgt.errorprone" version "0.0.13" apply false
     id "com.github.sherter.google-java-format" version "0.6" apply false
 }
 if (JavaVersion.current() == JavaVersion.VERSION_1_8) {
     apply plugin: 'net.ltgt.errorprone'
     dependencies {
-        errorprone 'com.google.errorprone:error_prone_core:2.1.1'
+        errorprone 'com.google.errorprone:error_prone_core:2.1.2'
     }
 
     apply plugin: 'com.github.sherter.google-java-format'
     googleJavaFormat {
-        toolVersion = '1.4'
+        toolVersion = '1.5'
     }
 }
 
@@ -42,7 +42,7 @@ repositories {
 dependencies {
     compile localGroovy()
 
-    testCompile('com.netflix.nebula:nebula-test:6.0.1')
+    testCompile('com.netflix.nebula:nebula-test:6.1.2')
     testCompile('org.spockframework:spock-core:1.1-groovy-2.4') {
         exclude group: 'org.codehaus.groovy'
     }
