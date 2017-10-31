@@ -5,7 +5,7 @@ dist: trusty
 matrix:
   include:
     - jdk: openjdk7
-      env: TEST_GRADLE_VERSIONS=4.3
+      env: TEST_GRADLE_VERSIONS=4.2.1
     - jdk: oraclejdk8
       env: TEST_GRADLE_VERSIONS=2.5
     - jdk: oraclejdk8
