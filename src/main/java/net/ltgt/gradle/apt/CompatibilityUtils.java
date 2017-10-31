@@ -1,5 +1,7 @@
 package net.ltgt.gradle.apt;
 
+import static net.ltgt.gradle.apt.ReflectionUtils.getMethod;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import org.gradle.api.Action;
@@ -30,37 +32,19 @@ class CompatibilityUtils {
     taskInputsFilesMethod = getMethod(TaskInputs.class, "files", Object[].class);
     taskOutputsDirMethod = getMethod(TaskOutputs.class, "dir", Object.class);
 
-    Class<?> taskPropertyBuilderClass = classForName("org.gradle.api.tasks.TaskPropertyBuilder");
-    taskPropertyBuilderWithPropertyNameMethod =
-        taskPropertyBuilderClass == null
-            ? null
-            : getMethod(taskPropertyBuilderClass, "withPropertyName", String.class);
+    Method withPropertyNameMethod =
+        getMethod("org.gradle.api.tasks.TaskFilePropertyBuilder", "withPropertyName", String.class);
+    if (withPropertyNameMethod == null) {
+      withPropertyNameMethod =
+          getMethod("org.gradle.api.tasks.TaskPropertyBuilder", "withPropertyName", String.class);
+    }
+    taskPropertyBuilderWithPropertyNameMethod = withPropertyNameMethod;
 
-    Class<?> taskOutputFilePropertyBuilderClass =
-        classForName("org.gradle.api.tasks.TaskOutputFilePropertyBuilder");
     taskOutputFilePropertyBuilderOptionalMethod =
-        taskOutputFilePropertyBuilderClass == null
-            ? null
-            : getMethod(taskOutputFilePropertyBuilderClass, "optional");
+        getMethod("org.gradle.api.tasks.TaskOutputFilePropertyBuilder", "optional");
 
     fileContentMergerGetBeforeMergedMethod = getMethod(FileContentMerger.class, "getBeforeMerged");
     fileContentMergerGetWhenMergedMethod = getMethod(FileContentMerger.class, "getWhenMerged");
-  }
-
-  private static Class<?> classForName(String className) {
-    try {
-      return Class.forName(className);
-    } catch (ClassNotFoundException e) {
-      return null;
-    }
-  }
-
-  private static Method getMethod(Class<?> klass, String methodName, Class<?>... parameterTypes) {
-    try {
-      return klass.getMethod(methodName, parameterTypes);
-    } catch (NoSuchMethodException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   /** {@link Task#getInputs()} changed return type in Gradle 3.0. */
