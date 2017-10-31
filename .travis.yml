@@ -33,6 +33,8 @@ matrix:
     - jdk: oraclejdk8
       env: TEST_GRADLE_VERSIONS=3.2
     - jdk: oraclejdk8
+      env: TEST_GRADLE_VERSIONS=3.3
+    - jdk: oraclejdk8
       env: TEST_GRADLE_VERSIONS=3.4
     - jdk: oraclejdk8
       env: TEST_GRADLE_VERSIONS=3.5
