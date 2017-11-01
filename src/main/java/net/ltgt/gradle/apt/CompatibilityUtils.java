@@ -21,6 +21,7 @@ class CompatibilityUtils {
   private static final Method taskOutputsDirMethod;
   private static final Method taskInputPropertyBuilderOptionalMethod;
   private static final Method taskInputFilePropertyBuilderWithPropertyNameMethod;
+  private static final Method taskInputFilePropertyBuilderOptionalMethod;
   private static final Method taskOutputFilePropertyBuilderWithPropertyNameMethod;
   private static final Method taskOutputFilePropertyBuilderOptionalMethod;
   private static final Method fileContentMergerGetBeforeMergedMethod;
@@ -46,6 +47,10 @@ class CompatibilityUtils {
         taskInputFilePropertyBuilderClass == null
             ? null
             : getMethod(taskInputFilePropertyBuilderClass, "withPropertyName", String.class);
+    taskInputFilePropertyBuilderOptionalMethod =
+        taskInputFilePropertyBuilderClass == null
+            ? null
+            : getMethod(taskInputFilePropertyBuilderClass, "optional");
 
     Class<?> taskOutputFilePropertyBuilderClass =
         classForName("org.gradle.api.tasks.TaskOutputFilePropertyBuilder");
@@ -144,6 +149,18 @@ class CompatibilityUtils {
     }
     try {
       taskInputFilePropertyBuilderWithPropertyNameMethod.invoke(inputs, propertyName);
+    } catch (IllegalAccessException | InvocationTargetException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /** {@link org.gradle.api.tasks.TaskInputFilePropertyBuilder} was introduced in Gradle 3.0. */
+  static void optional(TaskInputs inputs) {
+    if (taskInputFilePropertyBuilderOptionalMethod == null) {
+      return;
+    }
+    try {
+      taskInputFilePropertyBuilderOptionalMethod.invoke(inputs);
     } catch (IllegalAccessException | InvocationTargetException e) {
       throw new RuntimeException(e);
     }

@@ -224,6 +224,7 @@ public class AptPlugin implements Plugin<Project> {
                           }
                         });
                 withPropertyName(inputs, "aptOptions.processorpath");
+                optional(inputs);
 
                 TaskOutputs outputs =
                     dir(
