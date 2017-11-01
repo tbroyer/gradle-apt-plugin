@@ -22,6 +22,8 @@ class CompatibilityUtils {
   private static final Method taskInputPropertyBuilderOptionalMethod;
   private static final Method taskInputFilePropertyBuilderWithPropertyNameMethod;
   private static final Method taskInputFilePropertyBuilderOptionalMethod;
+  private static final Method taskInputFilePropertyBuilderWithNormalizerMethod;
+  private static final Class<?> classpathNormalizerClass;
   private static final Method taskOutputFilePropertyBuilderWithPropertyNameMethod;
   private static final Method taskOutputFilePropertyBuilderOptionalMethod;
   private static final Method fileContentMergerGetBeforeMergedMethod;
@@ -41,6 +43,7 @@ class CompatibilityUtils {
         taskInputPropertyBuilderClass == null
             ? null
             : getMethod(taskInputPropertyBuilderClass, "optional", boolean.class);
+
     Class<?> taskInputFilePropertyBuilderClass =
         classForName("org.gradle.api.tasks.TaskInputFilePropertyBuilder");
     taskInputFilePropertyBuilderWithPropertyNameMethod =
@@ -51,6 +54,12 @@ class CompatibilityUtils {
         taskInputFilePropertyBuilderClass == null
             ? null
             : getMethod(taskInputFilePropertyBuilderClass, "optional");
+    taskInputFilePropertyBuilderWithNormalizerMethod =
+        taskInputFilePropertyBuilderClass == null
+            ? null
+            : findMethod(taskInputFilePropertyBuilderClass, "withNormalizer", Class.class);
+
+    classpathNormalizerClass = classForName("org.gradle.api.tasks.ClasspathNormalizer");
 
     Class<?> taskOutputFilePropertyBuilderClass =
         classForName("org.gradle.api.tasks.TaskOutputFilePropertyBuilder");
@@ -80,6 +89,14 @@ class CompatibilityUtils {
       return klass.getMethod(methodName, parameterTypes);
     } catch (NoSuchMethodException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private static Method findMethod(Class<?> klass, String methodName, Class<?>... parameterTypes) {
+    try {
+      return klass.getMethod(methodName, parameterTypes);
+    } catch (NoSuchMethodException e) {
+      return null;
     }
   }
 
@@ -161,6 +178,23 @@ class CompatibilityUtils {
     }
     try {
       taskInputFilePropertyBuilderOptionalMethod.invoke(inputs);
+    } catch (IllegalAccessException | InvocationTargetException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * {@link org.gradle.api.tasks.TaskInputFilePropertyBuilder#withNormalizer(Class)} was introduced
+   * in Gradle 4.3.
+   */
+  static void withClasspathNormalizer(TaskInputs inputs) {
+    if (taskInputFilePropertyBuilderWithNormalizerMethod == null
+        || classpathNormalizerClass == null) {
+      return;
+    }
+    try {
+      taskInputFilePropertyBuilderWithNormalizerMethod.invoke(
+          inputs, new Object[] {classpathNormalizerClass});
     } catch (IllegalAccessException | InvocationTargetException e) {
       throw new RuntimeException(e);
     }
