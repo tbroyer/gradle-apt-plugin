@@ -31,6 +31,8 @@ import org.gradle.util.GradleVersion;
 public class AptPlugin implements Plugin<Project> {
   private static boolean HAS_ANNOTATION_PROCESSOR_PATH =
       GradleVersion.current().compareTo(GradleVersion.version("3.4")) >= 0;
+  private static boolean HAS_ANNOTATION_PROCESSOR_GENERATED_SOURCES_DIRECTORY =
+      GradleVersion.current().compareTo(GradleVersion.version("4.3")) >= 0;
 
   @Override
   public void apply(final Project project) {
@@ -256,6 +258,9 @@ public class AptPlugin implements Plugin<Project> {
 
                         boolean doUseAnnotationProcessorPath =
                             HAS_ANNOTATION_PROCESSOR_PATH && (task instanceof JavaCompile);
+                        boolean doUseAnnotationProcessorGeneratedSourcesDirectory =
+                            HAS_ANNOTATION_PROCESSOR_GENERATED_SOURCES_DIRECTORY
+                                && (task instanceof JavaCompile);
 
                         CompileOptions compileOptions =
                             getCompileOptions.getCompileOptions((T) task);
@@ -263,9 +268,16 @@ public class AptPlugin implements Plugin<Project> {
                           compileOptions.setAnnotationProcessorPath(
                               aptConvention.aptOptions.getProcessorpath());
                         }
+                        if (doUseAnnotationProcessorGeneratedSourcesDirectory) {
+                          compileOptions.setAnnotationProcessorGeneratedSourcesDirectory(
+                              aptConvention.getGeneratedSourcesDestinationDir());
+                        }
                         compileOptions
                             .getCompilerArgs()
-                            .addAll(aptConvention.buildCompilerArgs(!doUseAnnotationProcessorPath));
+                            .addAll(
+                                aptConvention.buildCompilerArgs(
+                                    !doUseAnnotationProcessorPath,
+                                    !doUseAnnotationProcessorGeneratedSourcesDirectory));
                       }
                     });
               }
@@ -332,9 +344,10 @@ public class AptPlugin implements Plugin<Project> {
       }
     }
 
-    List<String> buildCompilerArgs(boolean shouldAddProcessorPath) {
+    List<String> buildCompilerArgs(
+        boolean shouldAddProcessorPath, boolean shouldAddProcessorGeneratedSourcesDirectory) {
       List<String> result = new ArrayList<>();
-      if (generatedSourcesDestinationDir != null) {
+      if (shouldAddProcessorGeneratedSourcesDirectory && generatedSourcesDestinationDir != null) {
         result.add("-s");
         result.add(getGeneratedSourcesDestinationDir().getPath());
       }
