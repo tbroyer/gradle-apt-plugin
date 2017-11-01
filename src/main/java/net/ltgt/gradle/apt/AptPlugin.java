@@ -186,7 +186,7 @@ public class AptPlugin implements Plugin<Project> {
                             .isAnnotationProcessing();
                       }
                     });
-                property(
+                optionalProperty(
                     getInputs(task),
                     "aptOptions.processors",
                     new Callable<Object>() {
@@ -198,7 +198,7 @@ public class AptPlugin implements Plugin<Project> {
                             .getProcessors();
                       }
                     });
-                property(
+                optionalProperty(
                     getInputs(task),
                     "aptOptions.processorArgs",
                     new Callable<Object>() {

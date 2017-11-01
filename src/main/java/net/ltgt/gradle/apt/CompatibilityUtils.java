@@ -19,6 +19,7 @@ class CompatibilityUtils {
   private static final Method taskInputsFilesMethod;
   private static final Method taskInputsPropertyMethod;
   private static final Method taskOutputsDirMethod;
+  private static final Method taskInputPropertyBuilderOptionalMethod;
   private static final Method taskInputFilePropertyBuilderWithPropertyNameMethod;
   private static final Method taskOutputFilePropertyBuilderWithPropertyNameMethod;
   private static final Method taskOutputFilePropertyBuilderOptionalMethod;
@@ -33,6 +34,12 @@ class CompatibilityUtils {
     taskInputsPropertyMethod = getMethod(TaskInputs.class, "property", String.class, Object.class);
     taskOutputsDirMethod = getMethod(TaskOutputs.class, "dir", Object.class);
 
+    Class<?> taskInputPropertyBuilderClass =
+        classForName("org.gradle.api.tasks.TaskInputPropertyBuilder");
+    taskInputPropertyBuilderOptionalMethod =
+        taskInputPropertyBuilderClass == null
+            ? null
+            : getMethod(taskInputPropertyBuilderClass, "optional", boolean.class);
     Class<?> taskInputFilePropertyBuilderClass =
         classForName("org.gradle.api.tasks.TaskInputFilePropertyBuilder");
     taskInputFilePropertyBuilderWithPropertyNameMethod =
@@ -102,6 +109,20 @@ class CompatibilityUtils {
   static TaskInputs property(TaskInputs inputs, String name, Object value) {
     try {
       return (TaskInputs) taskInputsPropertyMethod.invoke(inputs, new Object[] {name, value});
+    } catch (IllegalAccessException | InvocationTargetException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /** {@link org.gradle.api.tasks.TaskInputPropertyBuilder} was introduced in Gradle 4.3. */
+  static TaskInputs optionalProperty(TaskInputs inputs, String name, Object value) {
+    inputs = property(inputs, name, value);
+    if (taskInputPropertyBuilderOptionalMethod == null) {
+      return inputs;
+    }
+    try {
+      return (TaskInputs)
+          taskInputPropertyBuilderOptionalMethod.invoke(inputs, new Object[] {true});
     } catch (IllegalAccessException | InvocationTargetException e) {
       throw new RuntimeException(e);
     }
