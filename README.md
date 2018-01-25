@@ -185,14 +185,19 @@ This can be configured system-wide for all projects using the `net.ltgt.apt` plu
 ```gradle
 allprojects { project ->
   project.plugins.withId("net.ltgt.apt") {
-    // automatically apply net.ltgt.apt-idea whenever net.ltgt.apt is used
-    project.apply plugin: "net.ltgt.apt-idea"
-    // disable addAptDependencies (if you delegate build actions to Gradle)
-    project.plugins.withType(JavaPlugin) {
-      project.afterEvaluate {
-        project.idea.module.apt.addAptDependencies = false
+    try {
+      // automatically apply net.ltgt.apt-idea whenever net.ltgt.apt is used
+      project.apply plugin: "net.ltgt.apt-idea"
+      // disable addAptDependencies (if you delegate build actions to Gradle)
+      project.plugins.withType(JavaPlugin) {
+        project.afterEvaluate {
+          project.idea.module.apt.addAptDependencies = false
+        }
       }
     }
+  } catch (UnknownPluginException) {
+    // ignore, in case an older version of net.ltgt.apt is being used
+    // that doesn't come with net.ltgt.apt-idea.
   }
 }
 ```
