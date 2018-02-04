@@ -310,36 +310,36 @@ class AptPluginSpec extends PluginProjectSpec {
       maven { url mavenRepo }
     }
     project.configurations {
-      annotationProcessor
-      testAnnotationProcessor
+      annotationProcessing
+      testAnnotationProcessing
     }
     project.dependencies {
-      compile                 'compile:compile:1.0'
-      annotationProcessor     'processor:compile:1.0'
-      testCompile             'testCompile:testCompile:1.0'
-      testAnnotationProcessor 'processor:testCompile:1.0'
+      compile                  'compile:compile:1.0'
+      annotationProcessing     'processor:compile:1.0'
+      testCompile              'testCompile:testCompile:1.0'
+      testAnnotationProcessing 'processor:testCompile:1.0'
     }
     project.tasks.compileJava {
       generatedSourcesDestinationDir = 'src/main/generated'
-      aptOptions.processorpath = project.configurations.annotationProcessor
+      aptOptions.processorpath = project.configurations.annotationProcessing
     }
     project.tasks.compileGroovy {
       generatedSourcesDestinationDir = 'src/main/generated'
-      aptOptions.processorpath = project.configurations.annotationProcessor
+      aptOptions.processorpath = project.configurations.annotationProcessing
     }
     project.tasks.compileTestJava {
       generatedSourcesDestinationDir = 'src/test/generated'
-      aptOptions.processorpath = project.configurations.testAnnotationProcessor
+      aptOptions.processorpath = project.configurations.testAnnotationProcessing
     }
     project.tasks.compileTestGroovy {
       generatedSourcesDestinationDir = 'src/test/generated'
-      aptOptions.processorpath = project.configurations.testAnnotationProcessor
+      aptOptions.processorpath = project.configurations.testAnnotationProcessing
     }
     project.evaluate()
 
     then:
     project.tasks.compileJava.convention.getPlugin(AptPlugin.AptConvention).buildCompilerArgs(true, true)
-            .containsAll([ '-s', new File(project.projectDir, 'src/main/generated').path, '-processorpath', project.configurations.annotationProcessor.asPath ])
+            .containsAll([ '-s', new File(project.projectDir, 'src/main/generated').path, '-processorpath', project.configurations.annotationProcessing.asPath ])
     with(project.tasks.compileJava.convention.getPlugin(AptPlugin.AptConvention).buildCompilerArgs(false, true)) { compilerArgs ->
       compilerArgs.containsAll(['-s', new File(project.projectDir, 'src/main/generated').path ])
       !compilerArgs.contains('-processorpath')
@@ -350,7 +350,7 @@ class AptPluginSpec extends PluginProjectSpec {
       !compilerArgs.any { arg -> arg.contains('src/main/generated') }
     }
     project.tasks.compileGroovy.convention.getPlugin(AptPlugin.AptConvention).buildCompilerArgs(true, true)
-            .containsAll([ '-s', new File(project.projectDir, 'src/main/generated').path, '-processorpath', project.configurations.annotationProcessor.asPath ])
+            .containsAll([ '-s', new File(project.projectDir, 'src/main/generated').path, '-processorpath', project.configurations.annotationProcessing.asPath ])
     with(project.tasks.compileGroovy.convention.getPlugin(AptPlugin.AptConvention).buildCompilerArgs(false, true)) { compilerArgs ->
       compilerArgs.containsAll(['-s', new File(project.projectDir, 'src/main/generated').path ])
       !compilerArgs.contains('-processorpath')
@@ -361,7 +361,7 @@ class AptPluginSpec extends PluginProjectSpec {
       !compilerArgs.any { arg -> arg.contains('src/main/generated') }
     }
     project.tasks.compileTestJava.convention.getPlugin(AptPlugin.AptConvention).buildCompilerArgs(true, true)
-            .containsAll([ '-s', new File(project.projectDir, 'src/test/generated').path, '-processorpath', project.configurations.testAnnotationProcessor.asPath ])
+            .containsAll([ '-s', new File(project.projectDir, 'src/test/generated').path, '-processorpath', project.configurations.testAnnotationProcessing.asPath ])
     with(project.tasks.compileTestJava.convention.getPlugin(AptPlugin.AptConvention).buildCompilerArgs(false, true)) { compilerArgs ->
       compilerArgs.containsAll(['-s', new File(project.projectDir, 'src/test/generated').path ])
       !compilerArgs.contains('-processorpath')
@@ -372,7 +372,7 @@ class AptPluginSpec extends PluginProjectSpec {
       !compilerArgs.any { arg -> arg.contains('src/test/generated') }
     }
     project.tasks.compileTestGroovy.convention.getPlugin(AptPlugin.AptConvention).buildCompilerArgs(true, true)
-            .containsAll([ '-s', new File(project.projectDir, 'src/test/generated').path, '-processorpath', project.configurations.testAnnotationProcessor.asPath ])
+            .containsAll([ '-s', new File(project.projectDir, 'src/test/generated').path, '-processorpath', project.configurations.testAnnotationProcessing.asPath ])
     with(project.tasks.compileTestGroovy.convention.getPlugin(AptPlugin.AptConvention).buildCompilerArgs(false, true)) { compilerArgs ->
       compilerArgs.containsAll(['-s', new File(project.projectDir, 'src/test/generated').path ])
       !compilerArgs.contains('-processorpath')
@@ -414,28 +414,28 @@ class AptPluginSpec extends PluginProjectSpec {
       maven { url mavenRepo }
     }
     project.configurations {
-      annotationProcessor
-      testAnnotationProcessor
+      annotationProcessing
+      testAnnotationProcessing
     }
     project.dependencies {
-      compile                 'compile:compile:1.0'
-      annotationProcessor     'processor:compile:1.0'
-      testCompile             'testCompile:testCompile:1.0'
-      testAnnotationProcessor 'processor:testCompile:1.0'
+      compile                  'compile:compile:1.0'
+      annotationProcessing     'processor:compile:1.0'
+      testCompile              'testCompile:testCompile:1.0'
+      testAnnotationProcessing 'processor:testCompile:1.0'
     }
     project.sourceSets.main {
       output.generatedSourcesDir = 'src/main/generated'
-      processorpath = project.configurations.annotationProcessor
+      annotationProcessorPath = project.configurations.annotationProcessing
     }
     project.sourceSets.test {
       output.generatedSourcesDir = 'src/test/generated'
-      processorpath = project.configurations.testAnnotationProcessor
+      annotationProcessorPath = project.configurations.testAnnotationProcessing
     }
     project.evaluate()
 
     then:
     project.tasks.compileJava.convention.getPlugin(AptPlugin.AptConvention).buildCompilerArgs(true, true)
-        .containsAll([ '-s', new File(project.projectDir, 'src/main/generated').path, '-processorpath', project.configurations.annotationProcessor.asPath ])
+        .containsAll([ '-s', new File(project.projectDir, 'src/main/generated').path, '-processorpath', project.configurations.annotationProcessing.asPath ])
     with(project.tasks.compileJava.convention.getPlugin(AptPlugin.AptConvention).buildCompilerArgs(false, true)) { compilerArgs ->
       compilerArgs.containsAll(['-s', new File(project.projectDir, 'src/main/generated').path ])
       !compilerArgs.contains('-processorpath')
@@ -446,7 +446,7 @@ class AptPluginSpec extends PluginProjectSpec {
       !compilerArgs.any { arg -> arg.contains('src/main/generated') }
     }
     project.tasks.compileGroovy.convention.getPlugin(AptPlugin.AptConvention).buildCompilerArgs(true, true)
-        .containsAll([ '-s', new File(project.projectDir, 'src/main/generated').path, '-processorpath', project.configurations.annotationProcessor.asPath ])
+        .containsAll([ '-s', new File(project.projectDir, 'src/main/generated').path, '-processorpath', project.configurations.annotationProcessing.asPath ])
     with(project.tasks.compileGroovy.convention.getPlugin(AptPlugin.AptConvention).buildCompilerArgs(false, true)) { compilerArgs ->
       compilerArgs.containsAll(['-s', new File(project.projectDir, 'src/main/generated').path ])
       !compilerArgs.contains('-processorpath')
@@ -457,7 +457,7 @@ class AptPluginSpec extends PluginProjectSpec {
       !compilerArgs.any { arg -> arg.contains('src/main/generated') }
     }
     project.tasks.compileTestJava.convention.getPlugin(AptPlugin.AptConvention).buildCompilerArgs(true, true)
-        .containsAll([ '-s', new File(project.projectDir, 'src/test/generated').path, '-processorpath', project.configurations.testAnnotationProcessor.asPath ])
+        .containsAll([ '-s', new File(project.projectDir, 'src/test/generated').path, '-processorpath', project.configurations.testAnnotationProcessing.asPath ])
     with(project.tasks.compileTestJava.convention.getPlugin(AptPlugin.AptConvention).buildCompilerArgs(false, true)) { compilerArgs ->
       compilerArgs.containsAll(['-s', new File(project.projectDir, 'src/test/generated').path ])
       !compilerArgs.contains('-processorpath')
@@ -468,7 +468,7 @@ class AptPluginSpec extends PluginProjectSpec {
       !compilerArgs.any { arg -> arg.contains('src/test/generated') }
     }
     project.tasks.compileTestGroovy.convention.getPlugin(AptPlugin.AptConvention).buildCompilerArgs(true, true)
-        .containsAll([ '-s', new File(project.projectDir, 'src/test/generated').path, '-processorpath', project.configurations.testAnnotationProcessor.asPath ])
+        .containsAll([ '-s', new File(project.projectDir, 'src/test/generated').path, '-processorpath', project.configurations.testAnnotationProcessing.asPath ])
     with(project.tasks.compileTestGroovy.convention.getPlugin(AptPlugin.AptConvention).buildCompilerArgs(false, true)) { compilerArgs ->
       compilerArgs.containsAll(['-s', new File(project.projectDir, 'src/test/generated').path ])
       !compilerArgs.contains('-processorpath')
