@@ -4,7 +4,7 @@ This plugin does a few things to make it easier/safer to use Java annotation pro
 
 * it adds configurations for your compile-time only dependencies (annotations, generally) and annotation processors;
 * automatically configures the corresponding `JavaCompile` and `GroovyCompile` tasks to make use of these configurations, when the `java` or `groovy` plugin is applied;
-* automatically configures IntelliJ IDEA and/or Eclipse when the `idea` or `eclipse` plugins are applied.
+* automatically configures IntelliJ IDEA and/or Eclipse when the `net.ltgt.apt-idea` or `net.ltgt.apt-eclipse` plugins are applied.
 
 ## Using the plugin
 
