@@ -137,7 +137,8 @@ public class AptPlugin implements Plugin<Project> {
                                     .getConfigurations()
                                     .create(convention.getAptConfigurationName());
                             aptConfiguration.setVisible(false);
-                            aptConfiguration.setDescription("Processor path for ${sourceSet}");
+                            aptConfiguration.setDescription(
+                                "Processor path for " + sourceSet.getName());
 
                             configureCompileTask(
                                 project, sourceSet, sourceSet.getCompileJavaTaskName());
