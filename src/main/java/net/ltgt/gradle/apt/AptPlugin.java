@@ -214,7 +214,9 @@ public class AptPlugin implements Plugin<Project> {
             new Action<T>() {
               @Override
               public void execute(final T task) {
-                task.getConvention().getPlugins().put("net.ltgt.apt", new AptConvention(project));
+                task.getConvention()
+                    .getPlugins()
+                    .put("net.ltgt.apt", new AptConvention(project, task));
                 property(
                     getInputs(task),
                     "aptOptions.annotationProcessing",
@@ -291,13 +293,8 @@ public class AptPlugin implements Plugin<Project> {
                             task.getConvention().getPlugin(AptConvention.class);
                         aptConvention.makeDirectories();
 
-                        // GroovyCompile used to fail when using options.annotationProcessorPath,
-                        // but was fixed when options.annotationProcessorGeneratedSourcesDirectory
-                        // was added.
                         boolean doUseAnnotationProcessorPath =
-                            HAS_ANNOTATION_PROCESSOR_PATH
-                                && (task instanceof JavaCompile
-                                    || HAS_ANNOTATION_PROCESSOR_GENERATED_SOURCES_DIRECTORY);
+                            shouldUseAnnotationProcessorPath((T) task);
                         boolean doUseAnnotationProcessorGeneratedSourcesDirectory =
                             HAS_ANNOTATION_PROCESSOR_GENERATED_SOURCES_DIRECTORY;
 
@@ -348,6 +345,14 @@ public class AptPlugin implements Plugin<Project> {
         });
   }
 
+  private static boolean shouldUseAnnotationProcessorPath(AbstractCompile task) {
+    // GroovyCompile used to fail when using options.annotationProcessorPath,
+    // but was fixed when options.annotationProcessorGeneratedSourcesDirectory
+    // was added.
+    return HAS_ANNOTATION_PROCESSOR_PATH
+        && (task instanceof JavaCompile || HAS_ANNOTATION_PROCESSOR_GENERATED_SOURCES_DIRECTORY);
+  }
+
   private interface GetCompileOptions<T extends AbstractCompile> {
     CompileOptions getCompileOptions(T task);
   }
@@ -355,11 +360,13 @@ public class AptPlugin implements Plugin<Project> {
   public static class AptConvention {
     private final Project project;
     private final AptOptions aptOptions;
+    private final AbstractCompile task;
     private Object generatedSourcesDestinationDir;
 
-    public AptConvention(Project project) {
+    public AptConvention(Project project, AbstractCompile task) {
       this.project = project;
-      this.aptOptions = new AptOptions(project);
+      this.task = task;
+      this.aptOptions = new AptOptions(project, task);
     }
 
     public File getGeneratedSourcesDestinationDir() {
@@ -370,6 +377,11 @@ public class AptPlugin implements Plugin<Project> {
     }
 
     public void setGeneratedSourcesDestinationDir(Object generatedSourcesDestinationDir) {
+      if (HAS_ANNOTATION_PROCESSOR_GENERATED_SOURCES_DIRECTORY) {
+        DeprecationLogger.nagUserWith(
+            task,
+            "The generatedSourcesDestinationDir property has been deprecated. Please use the options.annotationProcessorGeneratedSourcesDirectory property instead.");
+      }
       this.generatedSourcesDestinationDir = generatedSourcesDestinationDir;
     }
 
@@ -424,13 +436,15 @@ public class AptPlugin implements Plugin<Project> {
 
   public static class AptOptions {
     private final Project project;
+    private final AbstractCompile task;
     private boolean annotationProcessing = true;
     private Object processorpath;
     private List<?> processors = new ArrayList<>();
     private Map<String, ?> processorArgs = new LinkedHashMap<>();
 
-    public AptOptions(Project project) {
+    public AptOptions(Project project, AbstractCompile task) {
       this.project = project;
+      this.task = task;
     }
 
     public boolean isAnnotationProcessing() {
@@ -449,6 +463,11 @@ public class AptPlugin implements Plugin<Project> {
     }
 
     public void setProcessorpath(Object processorpath) {
+      if (shouldUseAnnotationProcessorPath(task)) {
+        DeprecationLogger.nagUserWith(
+            task,
+            "The aptOptions.processorpath property has been deprecated. Please use the options.annotationProcessorPath property instead.");
+      }
       this.processorpath = processorpath;
     }
 
