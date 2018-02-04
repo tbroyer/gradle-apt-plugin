@@ -127,7 +127,12 @@ This can be configured system-wide for all projects using the `net.ltgt.apt` plu
 allprojects { project ->
   project.plugins.withId("net.ltgt.apt") {
     // automatically apply net.ltgt.apt-eclipse whenever net.ltgt.apt is used
-    project.apply plugin: "net.ltgt.apt-eclipse"
+    try {
+      project.apply plugin: "net.ltgt.apt-eclipse"
+    } catch (UnknownPluginException) {
+      // ignore, in case an older version of net.ltgt.apt is being used
+      // that doesn't come with net.ltgt.apt-eclipse.
+    }
   }
 }
 ```
