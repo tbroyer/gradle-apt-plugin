@@ -166,11 +166,13 @@ public class AptIdeaPlugin implements Plugin<Project> {
                 mainConfigurations.add(
                     project
                         .getConfigurations()
-                        .getByName(mainSourceSetConvention.getAptConfigurationName()));
+                        .getByName(
+                            mainSourceSetConvention.getAnnotationProcessorConfigurationName()));
                 testConfigurations.add(
                     project
                         .getConfigurations()
-                        .getByName(testSourceSetConvention.getAptConfigurationName()));
+                        .getByName(
+                            testSourceSetConvention.getAnnotationProcessorConfigurationName()));
               }
               ideaModule
                   .getScopes()

@@ -2,7 +2,7 @@
 
 This plugin does a few things to make it easier/safer to use Java annotation processors in a Gradle build:
 
-* it adds configurations for your compile-time only dependencies (annotations, generally) and annotation processors;
+* it ensures the presence of configurations for your compile-time only dependencies (annotations, generally) and annotation processors, consistently across all supported Gradle versions;
 * automatically configures the corresponding `JavaCompile` and `GroovyCompile` tasks to make use of these configurations, when the `java` or `groovy` plugin is applied;
 * automatically configures IntelliJ IDEA and/or Eclipse when the `net.ltgt.apt-idea` or `net.ltgt.apt-eclipse` plugins are applied.
 
@@ -12,27 +12,28 @@ The plugin is published to the Plugin Portal; see instructions there: https://pl
 
 You can try snapshots using JitPack: https://jitpack.io/#tbroyer/gradle-apt-plugin
 
-## Added configurations
+## Configurations
 
-For each `SourceSet`, two configurations are added:
+For each `SourceSet`, three configurations are available:
 
-* for Gradle < 2.12: `<sourceSet>CompileOnly`, extends `<sourceSet>Compile` (Gradle ≥ 2.12 already provides those configurations; note that this plugin doesn't provide a `<sourceSet>CompileClasspath` like Gradle ≥ 2.12)
-* `<sourceSet>Apt`
+* `<sourceSet>CompileOnly` (Gradle ≥ 2.12 already provides those configurations; note that this plugin doesn't provide a `<sourceSet>CompileClasspath` like Gradle ≥ 2.12, but instead make it directly extend `<sourceSet>Compile`)
+* `<sourceSet>AnnotationProcessor`, since version 0.14 (Gradle 4.6 already provides those configurations)
+* `<sourceSet>Apt`: those are provided for backwards compatibility with versions of this plugin up to 0.13, and are deprecated since version 0.14. The `<sourceSet>AnnotationProcessor` configurations extend the respective `<sourceSet>Apt` configurations to provide that compatibility.
 
-As a result, the following configurations are added to any Java project:
+As a result, the following configurations are available for any Java project:
 
 * `compileOnly`, extends `compile`
-* `apt`
+* `annotationProcessor` (and `apt`)
 * `testCompileOnly`, extends `testCompile`
-* `testApt`
+* `testAnnotationProcessor` (and `testApt`)
 
-The `*Only` configurations are used to specify compile-time only dependencies such as annotations that will be processed by annotation processors. Annotation processors themselves are to be added to the `apt` and `testApt` configurations.
+The `*Only` configurations are used to specify compile-time only dependencies such as annotations that will be processed by annotation processors. Annotation processors themselves are to be added to the `annotationProcessor` and `testAnnotationProcessor` configurations (or the `apt` and `testApt` configurations in version 0.13 and earlier).
 
 The `*Only` configurations are part of the `classpath` of the `JavaCompile` and `GroovyCompile` tasks, whereas the `apt` and `testApt` configurations are turned into `-processorpath` compiler arguments.
 Note that up until version 0.7, if those configurations were empty, an empty processor path (`-processorpath :`) would be passed to `javac`; this was a breaking change compared to the normal behavior of Gradle, as it meant annotation processors wouldn't be looked up in the tasks' `classpath`.
-Starting with version 0.8, no `-processorpath` will be passed if the `<sourceSet>Apt` configuration is empty; this is to follow the [proposal to add first-class support for annotation processing to Gradle proper](https://github.com/gradle/gradle/blob/master/design-docs/java-annotation-processing.md)
+Starting with version 0.8, no `-processorpath` will be passed if the `<sourceSet>Apt` configuration is empty; this is to follow a proposal to add first-class support for annotation processing to Gradle proper, that [has been added in Gradle 4.6](https://github.com/gradle/gradle/pull/3786).
 
-Finally, note that those configurations don't extend each others: `testCompileOnly` doesn't extend `compileOnly`, and `testApt` doesn't extend `apt`; those configurations are only use for their respective `JavaCompile` and `GroovyCompile` tasks.
+Finally, note that those configurations don't extend each others: `testCompileOnly` doesn't extend `compileOnly`, and `testAnnotationProcessor` doesn't extend `annotationProcessor`; those configurations are only use for their respective `JavaCompile` and `GroovyCompile` tasks.
 
 ### Example usage
 
@@ -40,15 +41,15 @@ After applying the plugin following the above instructions, those added configur
 
 ```gradle
 dependencies {
-  compile "com.google.dagger:dagger:2.6"
-  apt     "com.google.dagger:dagger-compiler:2.6"
+  compile             "com.google.dagger:dagger:2.14.1"
+  annotationProcessor "com.google.dagger:dagger-compiler:2.14.1"
 
   // auto-factory contains both annotations and their processor, neither is needed at runtime
-  compileOnly "com.google.auto.factory:auto-factory:1.0-beta3"
-  apt         "com.google.auto.factory:auto-factory:1.0-beta3"
+  compileOnly         "com.google.auto.factory:auto-factory:1.0-beta5"
+  annotationProcessor "com.google.auto.factory:auto-factory:1.0-beta5"
 
-  compileOnly "org.immutables:value:2.2.10:annotations"
-  apt         "org.immutables:value:2.2.10"
+  compileOnly         "org.immutables:value:2.5.6:annotations"
+  annotationProcessor "org.immutables:value:2.5.6"
 }
 ```
 
@@ -158,7 +159,7 @@ idea {
     apt {
       // whether generated sources dirs are added as generated sources root
       addGeneratedSourcesDirs = true
-      // whether the apt and testApt dependencies are added as module dependencies
+      // whether the annotationProcessor/apt and testAnnotationProcessor/testApt dependencies are added as module dependencies
       addAptDependencies = true
 
       // The following are mostly internal details; you shouldn't ever need to configure them.
@@ -209,14 +210,15 @@ allprojects { project ->
 
 ## Configuration
 
-Starting with version 0.8, the plugin follows the [proposal to add first-class support for annotation processing to Gradle proper](https://github.com/gradle/gradle/blob/master/design-docs/java-annotation-processing.md), making many things configurable by enhancing source sets and tasks.
-One notable exception is that the proposed new `CompileOptions` properties are actually available on an `aptOptions` object, as the `CompileOptions` cannot actually be enhanced by plugins.
+Starting with version 0.8, the plugin makes many things configurable by enhancing source sets and tasks.
 
-Each source set gains a few properties:
+Each source set has a few properties:
 
-* for Gradle < 2.12: `compileOnlyConfigurationName` (read-only `String`) returning the `<sourceSet>CompileOnly` configuration name; Gradle ≥ 2.12 already provides that property
-* `aptConfigurationName` (read-only `String`) returning the `<sourceSet>Apt` configuration name
-* `processorpath`, a `FileCollection` defaulting to the `<sourceSet>Apt` configuration
+* `compileOnlyConfigurationName` (read-only `String`) returning the `<sourceSet>CompileOnly` configuration name (Gradle ≥ 2.12 already provides that property natively, this plugin contributes it for earlier Gradle versions)
+* `annotationProcessorConfigurationName` (read-only `String`) returning the `<sourceSet>AnnotationProcessor>` configuration name, starting with version 0.14 (Gradle ≥ 4.6 already provides that property natively, this plugin contributes it for earlier Gradle versions)
+* `aptConfigurationName` (read-only `String`) returning the `<sourceSet>Apt` configuration name, deprecated in version 0.14, replaced with `annotationProcessorConfigurationName`
+* `annotationProcessorPath`, a `FileCollection` defaulting to the `<sourceSet>AnnotationProcessor` configuration, starting with version 0.14
+* `processorpath`, a `FileCollection` defaulting to the `<sourceSet>Apt` configuration, deprecated in version 0.14, replaced with `annotationProcessorPath`
 
 Each source set `output` gains a `generatedSourcesDir` property, a `File` defaulting to `${project.buildDir}/generated/source/apt/${sourceSet.name}`.
 
@@ -232,4 +234,4 @@ Each `JavaCompile` and `GroovyCompile` task gains a couple properties:
 For each source set, the corresponding `JavaCompile` and `GroovyCompile` tasks are configured such that:
 
 * `generatedSourcesDestinationDir` maps to the source set's `output.generatedSourcesDir`
-* `aptOptions.processorpath` maps to the source set's `processorpath`
+* `aptOptions.processorpath` maps to the source set's `annotationProcessorPath`

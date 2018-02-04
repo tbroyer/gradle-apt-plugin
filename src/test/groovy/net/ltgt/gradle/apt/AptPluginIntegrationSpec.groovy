@@ -10,9 +10,11 @@ import spock.lang.Unroll
 
 class AptPluginIntegrationSpec extends Specification {
   @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
+  File settingsFile
   File buildFile
 
   def setup() {
+    settingsFile = testProjectDir.newFile('settings.gradle')
     buildFile = testProjectDir.newFile('build.gradle')
     buildFile << """\
       buildscript {
@@ -123,7 +125,6 @@ class AptPluginIntegrationSpec extends Specification {
   @Unroll
   def "simple java project with compile-only dependency, with Gradle #gradleVersion"() {
     given:
-    def settingsFile = testProjectDir.newFile('settings.gradle')
     settingsFile << """\
       include 'annotations'
       include 'core'
@@ -187,7 +188,6 @@ class AptPluginIntegrationSpec extends Specification {
   @Unroll
   def "simple java project with annotation processor, with Gradle #gradleVersion"() {
     given:
-    def settingsFile = testProjectDir.newFile('settings.gradle')
     settingsFile << """\
       include 'annotations'
       include 'processor'
@@ -203,7 +203,7 @@ class AptPluginIntegrationSpec extends Specification {
 
         dependencies {
           compileOnly project(':annotations')
-          apt project(':processor')
+          annotationProcessor project(':processor')
         }
 
         // Get Gradle 4.x to behave like previous versions
@@ -315,6 +315,48 @@ class AptPluginIntegrationSpec extends Specification {
   }
 
   @Unroll
+  def 'deprecated configurations, with Gradle #gradleVersion'() {
+    given:
+    settingsFile << """\
+      include 'processor'
+    """.stripIndent()
+    buildFile << """\
+      allprojects {
+        apply plugin: 'java'
+      }
+
+      apply plugin: 'net.ltgt.apt'
+
+      sourceSets {
+        integTest {
+          processorpath = null
+        }
+      }
+      dependencies {
+        apt project(':processor')
+        testApt project(':processor')
+        integTestApt project(':processor')
+      }
+    """
+
+    when:
+    def result = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
+        .withProjectDir(testProjectDir.root)
+        .withArguments(':classes')
+        .build()
+
+    then:
+    result.output.contains("sourceSets.integTest: " + AptPlugin.AptSourceSetConvention.PROCESSORPATH_DEPRECATION_MESSAGE)
+    result.output.contains("The apt configuration has been deprecated. Please use the annotationProcessor configuration instead.")
+    result.output.contains("The testApt configuration has been deprecated. Please use the testAnnotationProcessor configuration instead.")
+    result.output.contains("The integTestApt configuration has been deprecated. Please use the integTestAnnotationProcessor configuration instead.")
+
+    where:
+    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
+  }
+
+  @Unroll
   def "simple non-groovy project, with Gradle #gradleVersion"() {
     given:
     buildFile << """\
@@ -420,7 +462,6 @@ class AptPluginIntegrationSpec extends Specification {
   @Unroll
   def "simple groovy project with compile-only dependency, with Gradle #gradleVersion"() {
     given:
-    def settingsFile = testProjectDir.newFile('settings.gradle')
     settingsFile << """\
       include 'annotations'
       include 'core'
@@ -486,7 +527,6 @@ class AptPluginIntegrationSpec extends Specification {
   @Unroll
   def "simple groovy project with annotation processor, with Gradle #gradleVersion"() {
     given:
-    def settingsFile = testProjectDir.newFile('settings.gradle')
     settingsFile << """\
       include 'annotations'
       include 'processor'
@@ -511,7 +551,7 @@ class AptPluginIntegrationSpec extends Specification {
         dependencies {
           compile localGroovy()
           compileOnly project(':annotations')
-          apt project(':processor')
+          annotationProcessor project(':processor')
         }
 
         tasks.withType(GroovyCompile) {

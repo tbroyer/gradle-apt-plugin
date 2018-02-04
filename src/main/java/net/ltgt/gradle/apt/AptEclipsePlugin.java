@@ -194,14 +194,14 @@ public class AptEclipsePlugin implements Plugin<Project> {
                                           new DslObject(mainSourceSet)
                                               .getConvention()
                                               .getPlugin(AptPlugin.AptSourceSetConvention.class)
-                                              .getAptConfigurationName()),
+                                              .getAnnotationProcessorConfigurationName()),
                                   project
                                       .getConfigurations()
                                       .getByName(
                                           new DslObject(testSourceSet)
                                               .getConvention()
                                               .getPlugin(AptPlugin.AptSourceSetConvention.class)
-                                              .getAptConfigurationName()))));
+                                              .getAnnotationProcessorConfigurationName()))));
                     }
                   });
       project.getTasks().getByName("eclipse").dependsOn(task);

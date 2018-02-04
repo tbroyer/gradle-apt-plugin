@@ -126,12 +126,12 @@ class IdeaIntegrationSpec extends Specification {
           maven { url file(\$/${mavenRepo}/\$) }
         }
         dependencies {
-          compile         'compile:compile:1.0'
-          compileOnly     'annotations:compile:1.0'
-          apt             'processor:compile:1.0'
-          testCompile     'testCompile:testCompile:1.0'
-          testCompileOnly 'annotations:testCompile:1.0'
-          testApt         'processor:testCompile:1.0'
+          compile                 'compile:compile:1.0'
+          compileOnly             'annotations:compile:1.0'
+          annotationProcessor     'processor:compile:1.0'
+          testCompile             'testCompile:testCompile:1.0'
+          testCompileOnly         'annotations:testCompile:1.0'
+          testAnnotationProcessor 'processor:testCompile:1.0'
         }
     """.stripIndent()
 
@@ -183,12 +183,12 @@ class IdeaIntegrationSpec extends Specification {
           maven { url file(\$/${mavenRepo}/\$) }
         }
         dependencies {
-          compile         'compile:compile:1.0'
-          compileOnly     'annotations:compile:1.0'
-          apt             'processor:compile:1.0'
-          testCompile     'testCompile:testCompile:1.0'
-          testCompileOnly 'annotations:testCompile:1.0'
-          testApt         'processor:testCompile:1.0'
+          compile                 'compile:compile:1.0'
+          compileOnly             'annotations:compile:1.0'
+          annotationProcessor     'processor:compile:1.0'
+          testCompile             'testCompile:testCompile:1.0'
+          testCompileOnly         'annotations:testCompile:1.0'
+          testAnnotationProcessor 'processor:testCompile:1.0'
         }
         idea {
           project {
@@ -251,12 +251,12 @@ class IdeaIntegrationSpec extends Specification {
           maven { url file(\$/${mavenRepo}/\$) }
         }
         dependencies {
-          compile         'compile:compile:1.0'
-          compileOnly     'annotations:compile:1.0'
-          apt             'processor:compile:1.0'
-          testCompile     'testCompile:testCompile:1.0'
-          testCompileOnly 'annotations:testCompile:1.0'
-          testApt         'processor:testCompile:1.0'
+          compile                 'compile:compile:1.0'
+          compileOnly             'annotations:compile:1.0'
+          annotationProcessor     'processor:compile:1.0'
+          testCompile             'testCompile:testCompile:1.0'
+          testCompileOnly         'annotations:testCompile:1.0'
+          testAnnotationProcessor 'processor:testCompile:1.0'
         }
     """.stripIndent()
 
@@ -344,12 +344,12 @@ class IdeaIntegrationSpec extends Specification {
           maven { url file(\$/${mavenRepo}/\$) }
         }
         dependencies {
-          compile         'compile:compile:1.0'
-          compileOnly     'annotations:compile:1.0'
-          apt             'processor:compile:1.0'
-          testCompile     'testCompile:testCompile:1.0'
-          testCompileOnly 'annotations:testCompile:1.0'
-          testApt         'processor:testCompile:1.0'
+          compile                 'compile:compile:1.0'
+          compileOnly             'annotations:compile:1.0'
+          annotationProcessor     'processor:compile:1.0'
+          testCompile             'testCompile:testCompile:1.0'
+          testCompileOnly         'annotations:testCompile:1.0'
+          testAnnotationProcessor 'processor:testCompile:1.0'
         }
         idea {
           project {
