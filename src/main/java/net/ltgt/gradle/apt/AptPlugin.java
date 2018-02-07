@@ -291,11 +291,15 @@ public class AptPlugin implements Plugin<Project> {
                             task.getConvention().getPlugin(AptConvention.class);
                         aptConvention.makeDirectories();
 
+                        // GroovyCompile used to fail when using options.annotationProcessorPath,
+                        // but was fixed when options.annotationProcessorGeneratedSourcesDirectory
+                        // was added.
                         boolean doUseAnnotationProcessorPath =
-                            HAS_ANNOTATION_PROCESSOR_PATH && (task instanceof JavaCompile);
+                            HAS_ANNOTATION_PROCESSOR_PATH
+                                && (task instanceof JavaCompile
+                                    || HAS_ANNOTATION_PROCESSOR_GENERATED_SOURCES_DIRECTORY);
                         boolean doUseAnnotationProcessorGeneratedSourcesDirectory =
-                            HAS_ANNOTATION_PROCESSOR_GENERATED_SOURCES_DIRECTORY
-                                && (task instanceof JavaCompile);
+                            HAS_ANNOTATION_PROCESSOR_GENERATED_SOURCES_DIRECTORY;
 
                         CompileOptions compileOptions =
                             getCompileOptions.getCompileOptions((T) task);
