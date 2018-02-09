@@ -221,6 +221,75 @@ class IdeaIntegrationSpec extends Specification {
   }
 
   @Unroll
+  def "ideaModule task with project dependency, with Gradle #gradleVersion"() {
+    given:
+    settingsFile << """\
+      include 'processor'
+    """.stripIndent()
+    buildFile << """\
+      allprojects {
+        apply plugin: 'java'
+      }
+      dependencies {
+        annotationProcessor project(':processor')
+      }
+    """.stripIndent()
+
+    when:
+    def result = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
+        .withProjectDir(testProjectDir.root)
+        .withArguments(':ideaModule')
+        .build()
+
+    then:
+    result.task(':ideaModule').outcome == TaskOutcome.SUCCESS
+    result.task(':processor:jar').outcome == TaskOutcome.SUCCESS
+    // TODO: check IML for content roots and dependencies
+
+    where:
+    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
+  }
+
+  @Unroll
+  def "ideaModule task with project dependency, all configurations disabled, with Gradle #gradleVersion"() {
+    given:
+    settingsFile << """\
+      include 'processor'
+    """.stripIndent()
+    buildFile << """\
+      allprojects {
+        apply plugin: 'java'
+      }
+      dependencies {
+        annotationProcessor project(':processor')
+      }
+      idea {
+        module {
+          apt {
+            addAptDependencies = false
+          }
+        }
+      }
+    """.stripIndent()
+
+    when:
+    def result = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
+        .withProjectDir(testProjectDir.root)
+        .withArguments(':ideaModule')
+        .build()
+
+    then:
+    result.task(':ideaModule').outcome == TaskOutcome.SUCCESS
+    result.task(':processor:jar') == null
+    // TODO: check IML for content roots and dependencies
+
+    where:
+    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
+  }
+
+  @Unroll
   def "tooling api, with Gradle #gradleVersion"() {
     setup:
     def mavenRepo = new GradleDependencyGenerator(

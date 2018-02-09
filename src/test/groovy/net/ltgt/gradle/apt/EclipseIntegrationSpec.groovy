@@ -15,9 +15,11 @@ import spock.lang.Unroll
 
 class EclipseIntegrationSpec extends Specification {
   @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
+  File settingsFile
   File buildFile
 
   def setup() {
+    settingsFile = testProjectDir.newFile('settings.gradle')
     buildFile = testProjectDir.newFile('build.gradle')
     buildFile << """\
       buildscript {
@@ -145,6 +147,44 @@ class EclipseIntegrationSpec extends Specification {
       props.load(it)
     }
     props
+  }
+
+  @Unroll
+  def "eclipseFactorypath task with project dependency, with Gradle #gradleVersion"() {
+    given:
+    settingsFile << """\
+      include 'processor'
+    """.stripIndent()
+    buildFile << """\
+      allprojects {
+        apply plugin: 'java'
+      }
+      dependencies {
+        annotationProcessor project(':processor')
+      }
+    """.stripIndent()
+
+    when:
+    def result = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
+        .withProjectDir(testProjectDir.root)
+        .withArguments(':eclipseFactorypath')
+        .build()
+
+    then:
+    result.task(':eclipseFactorypath').outcome == TaskOutcome.SUCCESS
+    result.task(':processor:jar').outcome == TaskOutcome.SUCCESS
+    def factorypath = new File(testProjectDir.root, '.factorypath')
+    factorypath.exists()
+    def entries = new XmlSlurper().parse(factorypath).factorypathentry
+    entries.size() == 1
+    entries.every { it.@kind == 'EXTJAR' && it.@enabled == true && it.@runInBatchMode == false }
+    (entries.@id as Set).equals([
+        "${testProjectDir.root}/processor/build/libs/processor.jar",
+    ].collect { it.replace('/', File.separator) }.toSet())
+
+    where:
+    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
   @Unroll

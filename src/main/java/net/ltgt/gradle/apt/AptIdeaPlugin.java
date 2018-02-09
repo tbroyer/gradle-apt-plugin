@@ -24,6 +24,7 @@ import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
+import org.gradle.plugins.ide.idea.GenerateIdeaModule;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
 import org.gradle.plugins.ide.idea.model.IdeaModule;
@@ -150,8 +151,8 @@ public class AptIdeaPlugin implements Plugin<Project> {
                   new DslObject(testSourceSet)
                       .getConvention()
                       .getPlugin(AptPlugin.AptSourceSetConvention.class);
-              List<Configuration> mainConfigurations = new ArrayList<>();
-              List<Configuration> testConfigurations = new ArrayList<>();
+              final List<Configuration> mainConfigurations = new ArrayList<>();
+              final List<Configuration> testConfigurations = new ArrayList<>();
               if (apt.isAddCompileOnlyDependencies()) {
                 mainConfigurations.add(
                     project
@@ -180,6 +181,17 @@ public class AptIdeaPlugin implements Plugin<Project> {
                   .get("plus")
                   .addAll(mainConfigurations);
               ideaModule.getScopes().get("TEST").get("plus").addAll(testConfigurations);
+              project
+                  .getTasks()
+                  .withType(
+                      GenerateIdeaModule.class,
+                      new Action<GenerateIdeaModule>() {
+                        @Override
+                        public void execute(GenerateIdeaModule generateIdeaModule) {
+                          generateIdeaModule.dependsOn(mainConfigurations.toArray());
+                          generateIdeaModule.dependsOn(testConfigurations.toArray());
+                        }
+                      });
             }
           }
 

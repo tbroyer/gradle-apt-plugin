@@ -202,6 +202,8 @@ public class AptEclipsePlugin implements Plugin<Project> {
                                               .getConvention()
                                               .getPlugin(AptPlugin.AptSourceSetConvention.class)
                                               .getAnnotationProcessorConfigurationName()))));
+                      generateEclipseFactorypath.dependsOn(
+                          factorypath.getPlusConfigurations().toArray());
                     }
                   });
       project.getTasks().getByName("eclipse").dependsOn(task);
