@@ -65,6 +65,14 @@ compileGroovy {
 }
 ```
 
+## Build cache
+
+Compilation tasks are still [cacheable](https://docs.gradle.org/current/userguide/build_cache.html) with a few caveats:
+ * Only one _language_ can be used per source set (i.e. either `src/main/java` or `src/main/groovy` but not both), unless Groovy joint compilation is used (putting Java files in `src/main/groovy`), or tasks are configured to use distinct generated sources destination directories.
+ * Groovy compilation tasks are only fully cacheable starting with Gradle 4.3.
+   In previous versions, the tasks won't be relocatable and will only be cacheable if files in the annotation processor path do not change (e.g. when using a project dependency and that project is rebuilt, even if the classes come from the build cache).
+   This due to a bug/limitation in Gradle preventing the plugin to rely on `options.annotationProcessorPath`, and having no mean to tell Gradle to use classpath normalization; this was fixed in Gradle 4.3.
+
 ## Usage with IDEs
 
 IDE configuration is provided on a best-effort basis.

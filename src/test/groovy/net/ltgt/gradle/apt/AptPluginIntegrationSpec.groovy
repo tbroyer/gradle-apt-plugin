@@ -5,6 +5,7 @@ import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
+import spock.lang.Requires
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -671,5 +672,239 @@ class AptPluginIntegrationSpec extends Specification {
 
     where:
     gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
+  }
+
+  @Requires({ IntegrationTestHelper.GRADLE_VERSIONS.any { GradleVersion.version(it) >= GradleVersion.version("3.5") } })
+  @Unroll
+  def "is build-cache friendly, with Gradle #gradleVersion"() {
+    given:
+    settingsFile << """\
+      include 'annotations'
+      include 'processor'
+      include 'core'
+      buildCache {
+        local(DirectoryBuildCache) {
+          directory = new File(rootDir, 'build-cache')
+        }
+      }
+    """.stripIndent()
+
+    buildFile << """\
+      project('annotations') {
+        apply plugin: 'java'
+      }
+      project('processor') {
+        apply plugin: 'groovy'
+
+        dependencies {
+          compile localGroovy()
+        }
+      }
+      project('core') {
+        apply plugin: 'groovy'
+        apply plugin: 'net.ltgt.apt'
+
+        dependencies {
+          compileOnly project(':annotations')
+          annotationProcessor project(':processor')
+
+          testCompile localGroovy()
+          testCompileOnly project(':annotations')
+          testAnnotationProcessor project(':processor')
+        }
+
+        compileJava {
+          aptOptions.processorArgs = ['foo': 'bar']
+        }
+
+        compileTestGroovy {
+          groovyOptions.javaAnnotationProcessing = true
+        }
+
+        // Get Gradle 4.x to behave like previous versions
+        // This works here because we don't use more than one "language" per source set
+        sourceSets.main.output.classesDir = new File(buildDir, 'classes/main')
+        sourceSets.test.output.classesDir = new File(buildDir, 'classes/test')
+      }
+    """.stripIndent()
+
+    def f = new File(testProjectDir.newFolder('annotations', 'src', 'main', 'java', 'annotations'), 'Helper.java')
+    f.createNewFile()
+    f << """\
+      package annotations;
+
+      public @interface Helper {
+      }
+    """.stripIndent()
+
+    f = new File(testProjectDir.newFolder('processor', 'src', 'main', 'groovy', 'processor'), 'HelperProcessor.groovy')
+    f.createNewFile()
+    f << """\
+      package processor
+
+      import javax.annotation.processing.AbstractProcessor
+      import javax.annotation.processing.RoundEnvironment
+      import javax.annotation.processing.SupportedAnnotationTypes
+      import javax.lang.model.SourceVersion
+      import javax.lang.model.element.TypeElement
+      import javax.lang.model.util.ElementFilter
+      import javax.tools.Diagnostic
+      import javax.tools.FileObject
+      import javax.tools.StandardLocation
+
+      @SupportedAnnotationTypes(HelperProcessor.HELPER)
+      class HelperProcessor extends AbstractProcessor {
+
+        static final String HELPER = "annotations.Helper"
+
+        @Override
+        SourceVersion getSupportedSourceVersion() {
+          return SourceVersion.latest()
+        }
+
+        @Override
+        boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+          ElementFilter.typesIn(roundEnv.getElementsAnnotatedWith(
+              processingEnv.getElementUtils().getTypeElement(HELPER))).each { element ->
+            String helperName = "\${element.getSimpleName()}Helper"
+            try {
+              FileObject f = processingEnv.getFiler().createSourceFile("\${element.getQualifiedName()}Helper", element)
+              f.openWriter().withWriter { w ->
+                w << ""\"\\
+                  package \${processingEnv.getElementUtils().getPackageOf(element)};
+
+                  class \${element.getSimpleName()}Helper {
+                    static String getValue() { return "\${element.getQualifiedName()}"; }
+                  }
+                ""\".stripIndent()
+              }
+            } catch (IOException e) {
+              processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, e.getMessage())
+            }
+          }
+          return false
+        }
+      }
+    """.stripIndent()
+    f = new File(testProjectDir.newFolder('processor', 'src', 'main', 'resources', 'META-INF', 'services'), 'javax.annotation.processing.Processor')
+    f.createNewFile()
+    f << """\
+      processor.HelperProcessor
+    """.stripIndent()
+
+    // Java file in (main) sources
+    f = new File(testProjectDir.newFolder('core', 'src', 'main', 'java', 'core'), 'HelloWorldJ.java')
+    f.createNewFile()
+    f << """\
+      package core;
+
+      import annotations.Helper;
+
+      @Helper
+      class HelloWorldJ {
+        String sayHello(String name) {
+          return "Hello, " + name + "! I'm " + HelloWorldJHelper.getValue() + ".";
+        }
+      }
+    """.stripIndent()
+
+    // Java file in Groovy (test) sources
+    f = new File(testProjectDir.newFolder('core', 'src', 'test', 'groovy', 'test'), 'HelloWorldJ.java')
+    f.createNewFile()
+    f << """\
+      package test;
+
+      import annotations.Helper;
+
+      @Helper
+      class HelloWorldJ {
+        String sayHello(String name) {
+          return "Hello, " + name + "! I'm " + HelloWorldJHelper.getValue() + ".";
+        }
+      }
+    """.stripIndent()
+
+    // Groovy file in (test) sources
+    f = new File(f.parentFile, 'HelloWorldG.groovy')
+    f.createNewFile()
+    f << """\
+      package test;
+
+      import annotations.Helper;
+
+      @Helper
+      class HelloWorldG {
+        String sayHello(String name) {
+          "Hello, \${name}! I'm \${HelloWorldGHelper.getValue()}.";
+        }
+      }
+    """.stripIndent()
+
+    expect:
+
+    when:
+    def result = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
+        .withProjectDir(testProjectDir.root)
+        .withArguments('--build-cache', ':core:testClasses')
+        .build()
+
+    then:
+    result.task(':annotations:compileJava').outcome == TaskOutcome.SUCCESS
+    result.task(':processor:compileJava').outcome == TaskOutcome.NO_SOURCE
+    result.task(':processor:compileGroovy').outcome == TaskOutcome.SUCCESS
+    result.task(':core:compileJava').outcome == TaskOutcome.SUCCESS
+    result.task(':core:compileGroovy').outcome == TaskOutcome.NO_SOURCE
+    result.task(':core:compileTestJava').outcome == TaskOutcome.NO_SOURCE
+    result.task(':core:compileTestGroovy').outcome == TaskOutcome.SUCCESS
+    result.task(':core:classes').outcome == TaskOutcome.SUCCESS
+    result.task(':core:testClasses').outcome == TaskOutcome.SUCCESS
+    new File(testProjectDir.root, 'core/build/generated/source/apt/main/core/HelloWorldJHelper.java').exists()
+    new File(testProjectDir.root, 'core/build/generated/source/apt/test/test/HelloWorldJHelper.java').exists()
+    new File(testProjectDir.root, 'core/build/generated/source/apt/test/test/HelloWorldGHelper.java').exists()
+    new File(testProjectDir.root, 'core/build/classes/main/core/HelloWorldJ.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/main/core/HelloWorldJHelper.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/test/test/HelloWorldJ.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/test/test/HelloWorldJHelper.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/test/test/HelloWorldG.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/test/test/HelloWorldGHelper.class').exists()
+
+    when:
+    final usesClasspathNormalization = GradleVersion.version(gradleVersion) >= GradleVersion.version("4.3")
+    // Reuse JARs for GroovyCompile 'til Gradle 4.3 where options.annotationProcessorPath cannot be used,
+    // and classpath normalization cannot be declared through TaskInputs.
+    if (usesClasspathNormalization) {
+      new File(testProjectDir.root, 'annotations/build').deleteDir()
+      new File(testProjectDir.root, 'processor/build').deleteDir()
+    }
+    new File(testProjectDir.root, 'core/build').deleteDir()
+    result = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
+        .withProjectDir(testProjectDir.root)
+        .withArguments('--build-cache', ':core:testClasses')
+        .build()
+
+    then:
+    result.task(':annotations:compileJava').outcome == (usesClasspathNormalization ? TaskOutcome.FROM_CACHE : TaskOutcome.UP_TO_DATE)
+    result.task(':processor:compileJava').outcome == TaskOutcome.NO_SOURCE
+    result.task(':processor:compileGroovy').outcome == (usesClasspathNormalization ? TaskOutcome.FROM_CACHE : TaskOutcome.UP_TO_DATE)
+    result.task(':core:compileJava').outcome == TaskOutcome.FROM_CACHE
+    result.task(':core:compileGroovy').outcome == TaskOutcome.NO_SOURCE
+    result.task(':core:compileTestJava').outcome == TaskOutcome.NO_SOURCE
+    result.task(':core:compileTestGroovy').outcome == TaskOutcome.FROM_CACHE
+    result.task(':core:classes').outcome == TaskOutcome.UP_TO_DATE
+    result.task(':core:testClasses').outcome == TaskOutcome.UP_TO_DATE
+    new File(testProjectDir.root, 'core/build/generated/source/apt/main/core/HelloWorldJHelper.java').exists()
+    new File(testProjectDir.root, 'core/build/generated/source/apt/test/test/HelloWorldJHelper.java').exists()
+    new File(testProjectDir.root, 'core/build/generated/source/apt/test/test/HelloWorldGHelper.java').exists()
+    new File(testProjectDir.root, 'core/build/classes/main/core/HelloWorldJ.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/main/core/HelloWorldJHelper.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/test/test/HelloWorldJ.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/test/test/HelloWorldJHelper.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/test/test/HelloWorldG.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/test/test/HelloWorldGHelper.class').exists()
+
+    where:
+    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS.findAll { GradleVersion.version(it) >= GradleVersion.version("3.5") }
   }
 }
