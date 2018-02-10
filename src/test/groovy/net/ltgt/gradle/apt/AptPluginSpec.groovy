@@ -26,7 +26,6 @@ class AptPluginSpec extends PluginProjectSpec {
     project.apply plugin: pluginName
     project.apply plugin: 'java'
     project.evaluate()
-    project.tasks.withType(JavaCompile) { it.actions.first().execute(it) }
 
     then:
     project.configurations.findByName('annotationProcessor')
@@ -52,8 +51,6 @@ class AptPluginSpec extends PluginProjectSpec {
     project.apply plugin: pluginName
     project.apply plugin: 'groovy'
     project.evaluate()
-    project.tasks.withType(JavaCompile) { it.actions.first().execute(it) }
-    project.tasks.withType(GroovyCompile) { it.actions.first().execute(it) }
 
     then:
     project.configurations.findByName('annotationProcessor')
@@ -119,8 +116,6 @@ class AptPluginSpec extends PluginProjectSpec {
       testAnnotationProcessor 'processor:testCompile:1.0'
     }
     project.evaluate()
-    project.tasks.withType(JavaCompile) { it.actions.first().execute(it) }
-    project.tasks.withType(GroovyCompile) { it.actions.first().execute(it) }
 
     then:
     with(project.tasks.compileJava) { JavaCompile task ->
@@ -188,8 +183,6 @@ class AptPluginSpec extends PluginProjectSpec {
       testApt     'processor:testCompile:1.0'
     }
     project.evaluate()
-    project.tasks.withType(JavaCompile) { it.actions.first().execute(it) }
-    project.tasks.withType(GroovyCompile) { it.actions.first().execute(it) }
 
     then:
     project.configurations.apt.asPath == project.configurations.annotationProcessor.asPath
@@ -279,8 +272,6 @@ class AptPluginSpec extends PluginProjectSpec {
       aptOptions.processorpath = project.configurations.testAnnotationProcessing
     }
     project.evaluate()
-    project.tasks.withType(JavaCompile) { it.actions.first().execute(it) }
-    project.tasks.withType(GroovyCompile) { it.actions.first().execute(it) }
 
     then:
     with(project.tasks.compileJava) { JavaCompile task ->
@@ -356,8 +347,6 @@ class AptPluginSpec extends PluginProjectSpec {
       annotationProcessorPath = project.configurations.testAnnotationProcessing
     }
     project.evaluate()
-    project.tasks.withType(JavaCompile) { it.actions.first().execute(it) }
-    project.tasks.withType(GroovyCompile) { it.actions.first().execute(it) }
 
     then:
     with(project.tasks.compileJava) { JavaCompile task ->

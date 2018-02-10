@@ -20,12 +20,6 @@ class CompatibilityUtils {
   private static final Method taskInputsPropertyMethod;
   private static final Method taskOutputsDirMethod;
   private static final Method taskInputPropertyBuilderOptionalMethod;
-  private static final Method taskInputFilePropertyBuilderWithPropertyNameMethod;
-  private static final Method taskInputFilePropertyBuilderOptionalMethod;
-  private static final Method taskInputFilePropertyBuilderWithNormalizerMethod;
-  private static final Class<?> classpathNormalizerClass;
-  private static final Method taskOutputFilePropertyBuilderWithPropertyNameMethod;
-  private static final Method taskOutputFilePropertyBuilderOptionalMethod;
   private static final Method fileContentMergerGetBeforeMergedMethod;
   private static final Method fileContentMergerGetWhenMergedMethod;
 
@@ -43,34 +37,6 @@ class CompatibilityUtils {
         taskInputPropertyBuilderClass == null
             ? null
             : getMethod(taskInputPropertyBuilderClass, "optional", boolean.class);
-
-    Class<?> taskInputFilePropertyBuilderClass =
-        classForName("org.gradle.api.tasks.TaskInputFilePropertyBuilder");
-    taskInputFilePropertyBuilderWithPropertyNameMethod =
-        taskInputFilePropertyBuilderClass == null
-            ? null
-            : getMethod(taskInputFilePropertyBuilderClass, "withPropertyName", String.class);
-    taskInputFilePropertyBuilderOptionalMethod =
-        taskInputFilePropertyBuilderClass == null
-            ? null
-            : getMethod(taskInputFilePropertyBuilderClass, "optional");
-    taskInputFilePropertyBuilderWithNormalizerMethod =
-        taskInputFilePropertyBuilderClass == null
-            ? null
-            : findMethod(taskInputFilePropertyBuilderClass, "withNormalizer", Class.class);
-
-    classpathNormalizerClass = classForName("org.gradle.api.tasks.ClasspathNormalizer");
-
-    Class<?> taskOutputFilePropertyBuilderClass =
-        classForName("org.gradle.api.tasks.TaskOutputFilePropertyBuilder");
-    taskOutputFilePropertyBuilderWithPropertyNameMethod =
-        taskOutputFilePropertyBuilderClass == null
-            ? null
-            : getMethod(taskOutputFilePropertyBuilderClass, "withPropertyName", String.class);
-    taskOutputFilePropertyBuilderOptionalMethod =
-        taskOutputFilePropertyBuilderClass == null
-            ? null
-            : getMethod(taskOutputFilePropertyBuilderClass, "optional");
 
     fileContentMergerGetBeforeMergedMethod = getMethod(FileContentMerger.class, "getBeforeMerged");
     fileContentMergerGetWhenMergedMethod = getMethod(FileContentMerger.class, "getWhenMerged");
@@ -151,74 +117,9 @@ class CompatibilityUtils {
   }
 
   /** {@link TaskOutputs#dir(Object)} changed return type in Gradle 3.0. */
-  static TaskOutputs dir(TaskOutputs outputs, Object dir) {
+  static void dir(TaskOutputs outputs, Object dir) {
     try {
-      return (TaskOutputs) taskOutputsDirMethod.invoke(outputs, dir);
-    } catch (IllegalAccessException | InvocationTargetException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  /** {@link org.gradle.api.tasks.TaskInputFilePropertyBuilder} was introduced in Gradle 3.0. */
-  static void withPropertyName(TaskInputs inputs, String propertyName) {
-    if (taskInputFilePropertyBuilderWithPropertyNameMethod == null) {
-      return;
-    }
-    try {
-      taskInputFilePropertyBuilderWithPropertyNameMethod.invoke(inputs, propertyName);
-    } catch (IllegalAccessException | InvocationTargetException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  /** {@link org.gradle.api.tasks.TaskInputFilePropertyBuilder} was introduced in Gradle 3.0. */
-  static void optional(TaskInputs inputs) {
-    if (taskInputFilePropertyBuilderOptionalMethod == null) {
-      return;
-    }
-    try {
-      taskInputFilePropertyBuilderOptionalMethod.invoke(inputs);
-    } catch (IllegalAccessException | InvocationTargetException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  /**
-   * {@link org.gradle.api.tasks.TaskInputFilePropertyBuilder#withNormalizer(Class)} was introduced
-   * in Gradle 4.3.
-   */
-  static void withClasspathNormalizer(TaskInputs inputs) {
-    if (taskInputFilePropertyBuilderWithNormalizerMethod == null
-        || classpathNormalizerClass == null) {
-      return;
-    }
-    try {
-      taskInputFilePropertyBuilderWithNormalizerMethod.invoke(
-          inputs, new Object[] {classpathNormalizerClass});
-    } catch (IllegalAccessException | InvocationTargetException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  /** {@link org.gradle.api.tasks.TaskOutputFilePropertyBuilder} was introduced in Gradle 3.0. */
-  static void withPropertyName(TaskOutputs outputs, String propertyName) {
-    if (taskOutputFilePropertyBuilderWithPropertyNameMethod == null) {
-      return;
-    }
-    try {
-      taskOutputFilePropertyBuilderWithPropertyNameMethod.invoke(outputs, propertyName);
-    } catch (IllegalAccessException | InvocationTargetException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  /** {@link org.gradle.api.tasks.TaskOutputFilePropertyBuilder} was introduced in Gradle 3.0. */
-  static void optional(TaskOutputs outputs) {
-    if (taskOutputFilePropertyBuilderOptionalMethod == null) {
-      return;
-    }
-    try {
-      taskOutputFilePropertyBuilderOptionalMethod.invoke(outputs);
+      taskOutputsDirMethod.invoke(outputs, dir);
     } catch (IllegalAccessException | InvocationTargetException e) {
       throw new RuntimeException(e);
     }

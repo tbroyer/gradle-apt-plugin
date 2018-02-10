@@ -356,8 +356,10 @@ class AptPluginIntegrationSpec extends Specification {
     result.output.contains("The apt configuration has been deprecated. Please use the annotationProcessor configuration instead.")
     result.output.contains("The testApt configuration has been deprecated. Please use the testAnnotationProcessor configuration instead.")
     result.output.contains("The integTestApt configuration has been deprecated. Please use the integTestAnnotationProcessor configuration instead.")
-    GradleVersion.version(gradleVersion) < GradleVersion.version("3.4") ||
-        result.output.contains(":compileIntegTestJava: The aptOptions.processorpath property has been deprecated. Please use the options.annotationProcessorPath property instead.")
+    GradleVersion.version(gradleVersion) < GradleVersion.version("3.4") || (
+        result.output.contains(":compileIntegTestJava: The aptOptions.processorpath property has been deprecated") &&
+        result.output.contains("Please use the options.annotationProcessorPath property instead.")
+    )
     GradleVersion.version(gradleVersion) < GradleVersion.version("4.3") ||
         result.output.contains(":compileIntegTestJava: The generatedSourcesDestinationDir property has been deprecated. Please use the options.annotationProcessorGeneratedSourcesDirectory property instead.")
 
