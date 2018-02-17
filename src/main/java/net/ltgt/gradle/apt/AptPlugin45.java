@@ -70,17 +70,19 @@ class AptPlugin45 extends AptPlugin.Impl {
       final SourceSet sourceSet,
       AbstractCompile task,
       CompileOptions compileOptions) {
-    compileOptions.setAnnotationProcessorPath(
-        project.files(
-            new Callable<FileCollection>() {
-              @Override
-              public FileCollection call() {
-                return new DslObject(sourceSet)
-                    .getConvention()
-                    .getPlugin(AptPlugin.AptSourceSetConvention.class)
-                    .getAnnotationProcessorPath();
-              }
-            }));
+    if (compileOptions.getAnnotationProcessorPath() == null) {
+      compileOptions.setAnnotationProcessorPath(
+          project.files(
+              new Callable<FileCollection>() {
+                @Override
+                public FileCollection call() {
+                  return new DslObject(sourceSet)
+                      .getConvention()
+                      .getPlugin(AptPlugin.AptSourceSetConvention.class)
+                      .getAnnotationProcessorPath();
+                }
+              }));
+    }
     compileOptions.setAnnotationProcessorGeneratedSourcesDirectory(
         project.provider(
             new Callable<File>() {
