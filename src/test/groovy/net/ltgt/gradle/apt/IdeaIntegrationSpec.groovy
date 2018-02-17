@@ -45,7 +45,6 @@ class IdeaIntegrationSpec extends Specification {
         .build()
 
     then:
-    result.task(':idea').outcome == TaskOutcome.SUCCESS
     result.task(':ideaProject').outcome == TaskOutcome.SUCCESS
     result.task(':ideaModule').outcome == TaskOutcome.SUCCESS
     hasAnnotationProcessingConfigured(true)
@@ -86,7 +85,6 @@ class IdeaIntegrationSpec extends Specification {
         .build()
 
     then:
-    result.task(':idea').outcome == TaskOutcome.SUCCESS
     result.task(':ideaProject').outcome == TaskOutcome.SUCCESS
     result.task(':ideaModule').outcome == TaskOutcome.SUCCESS
     hasAnnotationProcessingConfigured(false)
@@ -143,7 +141,6 @@ class IdeaIntegrationSpec extends Specification {
         .build()
 
     then:
-    result.task(':idea').outcome == TaskOutcome.SUCCESS
     result.task(':ideaModule').outcome == TaskOutcome.SUCCESS
     hasAnnotationProcessingConfigured(true)
     // TODO: check IML for content roots and dependencies
@@ -211,7 +208,6 @@ class IdeaIntegrationSpec extends Specification {
         .build()
 
     then:
-    result.task(':idea').outcome == TaskOutcome.SUCCESS
     result.task(':ideaModule').outcome == TaskOutcome.SUCCESS
     hasAnnotationProcessingConfigured(false)
     // TODO: check IML for content roots and dependencies

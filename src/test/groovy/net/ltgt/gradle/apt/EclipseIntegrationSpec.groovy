@@ -41,7 +41,6 @@ class EclipseIntegrationSpec extends Specification {
         .build()
 
     then:
-    result.task(':eclipse').outcome == TaskOutcome.SUCCESS
     result.task(':eclipseJdtApt') == null
     result.task(':eclipseFactorypath') == null
     !new File(testProjectDir.root, '.factorypath').exists()
@@ -98,7 +97,6 @@ class EclipseIntegrationSpec extends Specification {
         .build()
 
     then:
-    result.task(':eclipse').outcome == TaskOutcome.SUCCESS
     result.task(':eclipseJdtApt').outcome == TaskOutcome.SUCCESS
     result.task(':eclipseFactorypath').outcome == TaskOutcome.SUCCESS
     def factorypath = new File(testProjectDir.root, '.factorypath')
@@ -131,7 +129,6 @@ class EclipseIntegrationSpec extends Specification {
         .build()
 
     then:
-    result2.task(':cleanEclipse').outcome == TaskOutcome.SUCCESS
     result2.task(':cleanEclipseJdtApt').outcome == TaskOutcome.SUCCESS
     result2.task(':cleanEclipseFactorypath').outcome == TaskOutcome.SUCCESS
     !factorypath.exists()
@@ -230,7 +227,6 @@ class EclipseIntegrationSpec extends Specification {
         .build()
 
     then:
-    result.task(':eclipse').outcome == TaskOutcome.SUCCESS
     result.task(':eclipseJdtApt').outcome == TaskOutcome.SUCCESS
     result.task(':eclipseFactorypath').outcome == TaskOutcome.SUCCESS
     def factorypath = new File(testProjectDir.root, '.factorypath')
