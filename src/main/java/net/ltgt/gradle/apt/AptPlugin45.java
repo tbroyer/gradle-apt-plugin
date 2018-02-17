@@ -12,7 +12,6 @@ import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.api.tasks.compile.CompileOptions;
-import org.gradle.api.tasks.compile.CompilerArgumentProvider;
 
 class AptPlugin45 extends AptPlugin.Impl {
 
@@ -172,8 +171,9 @@ class AptPlugin45 extends AptPlugin.Impl {
     }
   }
 
+  @SuppressWarnings("deprecation")
   private static class AptOptions45 extends AptPlugin.AptOptions
-      implements CompilerArgumentProvider {
+      implements org.gradle.api.tasks.compile.CompilerArgumentProvider {
     private final Project project;
     private final AbstractCompile task;
     private final CompileOptions compileOptions;
