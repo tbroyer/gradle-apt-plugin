@@ -44,6 +44,10 @@ dependencies {
     }
 }
 
+tasks.withType<JavaCompile> {
+    options.compilerArgs.addAll(arrayOf("-Xlint:all", "-Werror"))
+}
+
 val test by tasks.getting(Test::class) {
     val testGradleVersions = project.findProperty("test.gradle-versions") as? String
     val jar: Jar by tasks.getting
