@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -16,6 +17,8 @@ import org.gradle.api.plugins.GroovyBasePlugin;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.api.tasks.compile.CompileOptions;
@@ -25,7 +28,7 @@ import org.gradle.util.GradleVersion;
 
 public class AptPlugin implements Plugin<Project> {
 
-  private static final String PLUGIN_ID = "net.ltgt.apt";
+  static final String PLUGIN_ID = "net.ltgt.apt";
 
   private static final Impl IMPL = Impl.newInstance();
 
@@ -251,9 +254,11 @@ public class AptPlugin implements Plugin<Project> {
   }
 
   public abstract static class AptConvention {
+    @Nullable
     public abstract File getGeneratedSourcesDestinationDir();
 
-    public abstract void setGeneratedSourcesDestinationDir(Object generatedSourcesDestinationDir);
+    public abstract void setGeneratedSourcesDestinationDir(
+        @Nullable Object generatedSourcesDestinationDir);
 
     public abstract AptOptions getAptOptions();
   }
@@ -272,25 +277,31 @@ public class AptPlugin implements Plugin<Project> {
       this.annotationProcessing = annotationProcessing;
     }
 
+    @Internal
+    @Nullable
     public abstract FileCollection getProcessorpath();
 
-    public abstract void setProcessorpath(Object processorpath);
+    public abstract void setProcessorpath(@Nullable Object processorpath);
 
     @Input
+    @Optional
+    @Nullable
     public List<?> getProcessors() {
       return processors;
     }
 
-    public void setProcessors(List<?> processors) {
+    public void setProcessors(@Nullable List<?> processors) {
       this.processors = processors;
     }
 
     @Input
+    @Optional
+    @Nullable
     public Map<String, ?> getProcessorArgs() {
       return processorArgs;
     }
 
-    public void setProcessorArgs(Map<String, ?> processorArgs) {
+    public void setProcessorArgs(@Nullable Map<String, ?> processorArgs) {
       this.processorArgs = processorArgs;
     }
 
@@ -334,9 +345,11 @@ public class AptPlugin implements Plugin<Project> {
       this.sourceSet = sourceSet;
     }
 
+    @Nullable
     public abstract FileCollection getAnnotationProcessorPath();
 
-    public abstract void setAnnotationProcessorPath(FileCollection annotationProcessorPath);
+    public abstract void setAnnotationProcessorPath(
+        @Nullable FileCollection annotationProcessorPath);
 
     @Deprecated
     public FileCollection getProcessorpath() {
@@ -346,7 +359,7 @@ public class AptPlugin implements Plugin<Project> {
     }
 
     @Deprecated
-    public void setProcessorpath(Object processorpath) {
+    public void setProcessorpath(@Nullable Object processorpath) {
       DeprecationLogger.nagUserWith(
           project, "sourceSets." + sourceSet.getName() + ": " + PROCESSORPATH_DEPRECATION_MESSAGE);
       if (processorpath == null || processorpath instanceof FileCollection) {
@@ -376,6 +389,7 @@ public class AptPlugin implements Plugin<Project> {
       this.project = project;
     }
 
+    @Nullable
     public File getGeneratedSourcesDir() {
       if (generatedSourcesDir == null) {
         return null;
@@ -383,7 +397,7 @@ public class AptPlugin implements Plugin<Project> {
       return project.file(generatedSourcesDir);
     }
 
-    public void setGeneratedSourcesDir(Object generatedSourcesDir) {
+    public void setGeneratedSourcesDir(@Nullable Object generatedSourcesDir) {
       this.generatedSourcesDir = generatedSourcesDir;
     }
   }

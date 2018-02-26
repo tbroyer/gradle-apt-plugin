@@ -1,3 +1,4 @@
+import java.util.concurrent.Callable
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
 plugins {
@@ -47,9 +48,12 @@ tasks.withType<JavaCompile> {
     options.compilerArgs.addAll(arrayOf("-Xlint:all", "-Werror"))
 }
 
+val jar by tasks.getting(Jar::class) {
+    from(Callable { project(":kotlin-extensions").java.sourceSets["main"].output })
+}
+
 val test by tasks.getting(Test::class) {
     val testGradleVersions = project.findProperty("test.gradle-versions") as? String
-    val jar: Jar by tasks.getting
 
     dependsOn(jar)
     inputs.file(jar.archivePath).withPathSensitivity(PathSensitivity.NONE)

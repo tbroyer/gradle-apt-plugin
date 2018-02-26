@@ -2,6 +2,7 @@ package net.ltgt.gradle.apt;
 
 import java.io.File;
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -143,13 +144,14 @@ class AptPlugin43to44 extends AptPlugin.Impl {
       super(project, sourceSet);
     }
 
+    @Nullable
     @Override
     public FileCollection getAnnotationProcessorPath() {
       return annotationProcessorPath;
     }
 
     @Override
-    public void setAnnotationProcessorPath(FileCollection annotationProcessorPath) {
+    public void setAnnotationProcessorPath(@Nullable FileCollection annotationProcessorPath) {
       this.annotationProcessorPath = annotationProcessorPath;
     }
 
@@ -179,6 +181,7 @@ class AptPlugin43to44 extends AptPlugin.Impl {
       this.aptOptions = new AptOptions43to44(project, this.task, compileOptions);
     }
 
+    @Nullable
     @Override
     public File getGeneratedSourcesDestinationDir() {
       DeprecationLogger.nagUserWith(task, GENERATED_SOURCES_DESTINATION_DIR_DEPRECATION_MESSAGE);
@@ -186,7 +189,8 @@ class AptPlugin43to44 extends AptPlugin.Impl {
     }
 
     @Override
-    public void setGeneratedSourcesDestinationDir(final Object generatedSourcesDestinationDir) {
+    public void setGeneratedSourcesDestinationDir(
+        @Nullable final Object generatedSourcesDestinationDir) {
       DeprecationLogger.nagUserWith(task, GENERATED_SOURCES_DESTINATION_DIR_DEPRECATION_MESSAGE);
       if (generatedSourcesDestinationDir == null) {
         compileOptions.setAnnotationProcessorGeneratedSourcesDirectory((File) null);
@@ -219,6 +223,7 @@ class AptPlugin43to44 extends AptPlugin.Impl {
       this.compileOptions = compileOptions;
     }
 
+    @Nullable
     @Override
     public FileCollection getProcessorpath() {
       DeprecationLogger.nagUserWith(task, APT_OPTIONS_PROCESSORPATH_DEPRECATION_MESSAGE);
@@ -226,7 +231,7 @@ class AptPlugin43to44 extends AptPlugin.Impl {
     }
 
     @Override
-    public void setProcessorpath(Object processorpath) {
+    public void setProcessorpath(@Nullable Object processorpath) {
       DeprecationLogger.nagUserWith(task, APT_OPTIONS_PROCESSORPATH_DEPRECATION_MESSAGE);
       if (processorpath == null || processorpath instanceof FileCollection) {
         compileOptions.setAnnotationProcessorPath((FileCollection) processorpath);

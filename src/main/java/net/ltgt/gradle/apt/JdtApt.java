@@ -70,8 +70,4 @@ public class JdtApt extends PropertiesPersistableConfigurationObject {
   public Map<String, String> getProcessorOptions() {
     return processorOptions;
   }
-
-  public void setProcessorOptions(Map<String, String> processorOptions) {
-    this.processorOptions = processorOptions;
-  }
 }

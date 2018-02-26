@@ -3,6 +3,7 @@ package net.ltgt.gradle.apt;
 import groovy.lang.Closure;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Objects;
 import org.gradle.api.Action;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.plugins.ide.api.XmlFileContentMerger;
@@ -23,7 +24,7 @@ public class EclipseFactorypath {
   }
 
   public void setPlusConfigurations(Collection<Configuration> plusConfigurations) {
-    this.plusConfigurations = plusConfigurations;
+    this.plusConfigurations = Objects.requireNonNull(plusConfigurations);
   }
 
   public Collection<Configuration> getMinusConfigurations() {
@@ -31,7 +32,7 @@ public class EclipseFactorypath {
   }
 
   public void setMinusConfigurations(Collection<Configuration> minusConfigurations) {
-    this.minusConfigurations = minusConfigurations;
+    this.minusConfigurations = Objects.requireNonNull(minusConfigurations);
   }
 
   public XmlFileContentMerger getFile() {

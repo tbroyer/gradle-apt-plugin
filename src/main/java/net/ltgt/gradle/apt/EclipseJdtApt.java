@@ -4,6 +4,8 @@ import groovy.lang.Closure;
 import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
+import javax.annotation.Nullable;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.plugins.ide.api.PropertiesFileContentMerger;
@@ -41,23 +43,21 @@ public class EclipseJdtApt {
   private Object genSrcDir = ".apt_generated";
 
   public File getGenSrcDir() {
-    if (genSrcDir == null) {
-      return null;
-    }
     return project.file(genSrcDir);
   }
 
   public void setGenSrcDir(Object genSrcDir) {
-    this.genSrcDir = genSrcDir;
+    this.genSrcDir = Objects.requireNonNull(genSrcDir);
   }
 
   private Map<String, ?> processorOptions = new LinkedHashMap<>();
 
+  @Nullable
   public Map<String, ?> getProcessorOptions() {
     return processorOptions;
   }
 
-  public void setProcessorOptions(Map<String, ?> processorOptions) {
+  public void setProcessorOptions(@Nullable Map<String, ?> processorOptions) {
     this.processorOptions = processorOptions;
   }
 

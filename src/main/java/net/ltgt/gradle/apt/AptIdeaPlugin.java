@@ -333,11 +333,11 @@ public class AptIdeaPlugin implements Plugin<Project> {
     }
 
     public void setMainDependenciesScope(String mainDependenciesScope) {
-      this.mainDependenciesScope = mainDependenciesScope;
+      this.mainDependenciesScope = Objects.requireNonNull(mainDependenciesScope);
     }
   }
 
-  private static class ProjectAptConvention {
+  public static class ProjectAptConvention {
     private boolean configureAnnotationProcessing = true;
 
     public boolean isConfigureAnnotationProcessing() {
