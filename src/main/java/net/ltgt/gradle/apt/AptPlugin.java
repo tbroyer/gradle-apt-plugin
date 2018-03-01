@@ -217,7 +217,9 @@ public class AptPlugin implements Plugin<Project> {
 
   abstract static class Impl {
     static Impl newInstance() {
-      if (GradleVersion.current().compareTo(GradleVersion.version("4.5")) >= 0) {
+      if (GradleVersion.current().compareTo(GradleVersion.version("4.6")) >= 0) {
+        return new AptPlugin46();
+      } else if (GradleVersion.current().compareTo(GradleVersion.version("4.5")) >= 0) {
         return new AptPlugin45();
       } else if (GradleVersion.current().compareTo(GradleVersion.version("4.3")) >= 0) {
         return new AptPlugin43to44();

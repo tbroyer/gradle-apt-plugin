@@ -3,7 +3,6 @@ package net.ltgt.gradle.apt;
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.Callable;
-import javax.annotation.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.FileCollection;
@@ -12,8 +11,9 @@ import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.api.tasks.compile.CompileOptions;
+import org.gradle.process.CommandLineArgumentProvider;
 
-class AptPlugin45 extends AptPlugin.Impl {
+class AptPlugin46 extends AptPlugin.Impl {
 
   static final String GENERATED_SOURCES_DESTINATION_DIR_DEPRECATION_MESSAGE =
       "The generatedSourcesDestinationDir property has been deprecated. Please use the options.annotationProcessorGeneratedSourcesDirectory property instead.";
@@ -23,7 +23,7 @@ class AptPlugin45 extends AptPlugin.Impl {
   @Override
   protected AptPlugin.AptConvention createAptConvention(
       Project project, AbstractCompile task, CompileOptions compileOptions) {
-    return new AptConvention45(project, task, compileOptions);
+    return new AptConvention46(project, task, compileOptions);
   }
 
   @Override
@@ -31,13 +31,13 @@ class AptPlugin45 extends AptPlugin.Impl {
       Project project, AbstractCompile task, CompileOptions compileOptions) {
     compileOptions
         .getCompilerArgumentProviders()
-        .add(task.getConvention().getPlugin(AptConvention45.class).getAptOptions());
+        .add(task.getConvention().getPlugin(AptConvention46.class).getAptOptions());
   }
 
   @Override
   protected AptPlugin.AptSourceSetConvention createAptSourceSetConvention(
       Project project, SourceSet sourceSet) {
-    return new AptSourceSetConvention45(project, sourceSet);
+    return new AptSourceSetConvention46(project, sourceSet);
   }
 
   @Override
@@ -49,12 +49,9 @@ class AptPlugin45 extends AptPlugin.Impl {
   @Override
   protected Configuration ensureAnnotationProcessorConfiguration(
       Project project, SourceSet sourceSet, AptPlugin.AptSourceSetConvention convention) {
-    Configuration annotationProcessorConfiguration =
-        project.getConfigurations().create(convention.getAnnotationProcessorConfigurationName());
-    annotationProcessorConfiguration.setVisible(false);
-    annotationProcessorConfiguration.setDescription(
-        "Annotation processors and their dependencies for " + sourceSet.getName() + ".");
-    return annotationProcessorConfiguration;
+    return project
+        .getConfigurations()
+        .getByName(sourceSet.getAnnotationProcessorConfigurationName());
   }
 
   @Override
@@ -63,19 +60,6 @@ class AptPlugin45 extends AptPlugin.Impl {
       final SourceSet sourceSet,
       AbstractCompile task,
       CompileOptions compileOptions) {
-    if (compileOptions.getAnnotationProcessorPath() == null) {
-      compileOptions.setAnnotationProcessorPath(
-          project.files(
-              new Callable<FileCollection>() {
-                @Override
-                public FileCollection call() {
-                  return new DslObject(sourceSet)
-                      .getConvention()
-                      .getPlugin(AptPlugin.AptSourceSetConvention.class)
-                      .getAnnotationProcessorPath();
-                }
-              }));
-    }
     compileOptions.setAnnotationProcessorGeneratedSourcesDirectory(
         project.provider(
             new Callable<File>() {
@@ -89,22 +73,19 @@ class AptPlugin45 extends AptPlugin.Impl {
             }));
   }
 
-  private static class AptSourceSetConvention45 extends AptPlugin.AptSourceSetConvention {
-    private FileCollection annotationProcessorPath;
-
-    private AptSourceSetConvention45(Project project, SourceSet sourceSet) {
+  private static class AptSourceSetConvention46 extends AptPlugin.AptSourceSetConvention {
+    private AptSourceSetConvention46(Project project, SourceSet sourceSet) {
       super(project, sourceSet);
     }
 
-    @Nullable
     @Override
     public FileCollection getAnnotationProcessorPath() {
-      return annotationProcessorPath;
+      return sourceSet.getAnnotationProcessorPath();
     }
 
     @Override
-    public void setAnnotationProcessorPath(@Nullable FileCollection annotationProcessorPath) {
-      this.annotationProcessorPath = annotationProcessorPath;
+    public void setAnnotationProcessorPath(FileCollection annotationProcessorPath) {
+      sourceSet.setAnnotationProcessorPath(annotationProcessorPath);
     }
 
     @Override
@@ -114,26 +95,24 @@ class AptPlugin45 extends AptPlugin.Impl {
 
     @Override
     public String getAnnotationProcessorConfigurationName() {
-      // HACK: we use the same naming logic/scheme as for tasks, so just use SourceSet#getTaskName
-      return sourceSet.getTaskName("", "annotationProcessor");
+      return sourceSet.getAnnotationProcessorConfigurationName();
     }
   }
 
-  private static class AptConvention45 extends AptPlugin.AptConvention {
+  private static class AptConvention46 extends AptPlugin.AptConvention {
     private final Project project;
     private final AbstractCompile task;
     private final CompileOptions compileOptions;
 
-    private final AptOptions45 aptOptions;
+    private final AptOptions46 aptOptions;
 
-    AptConvention45(Project project, AbstractCompile task, CompileOptions compileOptions) {
+    AptConvention46(Project project, AbstractCompile task, CompileOptions compileOptions) {
       this.project = project;
       this.task = task;
       this.compileOptions = compileOptions;
-      this.aptOptions = new AptOptions45(project, task, compileOptions);
+      this.aptOptions = new AptOptions46(project, task, compileOptions);
     }
 
-    @Nullable
     @Override
     public File getGeneratedSourcesDestinationDir() {
       DeprecationLogger.nagUserWith(task, GENERATED_SOURCES_DESTINATION_DIR_DEPRECATION_MESSAGE);
@@ -141,8 +120,7 @@ class AptPlugin45 extends AptPlugin.Impl {
     }
 
     @Override
-    public void setGeneratedSourcesDestinationDir(
-        @Nullable final Object generatedSourcesDestinationDir) {
+    public void setGeneratedSourcesDestinationDir(final Object generatedSourcesDestinationDir) {
       DeprecationLogger.nagUserWith(task, GENERATED_SOURCES_DESTINATION_DIR_DEPRECATION_MESSAGE);
       if (generatedSourcesDestinationDir == null) {
         compileOptions.setAnnotationProcessorGeneratedSourcesDirectory((File) null);
@@ -159,25 +137,23 @@ class AptPlugin45 extends AptPlugin.Impl {
     }
 
     @Override
-    public AptOptions45 getAptOptions() {
+    public AptOptions46 getAptOptions() {
       return aptOptions;
     }
   }
 
-  @SuppressWarnings("deprecation")
-  private static class AptOptions45 extends AptPlugin.AptOptions
-      implements org.gradle.api.tasks.compile.CompilerArgumentProvider {
+  private static class AptOptions46 extends AptPlugin.AptOptions
+      implements CommandLineArgumentProvider {
     private final Project project;
     private final AbstractCompile task;
     private final CompileOptions compileOptions;
 
-    private AptOptions45(Project project, AbstractCompile task, CompileOptions compileOptions) {
+    private AptOptions46(Project project, AbstractCompile task, CompileOptions compileOptions) {
       this.project = project;
       this.task = task;
       this.compileOptions = compileOptions;
     }
 
-    @Nullable
     @Internal
     @Override
     public FileCollection getProcessorpath() {
@@ -186,7 +162,7 @@ class AptPlugin45 extends AptPlugin.Impl {
     }
 
     @Override
-    public void setProcessorpath(@Nullable final Object processorpath) {
+    public void setProcessorpath(final Object processorpath) {
       DeprecationLogger.nagUserWith(task, APT_OPTIONS_PROCESSORPATH_DEPRECATION_MESSAGE);
       if (processorpath == null || processorpath instanceof FileCollection) {
         compileOptions.setAnnotationProcessorPath((FileCollection) processorpath);
