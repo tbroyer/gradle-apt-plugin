@@ -20,7 +20,8 @@ if (JavaVersion.current().isJava9Compatible) {
     tasks.withType<GroovyCompile> { options.compilerArgs.addAll(arrayOf("--release", "7")) }
 }
 gradle.taskGraph.whenReady {
-    if (hasTask("publishPlugins")) {
+    val publishPlugins by tasks.getting
+    if (hasTask(publishPlugins)) {
         assert(JavaVersion.current().isJava9Compatible, { "Releases must be built with JDK 9" })
 
         assert("git diff --quiet --exit-code".execute(null, rootDir).waitFor() == 0, { "Working tree is dirty" })
