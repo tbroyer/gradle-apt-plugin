@@ -369,6 +369,60 @@ class AptPluginIntegrationSpec extends Specification {
   }
 
   @Unroll
+  def "sourceSet.allJava includes generated sources, with Gradle #gradleVersion"() {
+    given:
+    buildFile << """\
+      apply plugin: 'java'
+      apply plugin: 'net.ltgt.apt'
+
+      task sourceJar(type: Jar) {
+        from sourceSets.main.allJava
+        classifier "sources"
+      }
+    """.stripIndent()
+
+    when:
+    def result = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
+        .withProjectDir(testProjectDir.root)
+        .withArguments(':sourceJar')
+        .build()
+
+    then:
+    result.task(':compileJava') != null
+
+    where:
+    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
+  }
+
+  @Unroll
+  def "sourceSet.allSource includes generated sources, with Gradle #gradleVersion"() {
+    given:
+    buildFile << """\
+      apply plugin: 'java'
+      apply plugin: 'net.ltgt.apt'
+
+      task sourceJar(type: Jar) {
+        from sourceSets.main.allSource
+        classifier "sources"
+      }
+    """.stripIndent()
+
+    when:
+    def result = GradleRunner.create()
+        .withGradleVersion(gradleVersion)
+        .withProjectDir(testProjectDir.root)
+        .withArguments(':sourceJar')
+        .build()
+
+    then:
+    result.task(':compileJava') != null
+
+    where:
+    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
+  }
+
+  @Unroll
   def "simple non-groovy project, with Gradle #gradleVersion"() {
     given:
     buildFile << """\

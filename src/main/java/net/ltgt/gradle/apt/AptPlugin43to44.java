@@ -112,7 +112,7 @@ class AptPlugin43to44 extends AptPlugin.Impl {
       Project project,
       final SourceSet sourceSet,
       AbstractCompile task,
-      CompileOptions compileOptions) {
+      final CompileOptions compileOptions) {
     compileOptions.setAnnotationProcessorPath(
         project.files(
             new Callable<FileCollection>() {
@@ -135,6 +135,30 @@ class AptPlugin43to44 extends AptPlugin.Impl {
                     .getGeneratedSourcesDir();
               }
             }));
+    sourceSet
+        .getAllJava()
+        .srcDir(
+            project
+                .files(
+                    new Callable<File>() {
+                      @Override
+                      public File call() {
+                        return compileOptions.getAnnotationProcessorGeneratedSourcesDirectory();
+                      }
+                    })
+                .builtBy(task));
+    sourceSet
+        .getAllSource()
+        .srcDir(
+            project
+                .files(
+                    new Callable<File>() {
+                      @Override
+                      public File call() {
+                        return compileOptions.getAnnotationProcessorGeneratedSourcesDirectory();
+                      }
+                    })
+                .builtBy(task));
   }
 
   private static class AptSourceSetConvention43to44 extends AptPlugin.AptSourceSetConvention {

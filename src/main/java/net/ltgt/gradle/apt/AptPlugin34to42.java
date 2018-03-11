@@ -134,7 +134,7 @@ class AptPlugin34to42 extends AptPlugin.Impl {
   protected void configureCompileTaskForSourceSet(
       Project project,
       final SourceSet sourceSet,
-      AbstractCompile task,
+      final AbstractCompile task,
       CompileOptions compileOptions) {
     if (!(task instanceof JavaCompile)) {
       prevImpl.configureCompileTaskForSourceSet(project, sourceSet, task, compileOptions);
@@ -152,18 +152,42 @@ class AptPlugin34to42 extends AptPlugin.Impl {
                     .getAnnotationProcessorPath();
               }
             }));
-    task.getConvention()
-        .getPlugin(AptPlugin.AptConvention.class)
-        .setGeneratedSourcesDestinationDir(
-            new Callable<File>() {
-              @Override
-              public File call() {
-                return new DslObject(sourceSet.getOutput())
-                    .getConvention()
-                    .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
-                    .getGeneratedSourcesDir();
-              }
-            });
+    final AptPlugin.AptConvention convention =
+        task.getConvention().getPlugin(AptPlugin.AptConvention.class);
+    convention.setGeneratedSourcesDestinationDir(
+        new Callable<File>() {
+          @Override
+          public File call() {
+            return new DslObject(sourceSet.getOutput())
+                .getConvention()
+                .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
+                .getGeneratedSourcesDir();
+          }
+        });
+    sourceSet
+        .getAllJava()
+        .srcDir(
+            project
+                .files(
+                    new Callable<File>() {
+                      @Override
+                      public File call() {
+                        return convention.getGeneratedSourcesDestinationDir();
+                      }
+                    })
+                .builtBy(task));
+    sourceSet
+        .getAllSource()
+        .srcDir(
+            project
+                .files(
+                    new Callable<File>() {
+                      @Override
+                      public File call() {
+                        return convention.getGeneratedSourcesDestinationDir();
+                      }
+                    })
+                .builtBy(task));
   }
 
   private static class AptSourceSetConvention34to42 extends AptPlugin.AptSourceSetConvention {
