@@ -216,10 +216,10 @@ allprojects { project ->
           project.idea.module.apt.addAptDependencies = false
         }
       }
+    } catch (UnknownPluginException) {
+      // ignore, in case an older version of net.ltgt.apt is being used
+      // that doesn't come with net.ltgt.apt-idea.
     }
-  } catch (UnknownPluginException) {
-    // ignore, in case an older version of net.ltgt.apt is being used
-    // that doesn't come with net.ltgt.apt-idea.
   }
 }
 ```
