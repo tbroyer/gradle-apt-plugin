@@ -54,16 +54,13 @@ val jar by tasks.getting(Jar::class) {
 }
 
 val test by tasks.getting(Test::class) {
-    val testGradleVersions = project.findProperty("test.gradle-versions") as? String
+    val testGradleVersion = project.findProperty("test.gradle-version")
+    testGradleVersion?.also { systemProperty("test.gradle-version", testGradleVersion) }
 
     dependsOn(jar)
     inputs.file(jar.archivePath).withPathSensitivity(PathSensitivity.NONE)
-    inputs.property("test.gradle-versions", testGradleVersions).optional(true)
 
     systemProperty("plugin", jar.archivePath)
-    if (!testGradleVersions.isNullOrBlank()) {
-        systemProperty("test.gradle-versions", testGradleVersions!!)
-    }
 
     testLogging {
         showExceptions = true

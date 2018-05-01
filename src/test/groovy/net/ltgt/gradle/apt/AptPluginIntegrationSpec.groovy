@@ -1,5 +1,7 @@
 package net.ltgt.gradle.apt
 
+import static net.ltgt.gradle.apt.IntegrationTestHelper.TEST_GRADLE_VERSION
+
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
 import org.gradle.util.GradleVersion
@@ -7,7 +9,6 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Requires
 import spock.lang.Specification
-import spock.lang.Unroll
 
 class AptPluginIntegrationSpec extends Specification {
   @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
@@ -26,8 +27,7 @@ class AptPluginIntegrationSpec extends Specification {
     """.stripIndent()
   }
 
-  @Unroll
-  def "simple non-java project, with Gradle #gradleVersion"() {
+  def "simple non-java project"() {
     given:
     buildFile << """\
       apply plugin: 'net.ltgt.apt'
@@ -41,7 +41,7 @@ class AptPluginIntegrationSpec extends Specification {
         targetCompatibility = org.gradle.api.JavaVersion.current()
       }
     """.stripIndent()
-    if (GradleVersion.version(gradleVersion) < GradleVersion.version("4.0")) {
+    if (GradleVersion.version(TEST_GRADLE_VERSION) < GradleVersion.version("4.0")) {
       // dependencyCacheDir is required up until Gradle 3.2, deprecated in 3.3, and removed in 4.x
       buildFile << """\
         javaCompilationTask.dependencyCacheDir = project.file('build/dependency-cache')
@@ -62,7 +62,7 @@ class AptPluginIntegrationSpec extends Specification {
 
     when:
     def result = GradleRunner.create()
-            .withGradleVersion(gradleVersion)
+            .withGradleVersion(TEST_GRADLE_VERSION)
             .withProjectDir(testProjectDir.root)
             .withArguments('javaCompilationTask')
             .build()
@@ -70,13 +70,9 @@ class AptPluginIntegrationSpec extends Specification {
     then:
     result.task(':javaCompilationTask').outcome == TaskOutcome.SUCCESS
     new File(testProjectDir.root, 'build/classes/simple/HelloWorld.class').exists()
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
-  @Unroll
-  def "simple java project, with Gradle #gradleVersion"() {
+  def "simple java project"() {
     given:
     buildFile << """\
       apply plugin: 'net.ltgt.apt'
@@ -110,7 +106,7 @@ class AptPluginIntegrationSpec extends Specification {
 
     when:
     def result = GradleRunner.create()
-        .withGradleVersion(gradleVersion)
+        .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments('compileTestJava')
         .build()
@@ -118,13 +114,9 @@ class AptPluginIntegrationSpec extends Specification {
     then:
     result.task(':compileJava').outcome == TaskOutcome.SUCCESS
     result.task(':compileTestJava').outcome == TaskOutcome.SUCCESS
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
-  @Unroll
-  def "simple java project with compile-only dependency, with Gradle #gradleVersion"() {
+  def "simple java project with compile-only dependency"() {
     given:
     settingsFile << """\
       include 'annotations'
@@ -172,7 +164,7 @@ class AptPluginIntegrationSpec extends Specification {
 
     when:
     def result = GradleRunner.create()
-        .withGradleVersion(gradleVersion)
+        .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments(':core:javadoc')
         .build()
@@ -181,13 +173,9 @@ class AptPluginIntegrationSpec extends Specification {
     result.task(':annotations:compileJava').outcome == TaskOutcome.SUCCESS
     result.task(':core:compileJava').outcome == TaskOutcome.SUCCESS
     result.task(':core:javadoc').outcome == TaskOutcome.SUCCESS
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
-  @Unroll
-  def "simple java project with annotation processor, with Gradle #gradleVersion"() {
+  def "simple java project with annotation processor"() {
     given:
     settingsFile << """\
       include 'annotations'
@@ -299,7 +287,7 @@ class AptPluginIntegrationSpec extends Specification {
 
     when:
     def result = GradleRunner.create()
-            .withGradleVersion(gradleVersion)
+            .withGradleVersion(TEST_GRADLE_VERSION)
             .withProjectDir(testProjectDir.root)
             .withArguments(':core:javadoc')
             .build()
@@ -310,13 +298,9 @@ class AptPluginIntegrationSpec extends Specification {
     result.task(':core:compileJava').outcome == TaskOutcome.SUCCESS
     result.task(':core:javadoc').outcome == TaskOutcome.SUCCESS
     new File(testProjectDir.root, 'core/build/classes/main/annotated-elements').text.trim() == "core.HelloWorld"
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
-  @Unroll
-  def 'deprecated features, with Gradle #gradleVersion'() {
+  def 'deprecated features'() {
     given:
     settingsFile << """\
       include 'processor'
@@ -347,7 +331,7 @@ class AptPluginIntegrationSpec extends Specification {
 
     when:
     def result = GradleRunner.create()
-        .withGradleVersion(gradleVersion)
+        .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments(':classes')
         .build()
@@ -357,20 +341,16 @@ class AptPluginIntegrationSpec extends Specification {
     result.output.contains("The apt configuration has been deprecated. Please use the annotationProcessor configuration instead.")
     result.output.contains("The testApt configuration has been deprecated. Please use the testAnnotationProcessor configuration instead.")
     result.output.contains("The integTestApt configuration has been deprecated. Please use the integTestAnnotationProcessor configuration instead.")
-    GradleVersion.version(gradleVersion) < GradleVersion.version("3.4") || (
+    GradleVersion.version(TEST_GRADLE_VERSION) < GradleVersion.version("3.4") || (
         result.output.contains(":compileIntegTestJava: The aptOptions.processorpath property has been deprecated") &&
         result.output.contains("Please use the options.annotationProcessorPath property instead.")
     )
-    GradleVersion.version(gradleVersion) < GradleVersion.version("4.3") ||
+    GradleVersion.version(TEST_GRADLE_VERSION) < GradleVersion.version("4.3") ||
         result.output.contains(":compileIntegTestJava: The generatedSourcesDestinationDir property has been deprecated. Please use the options.annotationProcessorGeneratedSourcesDirectory property instead.")
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
-  @Requires({ IntegrationTestHelper.GRADLE_VERSIONS.any { GradleVersion.version(it) >= GradleVersion.version("3.2") } })
-  @Unroll
-  def "sourceSet.allJava includes generated sources, with Gradle #gradleVersion"() {
+  @Requires({ GradleVersion.version(TEST_GRADLE_VERSION) >= GradleVersion.version("3.2") })
+  def "sourceSet.allJava includes generated sources"() {
     given:
     buildFile << """\
       apply plugin: 'java'
@@ -384,21 +364,17 @@ class AptPluginIntegrationSpec extends Specification {
 
     when:
     def result = GradleRunner.create()
-        .withGradleVersion(gradleVersion)
+        .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments(':sourceJar')
         .build()
 
     then:
     result.task(':compileJava') != null
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
-  @Requires({ IntegrationTestHelper.GRADLE_VERSIONS.any { GradleVersion.version(it) >= GradleVersion.version("3.2") } })
-  @Unroll
-  def "sourceSet.allSource includes generated sources, with Gradle #gradleVersion"() {
+  @Requires({ GradleVersion.version(TEST_GRADLE_VERSION) >= GradleVersion.version("3.2") })
+  def "sourceSet.allSource includes generated sources"() {
     given:
     buildFile << """\
       apply plugin: 'java'
@@ -412,20 +388,16 @@ class AptPluginIntegrationSpec extends Specification {
 
     when:
     def result = GradleRunner.create()
-        .withGradleVersion(gradleVersion)
+        .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments(':sourceJar')
         .build()
 
     then:
     result.task(':compileJava') != null
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
-  @Unroll
-  def "simple non-groovy project, with Gradle #gradleVersion"() {
+  def "simple non-groovy project"() {
     given:
     buildFile << """\
       apply plugin: 'net.ltgt.apt'
@@ -462,7 +434,7 @@ class AptPluginIntegrationSpec extends Specification {
 
     when:
     def result = GradleRunner.create()
-            .withGradleVersion(gradleVersion)
+            .withGradleVersion(TEST_GRADLE_VERSION)
             .withProjectDir(testProjectDir.root)
             .withArguments('groovyCompilationTask')
             .build()
@@ -470,13 +442,9 @@ class AptPluginIntegrationSpec extends Specification {
     then:
     result.task(':groovyCompilationTask').outcome == TaskOutcome.SUCCESS
     new File(testProjectDir.root, 'build/classes/simple/HelloWorld.class').exists()
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
-  @Unroll
-  def "simple groovy project, with Gradle #gradleVersion"() {
+  def "simple groovy project"() {
     given:
     buildFile << """\
       apply plugin: 'net.ltgt.apt'
@@ -514,7 +482,7 @@ class AptPluginIntegrationSpec extends Specification {
 
     when:
     def result = GradleRunner.create()
-        .withGradleVersion(gradleVersion)
+        .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments('compileTestGroovy')
         .build()
@@ -522,13 +490,9 @@ class AptPluginIntegrationSpec extends Specification {
     then:
     result.task(':compileGroovy').outcome == TaskOutcome.SUCCESS
     result.task(':compileTestGroovy').outcome == TaskOutcome.SUCCESS
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
-  @Unroll
-  def "simple groovy project with compile-only dependency, with Gradle #gradleVersion"() {
+  def "simple groovy project with compile-only dependency"() {
     given:
     settingsFile << """\
       include 'annotations'
@@ -578,7 +542,7 @@ class AptPluginIntegrationSpec extends Specification {
 
     when:
     def result = GradleRunner.create()
-        .withGradleVersion(gradleVersion)
+        .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments(':core:groovydoc')
         .build()
@@ -587,13 +551,9 @@ class AptPluginIntegrationSpec extends Specification {
     result.task(':annotations:compileJava').outcome == TaskOutcome.SUCCESS
     result.task(':core:compileGroovy').outcome == TaskOutcome.SUCCESS
     result.task(':core:groovydoc').outcome == TaskOutcome.SUCCESS
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
-  @Unroll
-  def "simple groovy project with annotation processor, with Gradle #gradleVersion"() {
+  def "simple groovy project with annotation processor"() {
     given:
     settingsFile << """\
       include 'annotations'
@@ -714,7 +674,7 @@ class AptPluginIntegrationSpec extends Specification {
 
     when:
     def result = GradleRunner.create()
-            .withGradleVersion(gradleVersion)
+            .withGradleVersion(TEST_GRADLE_VERSION)
             .withProjectDir(testProjectDir.root)
             .withArguments(':core:groovydoc')
             .build()
@@ -725,14 +685,10 @@ class AptPluginIntegrationSpec extends Specification {
     result.task(':core:compileGroovy').outcome == TaskOutcome.SUCCESS
     result.task(':core:groovydoc').outcome == TaskOutcome.SUCCESS
     new File(testProjectDir.root, 'core/build/classes/main/annotated-elements').text.trim() == "core.HelloWorld"
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
-  @Requires({ IntegrationTestHelper.GRADLE_VERSIONS.any { GradleVersion.version(it) >= GradleVersion.version("3.5") } })
-  @Unroll
-  def "is build-cache friendly, with Gradle #gradleVersion"() {
+  @Requires({ GradleVersion.version(TEST_GRADLE_VERSION) >= GradleVersion.version("3.5") })
+  def "is build-cache friendly"() {
     given:
     settingsFile << """\
       include 'annotations'
@@ -900,7 +856,7 @@ class AptPluginIntegrationSpec extends Specification {
 
     when:
     def result = GradleRunner.create()
-        .withGradleVersion(gradleVersion)
+        .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments('--build-cache', ':core:testClasses')
         .build()
@@ -926,7 +882,7 @@ class AptPluginIntegrationSpec extends Specification {
     new File(testProjectDir.root, 'core/build/classes/test/test/HelloWorldGHelper.class').exists()
 
     when:
-    final usesClasspathNormalization = GradleVersion.version(gradleVersion) >= GradleVersion.version("4.3")
+    final usesClasspathNormalization = GradleVersion.version(TEST_GRADLE_VERSION) >= GradleVersion.version("4.3")
     // Reuse JARs for GroovyCompile 'til Gradle 4.3 where options.annotationProcessorPath cannot be used,
     // and classpath normalization cannot be declared through TaskInputs.
     if (usesClasspathNormalization) {
@@ -935,7 +891,7 @@ class AptPluginIntegrationSpec extends Specification {
     }
     new File(testProjectDir.root, 'core/build').deleteDir()
     result = GradleRunner.create()
-        .withGradleVersion(gradleVersion)
+        .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments('--build-cache', ':core:testClasses')
         .build()
@@ -959,8 +915,5 @@ class AptPluginIntegrationSpec extends Specification {
     new File(testProjectDir.root, 'core/build/classes/test/test/HelloWorldJHelper.class').exists()
     new File(testProjectDir.root, 'core/build/classes/test/test/HelloWorldG.class').exists()
     new File(testProjectDir.root, 'core/build/classes/test/test/HelloWorldGHelper.class').exists()
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS.findAll { GradleVersion.version(it) >= GradleVersion.version("3.5") }
   }
 }

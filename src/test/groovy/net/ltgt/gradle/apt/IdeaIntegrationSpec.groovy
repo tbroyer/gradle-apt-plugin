@@ -1,5 +1,7 @@
 package net.ltgt.gradle.apt
 
+import static net.ltgt.gradle.apt.IntegrationTestHelper.TEST_GRADLE_VERSION
+
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
 import nebula.test.dependencies.ModuleBuilder
@@ -12,7 +14,6 @@ import org.gradle.util.GradleVersion
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
-import spock.lang.Unroll
 
 class IdeaIntegrationSpec extends Specification {
   @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
@@ -35,11 +36,10 @@ class IdeaIntegrationSpec extends Specification {
     """.stripIndent()
   }
 
-  @Unroll
-  def "idea without java, with Gradle #gradleVersion"() {
+  def "idea without java"() {
     when:
     def result = GradleRunner.create()
-        .withGradleVersion(gradleVersion)
+        .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments('idea')
         .build()
@@ -48,9 +48,6 @@ class IdeaIntegrationSpec extends Specification {
     result.task(':ideaProject').outcome == TaskOutcome.SUCCESS
     result.task(':ideaModule').outcome == TaskOutcome.SUCCESS
     hasAnnotationProcessingConfigured(true)
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
   void hasAnnotationProcessingConfigured(boolean expected) {
@@ -66,8 +63,7 @@ class IdeaIntegrationSpec extends Specification {
     }
   }
 
-  @Unroll
-  def "idea without java, configureAnnotationProcessing = false, with Gradle #gradleVersion"() {
+  def "idea without java, configureAnnotationProcessing = false"() {
     setup:
     buildFile << """
       idea {
@@ -79,7 +75,7 @@ class IdeaIntegrationSpec extends Specification {
 
     when:
     def result = GradleRunner.create()
-        .withGradleVersion(gradleVersion)
+        .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments('idea')
         .build()
@@ -88,13 +84,9 @@ class IdeaIntegrationSpec extends Specification {
     result.task(':ideaProject').outcome == TaskOutcome.SUCCESS
     result.task(':ideaModule').outcome == TaskOutcome.SUCCESS
     hasAnnotationProcessingConfigured(false)
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
-  @Unroll
-  def "idea task, with Gradle #gradleVersion"() {
+  def "idea task"() {
     setup:
     def mavenRepo = new GradleDependencyGenerator(
         new DependencyGraphBuilder()
@@ -135,7 +127,7 @@ class IdeaIntegrationSpec extends Specification {
 
     when:
     def result = GradleRunner.create()
-        .withGradleVersion(gradleVersion)
+        .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments('idea')
         .build()
@@ -144,13 +136,9 @@ class IdeaIntegrationSpec extends Specification {
     result.task(':ideaModule').outcome == TaskOutcome.SUCCESS
     hasAnnotationProcessingConfigured(true)
     // TODO: check IML for content roots and dependencies
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
-  @Unroll
-  def "idea task, all configurations disabled, with Gradle #gradleVersion"() {
+  def "idea task, all configurations disabled"() {
     setup:
     def mavenRepo = new GradleDependencyGenerator(
         new DependencyGraphBuilder()
@@ -202,7 +190,7 @@ class IdeaIntegrationSpec extends Specification {
 
     when:
     def result = GradleRunner.create()
-        .withGradleVersion(gradleVersion)
+        .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments('idea')
         .build()
@@ -211,13 +199,9 @@ class IdeaIntegrationSpec extends Specification {
     result.task(':ideaModule').outcome == TaskOutcome.SUCCESS
     hasAnnotationProcessingConfigured(false)
     // TODO: check IML for content roots and dependencies
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
-  @Unroll
-  def "ideaModule task with project dependency, with Gradle #gradleVersion"() {
+  def "ideaModule task with project dependency"() {
     given:
     settingsFile << """\
       include 'processor'
@@ -233,7 +217,7 @@ class IdeaIntegrationSpec extends Specification {
 
     when:
     def result = GradleRunner.create()
-        .withGradleVersion(gradleVersion)
+        .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments(':ideaModule')
         .build()
@@ -242,13 +226,9 @@ class IdeaIntegrationSpec extends Specification {
     result.task(':ideaModule').outcome == TaskOutcome.SUCCESS
     result.task(':processor:jar').outcome == TaskOutcome.SUCCESS
     // TODO: check IML for content roots and dependencies
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
-  @Unroll
-  def "ideaModule task with project dependency, all configurations disabled, with Gradle #gradleVersion"() {
+  def "ideaModule task with project dependency, all configurations disabled"() {
     given:
     settingsFile << """\
       include 'processor'
@@ -271,7 +251,7 @@ class IdeaIntegrationSpec extends Specification {
 
     when:
     def result = GradleRunner.create()
-        .withGradleVersion(gradleVersion)
+        .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments(':ideaModule')
         .build()
@@ -280,13 +260,9 @@ class IdeaIntegrationSpec extends Specification {
     result.task(':ideaModule').outcome == TaskOutcome.SUCCESS
     result.task(':processor:jar') == null
     // TODO: check IML for content roots and dependencies
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
-  @Unroll
-  def "tooling api, with Gradle #gradleVersion"() {
+  def "tooling api"() {
     setup:
     def mavenRepo = new GradleDependencyGenerator(
         new DependencyGraphBuilder()
@@ -328,7 +304,7 @@ class IdeaIntegrationSpec extends Specification {
     when:
     ProjectConnection connection = GradleConnector.newConnector()
         .forProjectDirectory(testProjectDir.root)
-        .useGradleVersion(gradleVersion)
+        .useGradleVersion(TEST_GRADLE_VERSION)
         .connect()
     def ideaModule = connection.getModel(IdeaProject).modules[0]
 
@@ -345,7 +321,7 @@ class IdeaIntegrationSpec extends Specification {
       "${it.gradleModuleVersion.group}:${it.gradleModuleVersion.name}:${it.gradleModuleVersion.version}:${it.scope.scope}" as String
     }
     // XXX: it's unfortunate that we have both versions of "leaf" artifacts, but we can't easily do otherwise
-    if (GradleVersion.version(gradleVersion) >= GradleVersion.version("3.4")) {
+    if (GradleVersion.version(TEST_GRADLE_VERSION) >= GradleVersion.version("3.4")) {
       dependencies.contains('leaf:compile:1.0:PROVIDED')
       dependencies.contains('compile:compile:1.0:PROVIDED')
       dependencies.contains('annotations:compile:1.0:PROVIDED')
@@ -373,13 +349,9 @@ class IdeaIntegrationSpec extends Specification {
 
     cleanup:
     connection.close()
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
-  @Unroll
-  def "tooling api, all configurations disabled, with Gradle #gradleVersion"() {
+  def "tooling api, all configurations disabled"() {
     setup:
     def mavenRepo = new GradleDependencyGenerator(
         new DependencyGraphBuilder()
@@ -432,7 +404,7 @@ class IdeaIntegrationSpec extends Specification {
     when:
     ProjectConnection connection = GradleConnector.newConnector()
         .forProjectDirectory(testProjectDir.root)
-        .useGradleVersion(gradleVersion)
+        .useGradleVersion(TEST_GRADLE_VERSION)
         .connect()
     def ideaModule = connection.getModel(IdeaProject).modules[0]
 
@@ -447,7 +419,7 @@ class IdeaIntegrationSpec extends Specification {
     def dependencies = ideaModule.dependencies.collect {
       "${it.gradleModuleVersion.group}:${it.gradleModuleVersion.name}:${it.gradleModuleVersion.version}:${it.scope.scope}" as String
     }
-    if (GradleVersion.version(gradleVersion) >= GradleVersion.version("3.4")) {
+    if (GradleVersion.version(TEST_GRADLE_VERSION) >= GradleVersion.version("3.4")) {
       dependencies.contains('leaf:compile:1.0:PROVIDED')
       dependencies.contains('compile:compile:1.0:PROVIDED')
       dependencies.contains('annotations:compile:1.0:PROVIDED')
@@ -475,8 +447,5 @@ class IdeaIntegrationSpec extends Specification {
 
     cleanup:
     connection.close()
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 }

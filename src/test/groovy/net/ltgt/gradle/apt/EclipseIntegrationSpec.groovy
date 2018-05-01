@@ -1,5 +1,7 @@
 package net.ltgt.gradle.apt
 
+import static net.ltgt.gradle.apt.IntegrationTestHelper.TEST_GRADLE_VERSION
+
 import nebula.test.dependencies.DependencyGraphBuilder
 import nebula.test.dependencies.GradleDependencyGenerator
 import nebula.test.dependencies.ModuleBuilder
@@ -11,7 +13,6 @@ import org.gradle.tooling.model.eclipse.EclipseProject
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
-import spock.lang.Unroll
 
 class EclipseIntegrationSpec extends Specification {
   @Rule TemporaryFolder testProjectDir = new TemporaryFolder()
@@ -31,11 +32,10 @@ class EclipseIntegrationSpec extends Specification {
     """.stripIndent()
   }
 
-  @Unroll
-  def "eclipse without java, with Gradle #gradleVersion"() {
+  def "eclipse without java"() {
     when:
     def result = GradleRunner.create()
-        .withGradleVersion(gradleVersion)
+        .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments('eclipse')
         .build()
@@ -44,13 +44,9 @@ class EclipseIntegrationSpec extends Specification {
     result.task(':eclipseJdtApt') == null
     result.task(':eclipseFactorypath') == null
     !new File(testProjectDir.root, '.factorypath').exists()
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
-  @Unroll
-  def "eclipse task, with Gradle #gradleVersion"() {
+  def "eclipse task"() {
     given:
     def mavenRepo = new GradleDependencyGenerator(
         new DependencyGraphBuilder()
@@ -91,7 +87,7 @@ class EclipseIntegrationSpec extends Specification {
 
     when:
     def result = GradleRunner.create()
-        .withGradleVersion(gradleVersion)
+        .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments('eclipse')
         .build()
@@ -123,7 +119,7 @@ class EclipseIntegrationSpec extends Specification {
 
     when:
     def result2 = GradleRunner.create()
-        .withGradleVersion(gradleVersion)
+        .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments('cleanEclipse')
         .build()
@@ -133,9 +129,6 @@ class EclipseIntegrationSpec extends Specification {
     result2.task(':cleanEclipseFactorypath').outcome == TaskOutcome.SUCCESS
     !factorypath.exists()
     !new File(testProjectDir.root, '.settings/org.eclipse.jdt.apt.core.prefs').exists()
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
   def loadProperties(String path) {
@@ -146,8 +139,7 @@ class EclipseIntegrationSpec extends Specification {
     props
   }
 
-  @Unroll
-  def "eclipseFactorypath task with project dependency, with Gradle #gradleVersion"() {
+  def "eclipseFactorypath task with project dependency"() {
     given:
     settingsFile << """\
       include 'processor'
@@ -163,7 +155,7 @@ class EclipseIntegrationSpec extends Specification {
 
     when:
     def result = GradleRunner.create()
-        .withGradleVersion(gradleVersion)
+        .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments(':eclipseFactorypath')
         .build()
@@ -179,13 +171,9 @@ class EclipseIntegrationSpec extends Specification {
     (entries.@id as Set).equals([
         "${testProjectDir.root}/processor/build/libs/processor.jar",
     ].collect { it.replace('/', File.separator) }.toSet())
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
-  @Unroll
-  def "eclipse task custom config, with Gradle #gradleVersion"() {
+  def "eclipse task custom config"() {
     given:
     buildFile << """\
       apply plugin: 'java'
@@ -221,7 +209,7 @@ class EclipseIntegrationSpec extends Specification {
 
     when:
     def result = GradleRunner.create()
-        .withGradleVersion(gradleVersion)
+        .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments('eclipse')
         .build()
@@ -249,13 +237,9 @@ class EclipseIntegrationSpec extends Specification {
     aptSettings.getProperty('org.eclipse.jdt.apt.processorOptions/baz') == 'qux'
     aptSettings.getProperty('org.eclipse.jdt.apt.processorOptions/hasNullValue') == 'org.eclipse.jdt.apt.NULLVALUE'
     !aptSettings.containsKey('org.eclipse.jdt.apt.processorOptions/ignoredOption')
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
-  @Unroll
-  def "tooling api, with Gradle #gradleVersion"() {
+  def "tooling api"() {
     given:
     def mavenRepo = new GradleDependencyGenerator(
         new DependencyGraphBuilder()
@@ -297,7 +281,7 @@ class EclipseIntegrationSpec extends Specification {
     when:
     ProjectConnection connection = GradleConnector.newConnector()
         .forProjectDirectory(testProjectDir.root)
-        .useGradleVersion(gradleVersion)
+        .useGradleVersion(TEST_GRADLE_VERSION)
         .connect()
     def classpath = connection.getModel(EclipseProject).classpath.collect {
       "${it.gradleModuleVersion.group}:${it.gradleModuleVersion.name}:${it.gradleModuleVersion.version}" as String
@@ -317,8 +301,5 @@ class EclipseIntegrationSpec extends Specification {
 
     cleanup:
     connection.close()
-
-    where:
-    gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 }
