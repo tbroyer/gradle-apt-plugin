@@ -6,7 +6,6 @@ import org.gradle.api.tasks.SourceSetOutput
 import org.gradle.api.tasks.compile.GroovyCompile
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.getPlugin
-import org.gradle.kotlin.dsl.getPluginByName
 import org.gradle.kotlin.dsl.withConvention
 import org.gradle.plugins.ide.eclipse.model.EclipseJdt
 import org.gradle.plugins.ide.eclipse.model.EclipseModel
