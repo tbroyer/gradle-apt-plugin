@@ -1,11 +1,14 @@
 package net.ltgt.gradle.apt
 
 import org.gradle.api.file.FileCollection
+import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetOutput
 import org.gradle.api.tasks.compile.GroovyCompile
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.getPlugin
+import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.the
 import org.gradle.kotlin.dsl.withConvention
 import org.gradle.plugins.ide.eclipse.model.EclipseJdt
 import org.gradle.plugins.ide.eclipse.model.EclipseModel
@@ -39,24 +42,24 @@ var SourceSetOutput.generatedSourcesDir: File?
 // Eclipse
 
 val EclipseJdt.apt: EclipseJdtApt
-    get() = withConvention(AptEclipsePlugin.JdtAptConvention::class) { apt }
+    get() = (this as ExtensionAware).the()
 
 fun EclipseJdt.apt(configure: EclipseJdtApt.() -> Unit): Unit =
-    withConvention(AptEclipsePlugin.JdtAptConvention::class) { apt(configure) }
+    (this as ExtensionAware).configure(configure)
 
 val EclipseModel.factorypath: EclipseFactorypath
-    get() = withConvention(AptEclipsePlugin.FactorypathConvention::class) { factorypath }
+    get() = (this as ExtensionAware).the()
 
 fun EclipseModel.factorypath(configure: EclipseFactorypath.() -> Unit): Unit =
-    withConvention(AptEclipsePlugin.FactorypathConvention::class) { factorypath(configure) }
+    (this as ExtensionAware).configure(configure)
 
 // IDEA
 
 val IdeaModule.apt: AptIdeaPlugin.ModuleApt
-    get() = withConvention(AptIdeaPlugin.ModuleAptConvention::class) { apt }
+    get() = (this as ExtensionAware).the()
 
 fun IdeaModule.apt(configure: AptIdeaPlugin.ModuleApt.() -> Unit): Unit =
-    withConvention(AptIdeaPlugin.ModuleAptConvention::class) { apt(configure) }
+    (this as ExtensionAware).configure(configure)
 
 inline
 var AptIdeaPlugin.ModuleApt.addGeneratedSourcesDirs: Boolean

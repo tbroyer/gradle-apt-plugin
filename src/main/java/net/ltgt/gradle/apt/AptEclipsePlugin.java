@@ -2,7 +2,6 @@ package net.ltgt.gradle.apt;
 
 import static net.ltgt.gradle.apt.CompatibilityUtils.getOutputs;
 
-import groovy.lang.Closure;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,13 +14,13 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.internal.ConventionMapping;
 import org.gradle.api.internal.plugins.DslObject;
+import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.Delete;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.plugins.ide.eclipse.EclipsePlugin;
 import org.gradle.plugins.ide.eclipse.model.EclipseModel;
-import org.gradle.util.ConfigureUtil;
 
 public class AptEclipsePlugin implements Plugin<Project> {
 
@@ -100,10 +99,7 @@ public class AptEclipsePlugin implements Plugin<Project> {
                           project.file(".settings/org.eclipse.jdt.apt.core.prefs"));
 
                       final EclipseJdtApt jdtApt = generateEclipseJdtApt.getJdtApt();
-                      new DslObject(eclipseModel.getJdt())
-                          .getConvention()
-                          .getPlugins()
-                          .put("net.ltgt.apt-eclipse", new JdtAptConvention(jdtApt));
+                      ((ExtensionAware) eclipseModel.getJdt()).getExtensions().add("apt", jdtApt);
                       ConventionMapping conventionMapping =
                           new DslObject(jdtApt).getConventionMapping();
                       conventionMapping.map(
@@ -181,10 +177,9 @@ public class AptEclipsePlugin implements Plugin<Project> {
                       generateEclipseFactorypath.setOutputFile(project.file(".factorypath"));
 
                       EclipseFactorypath factorypath = generateEclipseFactorypath.getFactorypath();
-                      new DslObject(eclipseModel)
-                          .getConvention()
-                          .getPlugins()
-                          .put("net.ltgt.apt-eclipse", new FactorypathConvention(factorypath));
+                      ((ExtensionAware) eclipseModel)
+                          .getExtensions()
+                          .add("factorypath", factorypath);
                       factorypath.setPlusConfigurations(
                           new ArrayList<>(
                               Arrays.asList(
@@ -210,46 +205,6 @@ public class AptEclipsePlugin implements Plugin<Project> {
       Delete cleanTask = project.getTasks().create("cleanEclipseFactorypath", Delete.class);
       cleanTask.delete(getOutputs(task));
       project.getTasks().getByName("cleanEclipse").dependsOn(cleanTask);
-    }
-  }
-
-  public static class JdtAptConvention {
-    private final EclipseJdtApt apt;
-
-    public JdtAptConvention(EclipseJdtApt apt) {
-      this.apt = apt;
-    }
-
-    public EclipseJdtApt getApt() {
-      return apt;
-    }
-
-    public void apt(Closure<? super EclipseJdtApt> closure) {
-      ConfigureUtil.configure(closure, apt);
-    }
-
-    public void apt(Action<? super EclipseJdtApt> action) {
-      action.execute(apt);
-    }
-  }
-
-  public static class FactorypathConvention {
-    private final EclipseFactorypath factorypath;
-
-    public FactorypathConvention(EclipseFactorypath factorypath) {
-      this.factorypath = factorypath;
-    }
-
-    public EclipseFactorypath getFactorypath() {
-      return factorypath;
-    }
-
-    public void factorypath(Closure<? super EclipseFactorypath> closure) {
-      ConfigureUtil.configure(closure, factorypath);
-    }
-
-    public void factorypath(Action<? super EclipseFactorypath> action) {
-      action.execute(factorypath);
     }
   }
 }

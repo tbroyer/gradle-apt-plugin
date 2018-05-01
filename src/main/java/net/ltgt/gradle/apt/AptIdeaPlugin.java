@@ -1,6 +1,5 @@
 package net.ltgt.gradle.apt;
 
-import groovy.lang.Closure;
 import groovy.util.Node;
 import groovy.util.NodeList;
 import java.io.File;
@@ -21,6 +20,7 @@ import org.gradle.api.Project;
 import org.gradle.api.XmlProvider;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.internal.plugins.DslObject;
+import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
@@ -29,7 +29,6 @@ import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
 import org.gradle.plugins.ide.idea.model.IdeaModule;
 import org.gradle.plugins.ide.idea.model.IdeaProject;
-import org.gradle.util.ConfigureUtil;
 import org.gradle.util.GradleVersion;
 
 public class AptIdeaPlugin implements Plugin<Project> {
@@ -73,10 +72,7 @@ public class AptIdeaPlugin implements Plugin<Project> {
       Project project, final SourceSet mainSourceSet, final SourceSet testSourceSet) {
     final IdeaModule ideaModule = project.getExtensions().getByType(IdeaModel.class).getModule();
     final ModuleApt apt = new ModuleApt();
-    new DslObject(ideaModule)
-        .getConvention()
-        .getPlugins()
-        .put("net.ltgt.apt-idea", new ModuleAptConvention(apt));
+    ((ExtensionAware) ideaModule).getExtensions().add("apt", apt);
     project.afterEvaluate(
         new Action<Project>() {
           @Override
@@ -263,26 +259,6 @@ public class AptIdeaPlugin implements Plugin<Project> {
                     }
                   },
                   "execute"));
-    }
-  }
-
-  public static class ModuleAptConvention {
-    private final ModuleApt apt;
-
-    public ModuleAptConvention(ModuleApt apt) {
-      this.apt = apt;
-    }
-
-    public ModuleApt getApt() {
-      return apt;
-    }
-
-    public void apt(Closure<? super ModuleApt> closure) {
-      ConfigureUtil.configure(closure, apt);
-    }
-
-    public void apt(Action<? super ModuleApt> action) {
-      action.execute(apt);
     }
   }
 
