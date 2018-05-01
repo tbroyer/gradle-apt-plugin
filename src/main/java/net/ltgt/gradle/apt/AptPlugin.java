@@ -13,6 +13,7 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.plugins.DslObject;
+import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.plugins.GroovyBasePlugin;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
@@ -154,6 +155,11 @@ public class AptPlugin implements Plugin<Project> {
                 task.getConvention()
                     .getPlugins()
                     .put(PLUGIN_ID, IMPL.createAptConvention(project, task, compileOptions));
+                IMPL.addExtension(
+                    task.getExtensions(),
+                    AptOptions.class,
+                    "aptOptions",
+                    IMPL.createAptOptions(project, task, compileOptions));
                 IMPL.configureCompileTask(project, task, compileOptions);
               }
             });
@@ -223,8 +229,10 @@ public class AptPlugin implements Plugin<Project> {
         return new AptPlugin45();
       } else if (GradleVersion.current().compareTo(GradleVersion.version("4.3")) >= 0) {
         return new AptPlugin43to44();
+      } else if (GradleVersion.current().compareTo(GradleVersion.version("3.5")) >= 0) {
+        return new AptPlugin35to42();
       } else if (GradleVersion.current().compareTo(GradleVersion.version("3.4")) >= 0) {
-        return new AptPlugin34to42();
+        return new AptPlugin34();
       } else if (GradleVersion.current().compareTo(GradleVersion.version("3.2")) >= 0) {
         return new AptPlugin32to33();
       } else if (GradleVersion.current().compareTo(GradleVersion.version("3.0")) >= 0) {
@@ -238,7 +246,13 @@ public class AptPlugin implements Plugin<Project> {
       }
     }
 
+    protected abstract <T> void addExtension(
+        ExtensionContainer extensionContainer, Class<T> publicType, String name, T extension);
+
     protected abstract AptConvention createAptConvention(
+        Project project, AbstractCompile task, CompileOptions compileOptions);
+
+    protected abstract AptOptions createAptOptions(
         Project project, AbstractCompile task, CompileOptions compileOptions);
 
     protected abstract void configureCompileTask(
@@ -263,8 +277,6 @@ public class AptPlugin implements Plugin<Project> {
 
     public abstract void setGeneratedSourcesDestinationDir(
         @Nullable Object generatedSourcesDestinationDir);
-
-    public abstract AptOptions getAptOptions();
   }
 
   public abstract static class AptOptions {

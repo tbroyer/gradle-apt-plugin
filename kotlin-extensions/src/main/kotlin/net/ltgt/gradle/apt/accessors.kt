@@ -6,7 +6,6 @@ import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetOutput
 import org.gradle.api.tasks.compile.GroovyCompile
 import org.gradle.api.tasks.compile.JavaCompile
-import org.gradle.kotlin.dsl.getPlugin
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.the
 import org.gradle.kotlin.dsl.withConvention
@@ -17,10 +16,10 @@ import org.gradle.plugins.ide.idea.model.IdeaProject
 import java.io.File
 
 val JavaCompile.aptOptions: AptPlugin.AptOptions
-    get() = convention.getPlugin<AptPlugin.AptConvention>().aptOptions
+    get() = the()
 
 val GroovyCompile.aptOptions: AptPlugin.AptOptions
-    get() = convention.getPlugin<AptPlugin.AptConvention>().aptOptions
+    get() = the()
 
 var AptPlugin.AptOptions.annotationProcessing: Boolean
     get() = isAnnotationProcessing

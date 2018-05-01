@@ -8,6 +8,7 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.plugins.DslObject;
+import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
@@ -21,17 +22,32 @@ class AptPlugin45 extends AptPlugin.Impl {
       "The aptOptions.processorpath property has been deprecated. Please use the options.annotationProcessorPath property instead.";
 
   @Override
+  protected <T> void addExtension(
+      ExtensionContainer extensionContainer, Class<T> publicType, String name, T extension) {
+    extensionContainer.add(publicType, name, extension);
+  }
+
+  @Override
   protected AptPlugin.AptConvention createAptConvention(
       Project project, AbstractCompile task, CompileOptions compileOptions) {
     return new AptConvention45(project, task, compileOptions);
   }
 
   @Override
+  protected AptPlugin.AptOptions createAptOptions(
+      Project project, AbstractCompile task, CompileOptions compileOptions) {
+    return new AptOptions45(project, task, compileOptions);
+  }
+
+  @SuppressWarnings("deprecation")
+  @Override
   protected void configureCompileTask(
       Project project, AbstractCompile task, CompileOptions compileOptions) {
     compileOptions
         .getCompilerArgumentProviders()
-        .add(task.getConvention().getPlugin(AptConvention45.class).getAptOptions());
+        .add(
+            (org.gradle.api.tasks.compile.CompilerArgumentProvider)
+                task.getExtensions().getByType(AptPlugin.AptOptions.class));
   }
 
   @Override
@@ -148,13 +164,10 @@ class AptPlugin45 extends AptPlugin.Impl {
     private final AbstractCompile task;
     private final CompileOptions compileOptions;
 
-    private final AptOptions45 aptOptions;
-
     AptConvention45(Project project, AbstractCompile task, CompileOptions compileOptions) {
       this.project = project;
       this.task = task;
       this.compileOptions = compileOptions;
-      this.aptOptions = new AptOptions45(project, task, compileOptions);
     }
 
     @Nullable
@@ -180,11 +193,6 @@ class AptPlugin45 extends AptPlugin.Impl {
                   }
                 }));
       }
-    }
-
-    @Override
-    public AptOptions45 getAptOptions() {
-      return aptOptions;
     }
   }
 

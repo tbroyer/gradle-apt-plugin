@@ -109,10 +109,9 @@ public class AptEclipsePlugin implements Plugin<Project> {
                             public Boolean call() throws Exception {
                               return project
                                   .getTasks()
-                                  .findByName(mainSourceSet.getCompileJavaTaskName())
-                                  .getConvention()
-                                  .getPlugin(AptPlugin.AptConvention.class)
-                                  .getAptOptions()
+                                  .getByName(mainSourceSet.getCompileJavaTaskName())
+                                  .getExtensions()
+                                  .getByType(AptPlugin.AptOptions.class)
                                   .isAnnotationProcessing();
                             }
                           });
@@ -131,10 +130,9 @@ public class AptEclipsePlugin implements Plugin<Project> {
                             public Map<String, ?> call() throws Exception {
                               return project
                                   .getTasks()
-                                  .findByName(mainSourceSet.getCompileJavaTaskName())
-                                  .getConvention()
-                                  .getPlugin(AptPlugin.AptConvention.class)
-                                  .getAptOptions()
+                                  .getByName(mainSourceSet.getCompileJavaTaskName())
+                                  .getExtensions()
+                                  .getByType(AptPlugin.AptOptions.class)
                                   .getProcessorArgs();
                             }
                           });

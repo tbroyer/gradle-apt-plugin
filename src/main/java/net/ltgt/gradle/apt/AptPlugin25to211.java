@@ -1,9 +1,11 @@
 package net.ltgt.gradle.apt;
 
+import static net.ltgt.gradle.apt.AptPlugin.AptOptions;
 import static net.ltgt.gradle.apt.CompatibilityUtils.*;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
@@ -13,6 +15,7 @@ import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.plugins.DslObject;
+import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
@@ -22,9 +25,21 @@ import org.gradle.api.tasks.compile.CompileOptions;
 class AptPlugin25to211 extends AptPlugin.Impl {
 
   @Override
+  protected <T> void addExtension(
+      ExtensionContainer extensionContainer, Class<T> publicType, String name, T extension) {
+    extensionContainer.add(name, extension);
+  }
+
+  @Override
   protected AptPlugin.AptConvention createAptConvention(
       Project project, AbstractCompile task, CompileOptions compileOptions) {
     return new AptConvention25to211(project);
+  }
+
+  @Override
+  protected AptOptions createAptOptions(
+      Project project, AbstractCompile task, CompileOptions compileOptions) {
+    return new AptOptions25to211(project);
   }
 
   @Override
@@ -36,10 +51,7 @@ class AptPlugin25to211 extends AptPlugin.Impl {
         new Callable<Object>() {
           @Override
           public Object call() {
-            return task.getConvention()
-                .getPlugin(AptConvention25to211.class)
-                .getAptOptions()
-                .isAnnotationProcessing();
+            return task.getExtensions().getByType(AptOptions.class).isAnnotationProcessing();
           }
         });
     optionalProperty(
@@ -48,10 +60,7 @@ class AptPlugin25to211 extends AptPlugin.Impl {
         new Callable<Object>() {
           @Override
           public Object call() {
-            return task.getConvention()
-                .getPlugin(AptConvention25to211.class)
-                .getAptOptions()
-                .getProcessors();
+            return task.getExtensions().getByType(AptOptions.class).getProcessors();
           }
         });
     optionalProperty(
@@ -60,10 +69,7 @@ class AptPlugin25to211 extends AptPlugin.Impl {
         new Callable<Object>() {
           @Override
           public Object call() {
-            return task.getConvention()
-                .getPlugin(AptConvention25to211.class)
-                .getAptOptions()
-                .getProcessorArgs();
+            return task.getExtensions().getByType(AptOptions.class).getProcessorArgs();
           }
         });
 
@@ -72,10 +78,7 @@ class AptPlugin25to211 extends AptPlugin.Impl {
         new Callable<Object>() {
           @Override
           public Object call() {
-            return task.getConvention()
-                .getPlugin(AptPlugin.AptConvention.class)
-                .getAptOptions()
-                .getProcessorpath();
+            return task.getExtensions().getByType(AptOptions.class).getProcessorpath();
           }
         });
 
@@ -98,6 +101,9 @@ class AptPlugin25to211 extends AptPlugin.Impl {
                 task.getConvention().getPlugin(AptConvention25to211.class);
             convention.makeDirectories();
             compileOptions.getCompilerArgs().addAll(convention.asArguments());
+            compileOptions
+                .getCompilerArgs()
+                .addAll(task.getExtensions().getByType(AptOptions.class).asArguments());
           }
         });
   }
@@ -162,10 +168,8 @@ class AptPlugin25to211 extends AptPlugin.Impl {
       final SourceSet sourceSet,
       AbstractCompile task,
       CompileOptions compileOptions) {
-    AptPlugin.AptConvention convention =
-        task.getConvention().getPlugin(AptPlugin.AptConvention.class);
-    convention
-        .getAptOptions()
+    task.getExtensions()
+        .getByType(AptPlugin.AptOptions.class)
         .setProcessorpath(
             new Callable<FileCollection>() {
               @Override
@@ -176,16 +180,18 @@ class AptPlugin25to211 extends AptPlugin.Impl {
                     .getAnnotationProcessorPath();
               }
             });
-    convention.setGeneratedSourcesDestinationDir(
-        new Callable<File>() {
-          @Override
-          public File call() {
-            return new DslObject(sourceSet.getOutput())
-                .getConvention()
-                .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
-                .getGeneratedSourcesDir();
-          }
-        });
+    task.getConvention()
+        .getPlugin(AptPlugin.AptConvention.class)
+        .setGeneratedSourcesDestinationDir(
+            new Callable<File>() {
+              @Override
+              public File call() {
+                return new DslObject(sourceSet.getOutput())
+                    .getConvention()
+                    .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
+                    .getGeneratedSourcesDir();
+              }
+            });
   }
 
   private static class AptSourceSetConvention25to211 extends AptPlugin.AptSourceSetConvention {
@@ -221,13 +227,10 @@ class AptPlugin25to211 extends AptPlugin.Impl {
   private static class AptConvention25to211 extends AptPlugin.AptConvention {
     private final Project project;
 
-    private final AptOptions25to211 aptOptions;
-
     private Object generatedSourcesDestinationDir;
 
     AptConvention25to211(Project project) {
       this.project = project;
-      this.aptOptions = new AptOptions25to211(project);
     }
 
     @Override
@@ -244,11 +247,6 @@ class AptPlugin25to211 extends AptPlugin.Impl {
       this.generatedSourcesDestinationDir = generatedSourcesDestinationDir;
     }
 
-    @Override
-    public AptPlugin.AptOptions getAptOptions() {
-      return aptOptions;
-    }
-
     void makeDirectories() {
       if (generatedSourcesDestinationDir != null) {
         project.mkdir(generatedSourcesDestinationDir);
@@ -256,16 +254,12 @@ class AptPlugin25to211 extends AptPlugin.Impl {
     }
 
     List<String> asArguments() {
+      if (generatedSourcesDestinationDir == null) {
+        return Collections.emptyList();
+      }
       List<String> result = new ArrayList<>();
-      if (generatedSourcesDestinationDir != null) {
-        result.add("-s");
-        result.add(getGeneratedSourcesDestinationDir().getPath());
-      }
-      if (aptOptions.processorpath != null && !aptOptions.getProcessorpath().isEmpty()) {
-        result.add("-processorpath");
-        result.add(aptOptions.getProcessorpath().getAsPath());
-      }
-      result.addAll(aptOptions.asArguments());
+      result.add("-s");
+      result.add(getGeneratedSourcesDestinationDir().getPath());
       return result;
     }
   }
@@ -291,6 +285,18 @@ class AptPlugin25to211 extends AptPlugin.Impl {
     @Override
     public void setProcessorpath(@Nullable Object processorpath) {
       this.processorpath = processorpath;
+    }
+
+    @Override
+    protected List<String> asArguments() {
+      if (processorpath == null || getProcessorpath().isEmpty()) {
+        return super.asArguments();
+      }
+      List<String> result = new ArrayList<>();
+      result.add("-processorpath");
+      result.add(getProcessorpath().getAsPath());
+      result.addAll(super.asArguments());
+      return result;
     }
   }
 }
