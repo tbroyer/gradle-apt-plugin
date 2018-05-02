@@ -18,12 +18,12 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.api.tasks.compile.CompileOptions;
 
-class AptPlugin30to33 extends AptPlugin.Impl {
+class AptPlugin32to33 extends AptPlugin.Impl {
 
   @Override
   protected AptPlugin.AptConvention createAptConvention(
       Project project, AbstractCompile task, CompileOptions compileOptions) {
-    return new AptConvention30to33(project);
+    return new AptConvention32to33(project);
   }
 
   @Override
@@ -36,7 +36,7 @@ class AptPlugin30to33 extends AptPlugin.Impl {
           @Override
           public Object call() {
             return task.getConvention()
-                .getPlugin(AptConvention30to33.class)
+                .getPlugin(AptConvention32to33.class)
                 .getAptOptions()
                 .isAnnotationProcessing();
           }
@@ -48,7 +48,7 @@ class AptPlugin30to33 extends AptPlugin.Impl {
           @Override
           public Object call() {
             return task.getConvention()
-                .getPlugin(AptConvention30to33.class)
+                .getPlugin(AptConvention32to33.class)
                 .getAptOptions()
                 .getProcessors();
           }
@@ -60,7 +60,7 @@ class AptPlugin30to33 extends AptPlugin.Impl {
           @Override
           public Object call() {
             return task.getConvention()
-                .getPlugin(AptConvention30to33.class)
+                .getPlugin(AptConvention32to33.class)
                 .getAptOptions()
                 .getProcessorArgs();
           }
@@ -97,8 +97,8 @@ class AptPlugin30to33 extends AptPlugin.Impl {
         new Action<Task>() {
           @Override
           public void execute(Task task) {
-            AptConvention30to33 convention =
-                task.getConvention().getPlugin(AptConvention30to33.class);
+            AptConvention32to33 convention =
+                task.getConvention().getPlugin(AptConvention32to33.class);
             convention.makeDirectories();
             compileOptions.getCompilerArgs().addAll(convention.asArguments());
           }
@@ -108,7 +108,7 @@ class AptPlugin30to33 extends AptPlugin.Impl {
   @Override
   protected AptPlugin.AptSourceSetConvention createAptSourceSetConvention(
       Project project, SourceSet sourceSet) {
-    return new AptSourceSetConvention30to33(project, sourceSet);
+    return new AptSourceSetConvention32to33(project, sourceSet);
   }
 
   @Override
@@ -184,10 +184,10 @@ class AptPlugin30to33 extends AptPlugin.Impl {
                 .builtBy(task));
   }
 
-  private static class AptSourceSetConvention30to33 extends AptPlugin.AptSourceSetConvention {
+  private static class AptSourceSetConvention32to33 extends AptPlugin.AptSourceSetConvention {
     private FileCollection annotationProcessorPath;
 
-    private AptSourceSetConvention30to33(Project project, SourceSet sourceSet) {
+    private AptSourceSetConvention32to33(Project project, SourceSet sourceSet) {
       super(project, sourceSet);
     }
 
@@ -214,16 +214,16 @@ class AptPlugin30to33 extends AptPlugin.Impl {
     }
   }
 
-  private static class AptConvention30to33 extends AptPlugin.AptConvention {
+  private static class AptConvention32to33 extends AptPlugin.AptConvention {
     private final Project project;
 
-    private final AptOptions30to33 aptOptions;
+    private final AptOptions32to33 aptOptions;
 
     private Object generatedSourcesDestinationDir;
 
-    AptConvention30to33(Project project) {
+    AptConvention32to33(Project project) {
       this.project = project;
-      this.aptOptions = new AptOptions30to33(project);
+      this.aptOptions = new AptOptions32to33(project);
     }
 
     @Nullable
@@ -266,12 +266,12 @@ class AptPlugin30to33 extends AptPlugin.Impl {
     }
   }
 
-  private static class AptOptions30to33 extends AptPlugin.AptOptions {
+  private static class AptOptions32to33 extends AptPlugin.AptOptions {
     private final Project project;
 
     private Object processorpath;
 
-    private AptOptions30to33(Project project) {
+    private AptOptions32to33(Project project) {
       this.project = project;
     }
 

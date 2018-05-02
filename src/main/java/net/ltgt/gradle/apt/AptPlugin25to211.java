@@ -162,7 +162,7 @@ class AptPlugin25to211 extends AptPlugin.Impl {
       final SourceSet sourceSet,
       AbstractCompile task,
       CompileOptions compileOptions) {
-    final AptPlugin.AptConvention convention =
+    AptPlugin.AptConvention convention =
         task.getConvention().getPlugin(AptPlugin.AptConvention.class);
     convention
         .getAptOptions()
@@ -186,30 +186,6 @@ class AptPlugin25to211 extends AptPlugin.Impl {
                 .getGeneratedSourcesDir();
           }
         });
-    sourceSet
-        .getAllJava()
-        .srcDir(
-            project
-                .files(
-                    new Callable<File>() {
-                      @Override
-                      public File call() {
-                        return convention.getGeneratedSourcesDestinationDir();
-                      }
-                    })
-                .builtBy(task));
-    sourceSet
-        .getAllSource()
-        .srcDir(
-            project
-                .files(
-                    new Callable<File>() {
-                      @Override
-                      public File call() {
-                        return convention.getGeneratedSourcesDestinationDir();
-                      }
-                    })
-                .builtBy(task));
   }
 
   private static class AptSourceSetConvention25to211 extends AptPlugin.AptSourceSetConvention {

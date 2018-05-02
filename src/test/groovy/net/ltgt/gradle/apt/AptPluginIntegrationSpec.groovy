@@ -368,6 +368,7 @@ class AptPluginIntegrationSpec extends Specification {
     gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
+  @Requires({ IntegrationTestHelper.GRADLE_VERSIONS.any { GradleVersion.version(it) >= GradleVersion.version("3.2") } })
   @Unroll
   def "sourceSet.allJava includes generated sources, with Gradle #gradleVersion"() {
     given:
@@ -395,6 +396,7 @@ class AptPluginIntegrationSpec extends Specification {
     gradleVersion << IntegrationTestHelper.GRADLE_VERSIONS
   }
 
+  @Requires({ IntegrationTestHelper.GRADLE_VERSIONS.any { GradleVersion.version(it) >= GradleVersion.version("3.2") } })
   @Unroll
   def "sourceSet.allSource includes generated sources, with Gradle #gradleVersion"() {
     given:

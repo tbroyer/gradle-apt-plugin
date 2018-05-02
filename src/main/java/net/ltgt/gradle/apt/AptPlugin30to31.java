@@ -1,6 +1,7 @@
 package net.ltgt.gradle.apt;
 
-import static net.ltgt.gradle.apt.CompatibilityUtils.*;
+import static net.ltgt.gradle.apt.CompatibilityUtils.optionalProperty;
+import static net.ltgt.gradle.apt.CompatibilityUtils.property;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -16,35 +17,18 @@ import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.api.tasks.compile.CompileOptions;
-import org.gradle.api.tasks.compile.JavaCompile;
 
-class AptPlugin34to42 extends AptPlugin.Impl {
-
-  static final String APT_OPTIONS_PROCESSORPATH_DEPRECATION_MESSAGE =
-      "The aptOptions.processorpath property has been deprecated on JavaCompile tasks. Please use the options.annotationProcessorPath property instead.";
-
-  // options.annotationProcessorPath actually fails with GroovyCompile;
-  // let's use it only where we know it works (JavaCompile),
-  // and keep using the previous implementation otherwise.
-  final AptPlugin.Impl prevImpl = new AptPlugin32to33();
+class AptPlugin30to31 extends AptPlugin.Impl {
 
   @Override
   protected AptPlugin.AptConvention createAptConvention(
       Project project, AbstractCompile task, CompileOptions compileOptions) {
-    if (!(task instanceof JavaCompile)) {
-      return prevImpl.createAptConvention(project, task, compileOptions);
-    }
-    return new AptConvention34to42(project, task, compileOptions);
+    return new AptConvention30to31(project);
   }
 
   @Override
   protected void configureCompileTask(
       Project project, final AbstractCompile task, final CompileOptions compileOptions) {
-    if (!(task instanceof JavaCompile)) {
-      prevImpl.configureCompileTask(project, task, compileOptions);
-      return;
-    }
-
     property(
         task.getInputs(),
         "aptOptions.annotationProcessing",
@@ -52,7 +36,7 @@ class AptPlugin34to42 extends AptPlugin.Impl {
           @Override
           public Object call() {
             return task.getConvention()
-                .getPlugin(AptConvention34to42.class)
+                .getPlugin(AptConvention30to31.class)
                 .getAptOptions()
                 .isAnnotationProcessing();
           }
@@ -64,7 +48,7 @@ class AptPlugin34to42 extends AptPlugin.Impl {
           @Override
           public Object call() {
             return task.getConvention()
-                .getPlugin(AptConvention34to42.class)
+                .getPlugin(AptConvention30to31.class)
                 .getAptOptions()
                 .getProcessors();
           }
@@ -76,11 +60,25 @@ class AptPlugin34to42 extends AptPlugin.Impl {
           @Override
           public Object call() {
             return task.getConvention()
-                .getPlugin(AptConvention34to42.class)
+                .getPlugin(AptConvention30to31.class)
                 .getAptOptions()
                 .getProcessorArgs();
           }
         });
+
+    task.getInputs()
+        .files(
+            new Callable<Object>() {
+              @Override
+              public Object call() {
+                return task.getConvention()
+                    .getPlugin(AptPlugin.AptConvention.class)
+                    .getAptOptions()
+                    .getProcessorpath();
+              }
+            })
+        .withPropertyName("aptOptions.processorpath")
+        .optional();
 
     task.getOutputs()
         .dir(
@@ -99,8 +97,8 @@ class AptPlugin34to42 extends AptPlugin.Impl {
         new Action<Task>() {
           @Override
           public void execute(Task task) {
-            AptConvention34to42 convention =
-                task.getConvention().getPlugin(AptConvention34to42.class);
+            AptConvention30to31 convention =
+                task.getConvention().getPlugin(AptConvention30to31.class);
             convention.makeDirectories();
             compileOptions.getCompilerArgs().addAll(convention.asArguments());
           }
@@ -110,7 +108,7 @@ class AptPlugin34to42 extends AptPlugin.Impl {
   @Override
   protected AptPlugin.AptSourceSetConvention createAptSourceSetConvention(
       Project project, SourceSet sourceSet) {
-    return new AptSourceSetConvention34to42(project, sourceSet);
+    return new AptSourceSetConvention30to31(project, sourceSet);
   }
 
   @Override
@@ -134,15 +132,13 @@ class AptPlugin34to42 extends AptPlugin.Impl {
   protected void configureCompileTaskForSourceSet(
       Project project,
       final SourceSet sourceSet,
-      final AbstractCompile task,
+      AbstractCompile task,
       CompileOptions compileOptions) {
-    if (!(task instanceof JavaCompile)) {
-      prevImpl.configureCompileTaskForSourceSet(project, sourceSet, task, compileOptions);
-      return;
-    }
-
-    compileOptions.setAnnotationProcessorPath(
-        project.files(
+    AptPlugin.AptConvention convention =
+        task.getConvention().getPlugin(AptPlugin.AptConvention.class);
+    convention
+        .getAptOptions()
+        .setProcessorpath(
             new Callable<FileCollection>() {
               @Override
               public FileCollection call() {
@@ -151,9 +147,7 @@ class AptPlugin34to42 extends AptPlugin.Impl {
                     .getPlugin(AptPlugin.AptSourceSetConvention.class)
                     .getAnnotationProcessorPath();
               }
-            }));
-    final AptPlugin.AptConvention convention =
-        task.getConvention().getPlugin(AptPlugin.AptConvention.class);
+            });
     convention.setGeneratedSourcesDestinationDir(
         new Callable<File>() {
           @Override
@@ -164,36 +158,12 @@ class AptPlugin34to42 extends AptPlugin.Impl {
                 .getGeneratedSourcesDir();
           }
         });
-    sourceSet
-        .getAllJava()
-        .srcDir(
-            project
-                .files(
-                    new Callable<File>() {
-                      @Override
-                      public File call() {
-                        return convention.getGeneratedSourcesDestinationDir();
-                      }
-                    })
-                .builtBy(task));
-    sourceSet
-        .getAllSource()
-        .srcDir(
-            project
-                .files(
-                    new Callable<File>() {
-                      @Override
-                      public File call() {
-                        return convention.getGeneratedSourcesDestinationDir();
-                      }
-                    })
-                .builtBy(task));
   }
 
-  private static class AptSourceSetConvention34to42 extends AptPlugin.AptSourceSetConvention {
+  private static class AptSourceSetConvention30to31 extends AptPlugin.AptSourceSetConvention {
     private FileCollection annotationProcessorPath;
 
-    private AptSourceSetConvention34to42(Project project, SourceSet sourceSet) {
+    private AptSourceSetConvention30to31(Project project, SourceSet sourceSet) {
       super(project, sourceSet);
     }
 
@@ -220,16 +190,16 @@ class AptPlugin34to42 extends AptPlugin.Impl {
     }
   }
 
-  private static class AptConvention34to42 extends AptPlugin.AptConvention {
+  private static class AptConvention30to31 extends AptPlugin.AptConvention {
     private final Project project;
 
-    private final AptOptions34to42 aptOptions;
+    private final AptOptions30to31 aptOptions;
 
     private Object generatedSourcesDestinationDir;
 
-    AptConvention34to42(Project project, AbstractCompile task, CompileOptions compileOptions) {
+    AptConvention30to31(Project project) {
       this.project = project;
-      this.aptOptions = new AptOptions34to42(project, task, compileOptions);
+      this.aptOptions = new AptOptions30to31(project);
     }
 
     @Nullable
@@ -263,37 +233,36 @@ class AptPlugin34to42 extends AptPlugin.Impl {
         result.add("-s");
         result.add(getGeneratedSourcesDestinationDir().getPath());
       }
+      if (aptOptions.processorpath != null && !aptOptions.getProcessorpath().isEmpty()) {
+        result.add("-processorpath");
+        result.add(aptOptions.getProcessorpath().getAsPath());
+      }
       result.addAll(aptOptions.asArguments());
       return result;
     }
   }
 
-  private static class AptOptions34to42 extends AptPlugin.AptOptions {
+  private static class AptOptions30to31 extends AptPlugin.AptOptions {
     private final Project project;
-    private final AbstractCompile task;
-    private final CompileOptions compileOptions;
 
-    private AptOptions34to42(Project project, AbstractCompile task, CompileOptions compileOptions) {
+    private Object processorpath;
+
+    private AptOptions30to31(Project project) {
       this.project = project;
-      this.task = task;
-      this.compileOptions = compileOptions;
     }
 
     @Nullable
     @Override
     public FileCollection getProcessorpath() {
-      DeprecationLogger.nagUserWith(task, APT_OPTIONS_PROCESSORPATH_DEPRECATION_MESSAGE);
-      return compileOptions.getAnnotationProcessorPath();
+      if (processorpath == null) {
+        return null;
+      }
+      return project.files(processorpath);
     }
 
     @Override
     public void setProcessorpath(@Nullable Object processorpath) {
-      DeprecationLogger.nagUserWith(task, APT_OPTIONS_PROCESSORPATH_DEPRECATION_MESSAGE);
-      if (processorpath == null || processorpath instanceof FileCollection) {
-        compileOptions.setAnnotationProcessorPath((FileCollection) processorpath);
-      } else {
-        compileOptions.setAnnotationProcessorPath(project.files(processorpath));
-      }
+      this.processorpath = processorpath;
     }
   }
 }
