@@ -1,0 +1,1058 @@
+#
+# This is a generated file
+#
+platforms:
+  - &defaults
+    environment:
+      - GRADLE_OPTS: -Dorg.gradle.daemon=false
+      - JAVA_TOOL_OPTIONS: -XX:MaxRAM=4g -XX:ParallelGCThreads=2
+
+  - &java8
+    <<: *defaults
+    docker:
+      - image: circleci/openjdk:8-jdk
+    
+  - &java9
+    <<: *defaults
+    docker:
+      - image: circleci/openjdk:9-jdk
+    
+  - &java10
+    <<: *defaults
+    docker:
+      - image: circleci/openjdk:10-jdk
+    
+
+caches:
+  workspace:
+    - &persist-workspace
+      persist_to_workspace:
+        root: .
+        paths: .
+    - &attach-workspace
+      attach_workspace:
+        at: .
+  test_results:
+    - &store-test-results
+      store_test_results:
+        paths: build/test-results/
+  dependencies:
+
+    - &save-gradle-dependencies-java8
+      save_cache:
+        name: Saving Gradle dependencies
+        key: v3-gradle-java8-{{ checksum "build.gradle.kts" }}
+        paths:
+          - ~/.gradle/caches/modules-2/
+    - &restore-gradle-dependencies-java8
+      restore_cache:
+        name: Restoring Gradle dependencies
+        keys:
+          - v3-gradle-java8-{{ checksum "build.gradle.kts" }}
+    
+    - &save-gradle-dependencies-java9
+      save_cache:
+        name: Saving Gradle dependencies
+        key: v3-gradle-java9-{{ checksum "build.gradle.kts" }}
+        paths:
+          - ~/.gradle/caches/modules-2/
+    - &restore-gradle-dependencies-java9
+      restore_cache:
+        name: Restoring Gradle dependencies
+        keys:
+          - v3-gradle-java9-{{ checksum "build.gradle.kts" }}
+    
+    - &save-gradle-dependencies-java10
+      save_cache:
+        name: Saving Gradle dependencies
+        key: v3-gradle-java10-{{ checksum "build.gradle.kts" }}
+        paths:
+          - ~/.gradle/caches/modules-2/
+    - &restore-gradle-dependencies-java10
+      restore_cache:
+        name: Restoring Gradle dependencies
+        keys:
+          - v3-gradle-java10-{{ checksum "build.gradle.kts" }}
+    
+  wrapper:
+
+    - &save-gradle-wrapper-current
+      save_cache:
+        name: Saving Gradle wrapper 4.8
+        key: v2-gradle-wrapper-4.8
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-4.8-bin/
+          - ~/.gradle/caches/4.8/generated-gradle-jars/
+          - ~/.gradle/notifications/4.8/
+    - &restore-gradle-wrapper-current
+      restore_cache:
+        name: Restoring Gradle wrapper 4.8
+        keys:
+          - v2-gradle-wrapper-4.8
+    
+    - &save-gradle-wrapper-4-7
+      save_cache:
+        name: Saving Gradle wrapper 4.7
+        key: v2-gradle-wrapper-4.7
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-4.7-bin/
+          - ~/.gradle/caches/4.7/generated-gradle-jars/
+          - ~/.gradle/notifications/4.7/
+    - &restore-gradle-wrapper-4-7
+      restore_cache:
+        name: Restoring Gradle wrapper 4.7
+        keys:
+          - v2-gradle-wrapper-4.7
+    
+    - &save-gradle-wrapper-4-6
+      save_cache:
+        name: Saving Gradle wrapper 4.6
+        key: v2-gradle-wrapper-4.6
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-4.6-bin/
+          - ~/.gradle/caches/4.6/generated-gradle-jars/
+          - ~/.gradle/notifications/4.6/
+    - &restore-gradle-wrapper-4-6
+      restore_cache:
+        name: Restoring Gradle wrapper 4.6
+        keys:
+          - v2-gradle-wrapper-4.6
+    
+    - &save-gradle-wrapper-4-5-1
+      save_cache:
+        name: Saving Gradle wrapper 4.5.1
+        key: v2-gradle-wrapper-4.5.1
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-4.5.1-bin/
+          - ~/.gradle/caches/4.5.1/generated-gradle-jars/
+          - ~/.gradle/notifications/4.5.1/
+    - &restore-gradle-wrapper-4-5-1
+      restore_cache:
+        name: Restoring Gradle wrapper 4.5.1
+        keys:
+          - v2-gradle-wrapper-4.5.1
+    
+    - &save-gradle-wrapper-4-4-1
+      save_cache:
+        name: Saving Gradle wrapper 4.4.1
+        key: v2-gradle-wrapper-4.4.1
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-4.4.1-bin/
+          - ~/.gradle/caches/4.4.1/generated-gradle-jars/
+          - ~/.gradle/notifications/4.4.1/
+    - &restore-gradle-wrapper-4-4-1
+      restore_cache:
+        name: Restoring Gradle wrapper 4.4.1
+        keys:
+          - v2-gradle-wrapper-4.4.1
+    
+    - &save-gradle-wrapper-4-3-1
+      save_cache:
+        name: Saving Gradle wrapper 4.3.1
+        key: v2-gradle-wrapper-4.3.1
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-4.3.1-bin/
+          - ~/.gradle/caches/4.3.1/generated-gradle-jars/
+          - ~/.gradle/notifications/4.3.1/
+    - &restore-gradle-wrapper-4-3-1
+      restore_cache:
+        name: Restoring Gradle wrapper 4.3.1
+        keys:
+          - v2-gradle-wrapper-4.3.1
+    
+    - &save-gradle-wrapper-4-2-1
+      save_cache:
+        name: Saving Gradle wrapper 4.2.1
+        key: v2-gradle-wrapper-4.2.1
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-4.2.1-bin/
+          - ~/.gradle/caches/4.2.1/generated-gradle-jars/
+          - ~/.gradle/notifications/4.2.1/
+    - &restore-gradle-wrapper-4-2-1
+      restore_cache:
+        name: Restoring Gradle wrapper 4.2.1
+        keys:
+          - v2-gradle-wrapper-4.2.1
+    
+    - &save-gradle-wrapper-4-1
+      save_cache:
+        name: Saving Gradle wrapper 4.1
+        key: v2-gradle-wrapper-4.1
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-4.1-bin/
+          - ~/.gradle/caches/4.1/generated-gradle-jars/
+          - ~/.gradle/notifications/4.1/
+    - &restore-gradle-wrapper-4-1
+      restore_cache:
+        name: Restoring Gradle wrapper 4.1
+        keys:
+          - v2-gradle-wrapper-4.1
+    
+    - &save-gradle-wrapper-4-0-2
+      save_cache:
+        name: Saving Gradle wrapper 4.0.2
+        key: v2-gradle-wrapper-4.0.2
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-4.0.2-bin/
+          - ~/.gradle/caches/4.0.2/generated-gradle-jars/
+          - ~/.gradle/notifications/4.0.2/
+    - &restore-gradle-wrapper-4-0-2
+      restore_cache:
+        name: Restoring Gradle wrapper 4.0.2
+        keys:
+          - v2-gradle-wrapper-4.0.2
+    
+    - &save-gradle-wrapper-3-5-1
+      save_cache:
+        name: Saving Gradle wrapper 3.5.1
+        key: v2-gradle-wrapper-3.5.1
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-3.5.1-bin/
+          - ~/.gradle/caches/3.5.1/generated-gradle-jars/
+          - ~/.gradle/notifications/3.5.1/
+    - &restore-gradle-wrapper-3-5-1
+      restore_cache:
+        name: Restoring Gradle wrapper 3.5.1
+        keys:
+          - v2-gradle-wrapper-3.5.1
+    
+    - &save-gradle-wrapper-3-4-1
+      save_cache:
+        name: Saving Gradle wrapper 3.4.1
+        key: v2-gradle-wrapper-3.4.1
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-3.4.1-bin/
+          - ~/.gradle/caches/3.4.1/generated-gradle-jars/
+          - ~/.gradle/notifications/3.4.1/
+    - &restore-gradle-wrapper-3-4-1
+      restore_cache:
+        name: Restoring Gradle wrapper 3.4.1
+        keys:
+          - v2-gradle-wrapper-3.4.1
+    
+    - &save-gradle-wrapper-3-3
+      save_cache:
+        name: Saving Gradle wrapper 3.3
+        key: v2-gradle-wrapper-3.3
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-3.3-bin/
+          - ~/.gradle/caches/3.3/generated-gradle-jars/
+          - ~/.gradle/notifications/3.3/
+    - &restore-gradle-wrapper-3-3
+      restore_cache:
+        name: Restoring Gradle wrapper 3.3
+        keys:
+          - v2-gradle-wrapper-3.3
+    
+    - &save-gradle-wrapper-3-2-1
+      save_cache:
+        name: Saving Gradle wrapper 3.2.1
+        key: v2-gradle-wrapper-3.2.1
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-3.2.1-bin/
+          - ~/.gradle/caches/3.2.1/generated-gradle-jars/
+          - ~/.gradle/notifications/3.2.1/
+    - &restore-gradle-wrapper-3-2-1
+      restore_cache:
+        name: Restoring Gradle wrapper 3.2.1
+        keys:
+          - v2-gradle-wrapper-3.2.1
+    
+    - &save-gradle-wrapper-3-1
+      save_cache:
+        name: Saving Gradle wrapper 3.1
+        key: v2-gradle-wrapper-3.1
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-3.1-bin/
+          - ~/.gradle/caches/3.1/generated-gradle-jars/
+          - ~/.gradle/notifications/3.1/
+    - &restore-gradle-wrapper-3-1
+      restore_cache:
+        name: Restoring Gradle wrapper 3.1
+        keys:
+          - v2-gradle-wrapper-3.1
+    
+    - &save-gradle-wrapper-3-0
+      save_cache:
+        name: Saving Gradle wrapper 3.0
+        key: v2-gradle-wrapper-3.0
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-3.0-bin/
+          - ~/.gradle/caches/3.0/generated-gradle-jars/
+          - ~/.gradle/notifications/3.0/
+    - &restore-gradle-wrapper-3-0
+      restore_cache:
+        name: Restoring Gradle wrapper 3.0
+        keys:
+          - v2-gradle-wrapper-3.0
+    
+    - &save-gradle-wrapper-2-14-1
+      save_cache:
+        name: Saving Gradle wrapper 2.14.1
+        key: v2-gradle-wrapper-2.14.1
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-2.14.1-bin/
+          - ~/.gradle/caches/2.14.1/generated-gradle-jars/
+          - ~/.gradle/notifications/2.14.1/
+    - &restore-gradle-wrapper-2-14-1
+      restore_cache:
+        name: Restoring Gradle wrapper 2.14.1
+        keys:
+          - v2-gradle-wrapper-2.14.1
+    
+    - &save-gradle-wrapper-2-13
+      save_cache:
+        name: Saving Gradle wrapper 2.13
+        key: v2-gradle-wrapper-2.13
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-2.13-bin/
+          - ~/.gradle/caches/2.13/generated-gradle-jars/
+          - ~/.gradle/notifications/2.13/
+    - &restore-gradle-wrapper-2-13
+      restore_cache:
+        name: Restoring Gradle wrapper 2.13
+        keys:
+          - v2-gradle-wrapper-2.13
+    
+    - &save-gradle-wrapper-2-12
+      save_cache:
+        name: Saving Gradle wrapper 2.12
+        key: v2-gradle-wrapper-2.12
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-2.12-bin/
+          - ~/.gradle/caches/2.12/generated-gradle-jars/
+          - ~/.gradle/notifications/2.12/
+    - &restore-gradle-wrapper-2-12
+      restore_cache:
+        name: Restoring Gradle wrapper 2.12
+        keys:
+          - v2-gradle-wrapper-2.12
+    
+    - &save-gradle-wrapper-2-11
+      save_cache:
+        name: Saving Gradle wrapper 2.11
+        key: v2-gradle-wrapper-2.11
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-2.11-bin/
+          - ~/.gradle/caches/2.11/generated-gradle-jars/
+          - ~/.gradle/notifications/2.11/
+    - &restore-gradle-wrapper-2-11
+      restore_cache:
+        name: Restoring Gradle wrapper 2.11
+        keys:
+          - v2-gradle-wrapper-2.11
+    
+    - &save-gradle-wrapper-2-10
+      save_cache:
+        name: Saving Gradle wrapper 2.10
+        key: v2-gradle-wrapper-2.10
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-2.10-bin/
+          - ~/.gradle/caches/2.10/generated-gradle-jars/
+          - ~/.gradle/notifications/2.10/
+    - &restore-gradle-wrapper-2-10
+      restore_cache:
+        name: Restoring Gradle wrapper 2.10
+        keys:
+          - v2-gradle-wrapper-2.10
+    
+    - &save-gradle-wrapper-2-9
+      save_cache:
+        name: Saving Gradle wrapper 2.9
+        key: v2-gradle-wrapper-2.9
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-2.9-bin/
+          - ~/.gradle/caches/2.9/generated-gradle-jars/
+          - ~/.gradle/notifications/2.9/
+    - &restore-gradle-wrapper-2-9
+      restore_cache:
+        name: Restoring Gradle wrapper 2.9
+        keys:
+          - v2-gradle-wrapper-2.9
+    
+    - &save-gradle-wrapper-2-8
+      save_cache:
+        name: Saving Gradle wrapper 2.8
+        key: v2-gradle-wrapper-2.8
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-2.8-bin/
+          - ~/.gradle/caches/2.8/generated-gradle-jars/
+          - ~/.gradle/notifications/2.8/
+    - &restore-gradle-wrapper-2-8
+      restore_cache:
+        name: Restoring Gradle wrapper 2.8
+        keys:
+          - v2-gradle-wrapper-2.8
+    
+    - &save-gradle-wrapper-2-7
+      save_cache:
+        name: Saving Gradle wrapper 2.7
+        key: v2-gradle-wrapper-2.7
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-2.7-bin/
+          - ~/.gradle/caches/2.7/generated-gradle-jars/
+          - ~/.gradle/notifications/2.7/
+    - &restore-gradle-wrapper-2-7
+      restore_cache:
+        name: Restoring Gradle wrapper 2.7
+        keys:
+          - v2-gradle-wrapper-2.7
+    
+    - &save-gradle-wrapper-2-6
+      save_cache:
+        name: Saving Gradle wrapper 2.6
+        key: v2-gradle-wrapper-2.6
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-2.6-bin/
+          - ~/.gradle/caches/2.6/generated-gradle-jars/
+          - ~/.gradle/notifications/2.6/
+    - &restore-gradle-wrapper-2-6
+      restore_cache:
+        name: Restoring Gradle wrapper 2.6
+        keys:
+          - v2-gradle-wrapper-2.6
+    
+    - &save-gradle-wrapper-2-5
+      save_cache:
+        name: Saving Gradle wrapper 2.5
+        key: v2-gradle-wrapper-2.5
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-2.5-bin/
+          - ~/.gradle/caches/2.5/generated-gradle-jars/
+          - ~/.gradle/notifications/2.5/
+    - &restore-gradle-wrapper-2-5
+      restore_cache:
+        name: Restoring Gradle wrapper 2.5
+        keys:
+          - v2-gradle-wrapper-2.5
+    
+
+version: 2
+jobs:
+  checkout_code:
+    <<: *java8
+    steps:
+      - checkout
+      - run:
+          name: Remove Git tracking files (reduces workspace size)
+          command: rm -rf .git/
+      - *persist-workspace
+
+  java8:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - run:
+          name: Build
+          command: ./gradlew build
+      - *store-test-results
+      - *save-gradle-wrapper-current
+      - *save-gradle-dependencies-java8
+      - *persist-workspace
+    
+  java9:
+    <<: *java9
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java9
+      - *restore-gradle-wrapper-current
+      - run:
+          name: Build
+          command: ./gradlew build
+      - *store-test-results
+      - *save-gradle-wrapper-current
+      - *save-gradle-dependencies-java9
+      - *persist-workspace
+    
+  java10:
+    <<: *java10
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java10
+      - *restore-gradle-wrapper-current
+      - run:
+          name: Build
+          command: ./gradlew build
+      - *store-test-results
+      - *save-gradle-wrapper-current
+      - *save-gradle-dependencies-java10
+      - *persist-workspace
+    
+  java8_gradle47:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-7
+      - run:
+          name: Test against Gradle 4.7
+          command: ./gradlew test -Ptest.gradle-version=4.7
+      - *store-test-results
+      - *save-gradle-wrapper-4-7
+        
+  java9_gradle47:
+    <<: *java9
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java9
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-7
+      - run:
+          name: Test against Gradle 4.7
+          command: ./gradlew test -Ptest.gradle-version=4.7
+      - *store-test-results
+      - *save-gradle-wrapper-4-7
+        
+  java10_gradle47:
+    <<: *java10
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java10
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-7
+      - run:
+          name: Test against Gradle 4.7
+          command: ./gradlew test -Ptest.gradle-version=4.7
+      - *store-test-results
+      - *save-gradle-wrapper-4-7
+        
+  java8_gradle46:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-6
+      - run:
+          name: Test against Gradle 4.6
+          command: ./gradlew test -Ptest.gradle-version=4.6
+      - *store-test-results
+      - *save-gradle-wrapper-4-6
+        
+  java9_gradle46:
+    <<: *java9
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java9
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-6
+      - run:
+          name: Test against Gradle 4.6
+          command: ./gradlew test -Ptest.gradle-version=4.6
+      - *store-test-results
+      - *save-gradle-wrapper-4-6
+        
+  java8_gradle45:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-5-1
+      - run:
+          name: Test against Gradle 4.5.1
+          command: ./gradlew test -Ptest.gradle-version=4.5.1
+      - *store-test-results
+      - *save-gradle-wrapper-4-5-1
+        
+  java9_gradle45:
+    <<: *java9
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java9
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-5-1
+      - run:
+          name: Test against Gradle 4.5.1
+          command: ./gradlew test -Ptest.gradle-version=4.5.1
+      - *store-test-results
+      - *save-gradle-wrapper-4-5-1
+        
+  java8_gradle44:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-4-1
+      - run:
+          name: Test against Gradle 4.4.1
+          command: ./gradlew test -Ptest.gradle-version=4.4.1
+      - *store-test-results
+      - *save-gradle-wrapper-4-4-1
+        
+  java9_gradle44:
+    <<: *java9
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java9
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-4-1
+      - run:
+          name: Test against Gradle 4.4.1
+          command: ./gradlew test -Ptest.gradle-version=4.4.1
+      - *store-test-results
+      - *save-gradle-wrapper-4-4-1
+        
+  java8_gradle43:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-3-1
+      - run:
+          name: Test against Gradle 4.3.1
+          command: ./gradlew test -Ptest.gradle-version=4.3.1
+      - *store-test-results
+      - *save-gradle-wrapper-4-3-1
+        
+  java9_gradle43:
+    <<: *java9
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java9
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-3-1
+      - run:
+          name: Test against Gradle 4.3.1
+          command: ./gradlew test -Ptest.gradle-version=4.3.1
+      - *store-test-results
+      - *save-gradle-wrapper-4-3-1
+        
+  java8_gradle42:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-2-1
+      - run:
+          name: Test against Gradle 4.2.1
+          command: ./gradlew test -Ptest.gradle-version=4.2.1
+      - *store-test-results
+      - *save-gradle-wrapper-4-2-1
+        
+  java9_gradle42:
+    <<: *java9
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java9
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-2-1
+      - run:
+          name: Test against Gradle 4.2.1
+          command: ./gradlew test -Ptest.gradle-version=4.2.1
+      - *store-test-results
+      - *save-gradle-wrapper-4-2-1
+        
+  java8_gradle41:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-1
+      - run:
+          name: Test against Gradle 4.1
+          command: ./gradlew test -Ptest.gradle-version=4.1
+      - *store-test-results
+      - *save-gradle-wrapper-4-1
+        
+  java8_gradle40:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-0-2
+      - run:
+          name: Test against Gradle 4.0.2
+          command: ./gradlew test -Ptest.gradle-version=4.0.2
+      - *store-test-results
+      - *save-gradle-wrapper-4-0-2
+        
+  java8_gradle35:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-3-5-1
+      - run:
+          name: Test against Gradle 3.5.1
+          command: ./gradlew test -Ptest.gradle-version=3.5.1
+      - *store-test-results
+      - *save-gradle-wrapper-3-5-1
+        
+  java8_gradle34:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-3-4-1
+      - run:
+          name: Test against Gradle 3.4.1
+          command: ./gradlew test -Ptest.gradle-version=3.4.1
+      - *store-test-results
+      - *save-gradle-wrapper-3-4-1
+        
+  java8_gradle33:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-3-3
+      - run:
+          name: Test against Gradle 3.3
+          command: ./gradlew test -Ptest.gradle-version=3.3
+      - *store-test-results
+      - *save-gradle-wrapper-3-3
+        
+  java8_gradle32:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-3-2-1
+      - run:
+          name: Test against Gradle 3.2.1
+          command: ./gradlew test -Ptest.gradle-version=3.2.1
+      - *store-test-results
+      - *save-gradle-wrapper-3-2-1
+        
+  java8_gradle31:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-3-1
+      - run:
+          name: Test against Gradle 3.1
+          command: ./gradlew test -Ptest.gradle-version=3.1
+      - *store-test-results
+      - *save-gradle-wrapper-3-1
+        
+  java8_gradle30:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-3-0
+      - run:
+          name: Test against Gradle 3.0
+          command: ./gradlew test -Ptest.gradle-version=3.0
+      - *store-test-results
+      - *save-gradle-wrapper-3-0
+        
+  java8_gradle214:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-2-14-1
+      - run:
+          name: Test against Gradle 2.14.1
+          command: ./gradlew test -Ptest.gradle-version=2.14.1
+      - *store-test-results
+      - *save-gradle-wrapper-2-14-1
+        
+  java8_gradle213:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-2-13
+      - run:
+          name: Test against Gradle 2.13
+          command: ./gradlew test -Ptest.gradle-version=2.13
+      - *store-test-results
+      - *save-gradle-wrapper-2-13
+        
+  java8_gradle212:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-2-12
+      - run:
+          name: Test against Gradle 2.12
+          command: ./gradlew test -Ptest.gradle-version=2.12
+      - *store-test-results
+      - *save-gradle-wrapper-2-12
+        
+  java8_gradle211:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-2-11
+      - run:
+          name: Test against Gradle 2.11
+          command: ./gradlew test -Ptest.gradle-version=2.11
+      - *store-test-results
+      - *save-gradle-wrapper-2-11
+        
+  java8_gradle210:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-2-10
+      - run:
+          name: Test against Gradle 2.10
+          command: ./gradlew test -Ptest.gradle-version=2.10
+      - *store-test-results
+      - *save-gradle-wrapper-2-10
+        
+  java8_gradle29:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-2-9
+      - run:
+          name: Test against Gradle 2.9
+          command: ./gradlew test -Ptest.gradle-version=2.9
+      - *store-test-results
+      - *save-gradle-wrapper-2-9
+        
+  java8_gradle28:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-2-8
+      - run:
+          name: Test against Gradle 2.8
+          command: ./gradlew test -Ptest.gradle-version=2.8
+      - *store-test-results
+      - *save-gradle-wrapper-2-8
+        
+  java8_gradle27:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-2-7
+      - run:
+          name: Test against Gradle 2.7
+          command: ./gradlew test -Ptest.gradle-version=2.7
+      - *store-test-results
+      - *save-gradle-wrapper-2-7
+        
+  java8_gradle26:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-2-6
+      - run:
+          name: Test against Gradle 2.6
+          command: ./gradlew test -Ptest.gradle-version=2.6
+      - *store-test-results
+      - *save-gradle-wrapper-2-6
+        
+  java8_gradle25:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-2-5
+      - run:
+          name: Test against Gradle 2.5
+          command: ./gradlew test -Ptest.gradle-version=2.5
+      - *store-test-results
+      - *save-gradle-wrapper-2-5
+        
+
+workflows:
+  version: 2
+  tests:
+    jobs:
+      - checkout_code
+
+      - java8:
+          requires:
+            - checkout_code
+    
+      - java9:
+          requires:
+            - java8
+    
+      - java10:
+          requires:
+            - java8
+    
+      - java8_gradle47:
+          requires:
+            - java8
+            
+        
+      - java9_gradle47:
+          requires:
+            - java9
+            - java8_gradle47
+        
+      - java10_gradle47:
+          requires:
+            - java10
+            - java8_gradle47
+        
+      - java8_gradle46:
+          requires:
+            - java8
+            
+        
+      - java9_gradle46:
+          requires:
+            - java9
+            - java8_gradle46
+        
+      - java8_gradle45:
+          requires:
+            - java8
+            
+        
+      - java9_gradle45:
+          requires:
+            - java9
+            - java8_gradle45
+        
+      - java8_gradle44:
+          requires:
+            - java8
+            
+        
+      - java9_gradle44:
+          requires:
+            - java9
+            - java8_gradle44
+        
+      - java8_gradle43:
+          requires:
+            - java8
+            
+        
+      - java9_gradle43:
+          requires:
+            - java9
+            - java8_gradle43
+        
+      - java8_gradle42:
+          requires:
+            - java8
+            
+        
+      - java9_gradle42:
+          requires:
+            - java9
+            - java8_gradle42
+        
+      - java8_gradle41:
+          requires:
+            - java8
+            
+        
+      - java8_gradle40:
+          requires:
+            - java8
+            
+        
+      - java8_gradle35:
+          requires:
+            - java8
+            
+        
+      - java8_gradle34:
+          requires:
+            - java8
+            
+        
+      - java8_gradle33:
+          requires:
+            - java8
+            
+        
+      - java8_gradle32:
+          requires:
+            - java8
+            
+        
+      - java8_gradle31:
+          requires:
+            - java8
+            
+        
+      - java8_gradle30:
+          requires:
+            - java8
+            
+        
+      - java8_gradle214:
+          requires:
+            - java8
+            
+        
+      - java8_gradle213:
+          requires:
+            - java8
+            
+        
+      - java8_gradle212:
+          requires:
+            - java8
+            
+        
+      - java8_gradle211:
+          requires:
+            - java8
+            
+        
+      - java8_gradle210:
+          requires:
+            - java8
+            
+        
+      - java8_gradle29:
+          requires:
+            - java8
+            
+        
+      - java8_gradle28:
+          requires:
+            - java8
+            
+        
+      - java8_gradle27:
+          requires:
+            - java8
+            
+        
+      - java8_gradle26:
+          requires:
+            - java8
+            
+        
+      - java8_gradle25:
+          requires:
+            - java8
+            
