@@ -123,7 +123,7 @@ val verifyKtlint by tasks.creating(JavaExec::class) {
     description = "Check Kotlin code style."
     classpath = ktlint
     main = "com.github.shyiko.ktlint.Main"
-    args("**./*.gradle.kts", "**/*.kt")
+    args("**/*.gradle.kts", "**/*.kt")
 }
 tasks["check"].dependsOn(verifyKtlint)
 
