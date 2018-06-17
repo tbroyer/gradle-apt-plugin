@@ -1,6 +1,11 @@
 package net.ltgt.gradle.apt;
 
-import static net.ltgt.gradle.apt.CompatibilityUtils.*;
+import static net.ltgt.gradle.apt.CompatibilityUtils.dir;
+import static net.ltgt.gradle.apt.CompatibilityUtils.files;
+import static net.ltgt.gradle.apt.CompatibilityUtils.getInputs;
+import static net.ltgt.gradle.apt.CompatibilityUtils.getOutputs;
+import static net.ltgt.gradle.apt.CompatibilityUtils.optionalProperty;
+import static net.ltgt.gradle.apt.CompatibilityUtils.property;
 
 import java.io.File;
 import java.util.ArrayList;
