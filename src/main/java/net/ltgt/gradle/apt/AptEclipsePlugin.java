@@ -68,17 +68,11 @@ public class AptEclipsePlugin implements Plugin<Project> {
                         project
                             .getConfigurations()
                             .getByName(
-                                new DslObject(mainSourceSet)
-                                    .getConvention()
-                                    .getPlugin(AptPlugin.AptSourceSetConvention.class)
-                                    .getCompileOnlyConfigurationName()),
+                                AptPlugin.IMPL.getCompileOnlyConfigurationName(mainSourceSet)),
                         project
                             .getConfigurations()
                             .getByName(
-                                new DslObject(testSourceSet)
-                                    .getConvention()
-                                    .getPlugin(AptPlugin.AptSourceSetConvention.class)
-                                    .getCompileOnlyConfigurationName())));
+                                AptPlugin.IMPL.getCompileOnlyConfigurationName(testSourceSet))));
           }
         });
     if (project.getTasks().findByName("eclipseJdtApt") == null) {
@@ -184,17 +178,13 @@ public class AptEclipsePlugin implements Plugin<Project> {
                                   project
                                       .getConfigurations()
                                       .getByName(
-                                          new DslObject(mainSourceSet)
-                                              .getConvention()
-                                              .getPlugin(AptPlugin.AptSourceSetConvention.class)
-                                              .getAnnotationProcessorConfigurationName()),
+                                          AptPlugin.IMPL.getAnnotationProcessorConfigurationName(
+                                              mainSourceSet)),
                                   project
                                       .getConfigurations()
                                       .getByName(
-                                          new DslObject(testSourceSet)
-                                              .getConvention()
-                                              .getPlugin(AptPlugin.AptSourceSetConvention.class)
-                                              .getAnnotationProcessorConfigurationName()))));
+                                          AptPlugin.IMPL.getAnnotationProcessorConfigurationName(
+                                              testSourceSet)))));
                       generateEclipseFactorypath.dependsOn(
                           factorypath.getPlusConfigurations().toArray());
                     }

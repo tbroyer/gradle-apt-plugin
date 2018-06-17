@@ -169,6 +169,19 @@ class AptPlugin30to31 extends AptPlugin.Impl {
             });
   }
 
+  @Override
+  String getAnnotationProcessorConfigurationName(SourceSet sourceSet) {
+    return ((HasConvention) sourceSet)
+        .getConvention()
+        .getPlugin(AptPlugin.AptSourceSetConvention.class)
+        .getAnnotationProcessorConfigurationName();
+  }
+
+  @Override
+  String getCompileOnlyConfigurationName(SourceSet sourceSet) {
+    return sourceSet.getCompileOnlyConfigurationName();
+  }
+
   private static class AptSourceSetConvention30to31 extends AptPlugin.AptSourceSetConvention {
     private FileCollection annotationProcessorPath;
 

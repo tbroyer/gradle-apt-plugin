@@ -31,7 +31,7 @@ public class AptPlugin implements Plugin<Project> {
 
   static final String PLUGIN_ID = "net.ltgt.apt";
 
-  private static final Impl IMPL = Impl.newInstance();
+  static final Impl IMPL = Impl.newInstance();
 
   @Override
   public void apply(final Project project) {
@@ -269,6 +269,10 @@ public class AptPlugin implements Plugin<Project> {
 
     protected abstract void configureCompileTaskForSourceSet(
         Project project, SourceSet sourceSet, AbstractCompile task, CompileOptions compileOptions);
+
+    abstract String getAnnotationProcessorConfigurationName(SourceSet sourceSet);
+
+    abstract String getCompileOnlyConfigurationName(SourceSet sourceSet);
   }
 
   public abstract static class AptConvention {

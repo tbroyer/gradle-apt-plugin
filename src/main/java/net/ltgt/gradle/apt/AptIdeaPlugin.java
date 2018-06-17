@@ -139,37 +139,29 @@ public class AptIdeaPlugin implements Plugin<Project> {
             }
 
             if (apt.isAddCompileOnlyDependencies() || apt.isAddAptDependencies()) {
-              final AptPlugin.AptSourceSetConvention mainSourceSetConvention =
-                  new DslObject(mainSourceSet)
-                      .getConvention()
-                      .getPlugin(AptPlugin.AptSourceSetConvention.class);
-              final AptPlugin.AptSourceSetConvention testSourceSetConvention =
-                  new DslObject(testSourceSet)
-                      .getConvention()
-                      .getPlugin(AptPlugin.AptSourceSetConvention.class);
               final List<Configuration> mainConfigurations = new ArrayList<>();
               final List<Configuration> testConfigurations = new ArrayList<>();
               if (apt.isAddCompileOnlyDependencies()) {
                 mainConfigurations.add(
                     project
                         .getConfigurations()
-                        .getByName(mainSourceSetConvention.getCompileOnlyConfigurationName()));
+                        .getByName(AptPlugin.IMPL.getCompileOnlyConfigurationName(mainSourceSet)));
                 testConfigurations.add(
                     project
                         .getConfigurations()
-                        .getByName(testSourceSetConvention.getCompileOnlyConfigurationName()));
+                        .getByName(AptPlugin.IMPL.getCompileOnlyConfigurationName(testSourceSet)));
               }
               if (apt.isAddAptDependencies()) {
                 mainConfigurations.add(
                     project
                         .getConfigurations()
                         .getByName(
-                            mainSourceSetConvention.getAnnotationProcessorConfigurationName()));
+                            AptPlugin.IMPL.getAnnotationProcessorConfigurationName(mainSourceSet)));
                 testConfigurations.add(
                     project
                         .getConfigurations()
                         .getByName(
-                            testSourceSetConvention.getAnnotationProcessorConfigurationName()));
+                            AptPlugin.IMPL.getAnnotationProcessorConfigurationName(testSourceSet)));
               }
               ideaModule
                   .getScopes()

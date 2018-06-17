@@ -113,6 +113,16 @@ class AptPlugin46 extends AptPlugin.Impl {
                 .builtBy(task));
   }
 
+  @Override
+  String getAnnotationProcessorConfigurationName(SourceSet sourceSet) {
+    return sourceSet.getAnnotationProcessorConfigurationName();
+  }
+
+  @Override
+  String getCompileOnlyConfigurationName(SourceSet sourceSet) {
+    return sourceSet.getCompileOnlyConfigurationName();
+  }
+
   private static class AptSourceSetConvention46 extends AptPlugin.AptSourceSetConvention {
     private AptSourceSetConvention46(Project project, SourceSet sourceSet) {
       super(project, sourceSet);
