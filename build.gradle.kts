@@ -5,8 +5,10 @@ plugins {
     `java-gradle-plugin`
     groovy
     id("com.gradle.plugin-publish") version "0.9.10"
-    id("net.ltgt.errorprone") version "0.0.13"
     id("com.github.sherter.google-java-format") version "0.6"
+
+    id("net.ltgt.errorprone") version "0.0.13" apply false
+    id("net.ltgt.errorprone-javacplugin") version "0.2" apply false
 }
 
 googleJavaFormat {
@@ -16,8 +18,12 @@ googleJavaFormat {
 group = "net.ltgt.gradle"
 
 if (JavaVersion.current().isJava9Compatible) {
+    apply(plugin = "net.ltgt.errorprone-javacplugin")
+
     tasks.withType<JavaCompile> { options.compilerArgs.addAll(arrayOf("--release", "7")) }
     tasks.withType<GroovyCompile> { options.compilerArgs.addAll(arrayOf("--release", "7")) }
+} else {
+    apply(plugin = "net.ltgt.errorprone")
 }
 gradle.taskGraph.whenReady {
     val publishPlugins by tasks.getting
@@ -36,7 +42,7 @@ repositories {
 }
 
 dependencies {
-    errorprone("com.google.errorprone:error_prone_core:2.3.1")
+    "errorprone"("com.google.errorprone:error_prone_core:2.3.1")
 
     testImplementation(localGroovy())
     testImplementation("com.netflix.nebula:nebula-test:6.4.2")

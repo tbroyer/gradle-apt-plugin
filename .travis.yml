@@ -4,6 +4,10 @@ dist: trusty
 
 matrix:
   include:
+    - jdk: oraclejdk10
+      env: TEST_GRADLE_VERSION=4.8
+    - jdk: oraclejdk10
+      env: TEST_GRADLE_VERSION=4.7
     - jdk: oraclejdk9
       env: TEST_GRADLE_VERSION=4.8
     - jdk: oraclejdk9
