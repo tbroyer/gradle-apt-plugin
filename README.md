@@ -10,8 +10,6 @@ This plugin does a few things to make it easier/safer to use Java annotation pro
 
 The plugin is published to the Plugin Portal; see instructions there: https://plugins.gradle.org/plugin/net.ltgt.apt
 
-You can try snapshots using JitPack: https://jitpack.io/#tbroyer/gradle-apt-plugin
-
 ## Configurations
 
 For each `SourceSet`, three configurations are available:
