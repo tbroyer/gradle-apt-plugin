@@ -10,7 +10,7 @@ plugins {
 }
 
 googleJavaFormat {
-    toolVersion = "1.5"
+    toolVersion = "1.6"
 }
 
 group = "net.ltgt.gradle"
