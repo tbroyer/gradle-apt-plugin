@@ -19,7 +19,7 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.XmlProvider;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.internal.plugins.DslObject;
+import org.gradle.api.internal.HasConvention;
 import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
@@ -81,7 +81,7 @@ public class AptIdeaPlugin implements Plugin<Project> {
               Set<File> excl = new LinkedHashSet<>();
               for (SourceSet sourceSet : new SourceSet[] {mainSourceSet, testSourceSet}) {
                 File generatedSourcesDir =
-                    new DslObject(sourceSet.getOutput())
+                    ((HasConvention) sourceSet.getOutput())
                         .getConvention()
                         .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
                         .getGeneratedSourcesDir();
@@ -116,12 +116,12 @@ public class AptIdeaPlugin implements Plugin<Project> {
               ideaModule.setExcludeDirs(excludeDirs);
 
               File mainGeneratedSourcesDir =
-                  new DslObject(mainSourceSet.getOutput())
+                  ((HasConvention) mainSourceSet.getOutput())
                       .getConvention()
                       .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
                       .getGeneratedSourcesDir();
               File testGeneratedSourcesDir =
-                  new DslObject(testSourceSet.getOutput())
+                  ((HasConvention) testSourceSet.getOutput())
                       .getConvention()
                       .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
                       .getGeneratedSourcesDir();
@@ -196,7 +196,7 @@ public class AptIdeaPlugin implements Plugin<Project> {
       final IdeaProject ideaProject =
           project.getExtensions().getByType(IdeaModel.class).getProject();
       final ProjectAptConvention apt = new ProjectAptConvention();
-      new DslObject(ideaProject).getConvention().getPlugins().put("net.ltgt.apt-idea", apt);
+      ((HasConvention) ideaProject).getConvention().getPlugins().put("net.ltgt.apt-idea", apt);
       ideaProject
           .getIpr()
           .withXml(

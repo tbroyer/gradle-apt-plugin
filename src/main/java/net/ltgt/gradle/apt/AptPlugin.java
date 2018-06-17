@@ -12,7 +12,7 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.plugins.DslObject;
+import org.gradle.api.internal.HasConvention;
 import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.plugins.GroovyBasePlugin;
 import org.gradle.api.plugins.JavaBasePlugin;
@@ -71,7 +71,7 @@ public class AptPlugin implements Plugin<Project> {
                           public void execute(final SourceSet sourceSet) {
                             AptSourceSetConvention convention =
                                 IMPL.createAptSourceSetConvention(project, sourceSet);
-                            new DslObject(sourceSet)
+                            ((HasConvention) sourceSet)
                                 .getConvention()
                                 .getPlugins()
                                 .put(PLUGIN_ID, convention);
@@ -82,7 +82,7 @@ public class AptPlugin implements Plugin<Project> {
                                 new File(
                                     project.getBuildDir(),
                                     "generated/source/apt/" + sourceSet.getName()));
-                            new DslObject(sourceSet.getOutput())
+                            ((HasConvention) sourceSet.getOutput())
                                 .getConvention()
                                 .getPlugins()
                                 .put(PLUGIN_ID, outputConvention);
@@ -120,7 +120,7 @@ public class AptPlugin implements Plugin<Project> {
                           @Override
                           public void execute(SourceSet sourceSet) {
                             AptSourceSetConvention convention =
-                                new DslObject(sourceSet)
+                                ((HasConvention) sourceSet)
                                     .getConvention()
                                     .getPlugin(AptSourceSetConvention.class);
                             configureCompileTaskForSourceSet(

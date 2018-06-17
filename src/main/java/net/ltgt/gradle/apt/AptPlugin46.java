@@ -7,7 +7,7 @@ import org.gradle.api.Named;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.plugins.DslObject;
+import org.gradle.api.internal.HasConvention;
 import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.SourceSet;
@@ -81,7 +81,7 @@ class AptPlugin46 extends AptPlugin.Impl {
             new Callable<File>() {
               @Override
               public File call() {
-                return new DslObject(sourceSet.getOutput())
+                return ((HasConvention) sourceSet.getOutput())
                     .getConvention()
                     .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
                     .getGeneratedSourcesDir();

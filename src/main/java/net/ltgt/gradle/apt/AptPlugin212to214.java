@@ -13,7 +13,7 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.plugins.DslObject;
+import org.gradle.api.internal.HasConvention;
 import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
@@ -142,7 +142,7 @@ class AptPlugin212to214 extends AptPlugin.Impl {
             new Callable<FileCollection>() {
               @Override
               public FileCollection call() {
-                return new DslObject(sourceSet)
+                return ((HasConvention) sourceSet)
                     .getConvention()
                     .getPlugin(AptPlugin.AptSourceSetConvention.class)
                     .getAnnotationProcessorPath();
@@ -154,7 +154,7 @@ class AptPlugin212to214 extends AptPlugin.Impl {
             new Callable<File>() {
               @Override
               public File call() {
-                return new DslObject(sourceSet.getOutput())
+                return ((HasConvention) sourceSet.getOutput())
                     .getConvention()
                     .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
                     .getGeneratedSourcesDir();

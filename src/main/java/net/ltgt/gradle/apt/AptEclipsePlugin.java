@@ -13,7 +13,7 @@ import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.internal.ConventionMapping;
-import org.gradle.api.internal.plugins.DslObject;
+import org.gradle.api.internal.IConventionAware;
 import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
@@ -95,7 +95,7 @@ public class AptEclipsePlugin implements Plugin<Project> {
                       final EclipseJdtApt jdtApt = generateEclipseJdtApt.getJdtApt();
                       ((ExtensionAware) eclipseModel.getJdt()).getExtensions().add("apt", jdtApt);
                       ConventionMapping conventionMapping =
-                          new DslObject(jdtApt).getConventionMapping();
+                          ((IConventionAware) jdtApt).getConventionMapping();
                       conventionMapping.map(
                           "aptEnabled",
                           new Callable<Boolean>() {
