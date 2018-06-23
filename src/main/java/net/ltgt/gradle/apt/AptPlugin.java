@@ -233,10 +233,8 @@ public class AptPlugin implements Plugin<Project> {
         return new AptPlugin35to42();
       } else if (GradleVersion.current().compareTo(GradleVersion.version("3.4")) >= 0) {
         return new AptPlugin34();
-      } else if (GradleVersion.current().compareTo(GradleVersion.version("3.2")) >= 0) {
-        return new AptPlugin32to33();
       } else if (GradleVersion.current().compareTo(GradleVersion.version("3.0")) >= 0) {
-        return new AptPlugin30to31();
+        return new AptPlugin30to33();
       } else if (GradleVersion.current().compareTo(GradleVersion.version("2.12")) >= 0) {
         return new AptPlugin212to214();
       } else if (GradleVersion.current().compareTo(GradleVersion.version("2.5")) >= 0) {

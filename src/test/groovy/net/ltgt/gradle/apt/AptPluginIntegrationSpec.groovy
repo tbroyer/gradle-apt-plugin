@@ -349,54 +349,6 @@ class AptPluginIntegrationSpec extends Specification {
         result.output.contains(":compileIntegTestJava: The generatedSourcesDestinationDir property has been deprecated. Please use the options.annotationProcessorGeneratedSourcesDirectory property instead.")
   }
 
-  @Requires({ GradleVersion.version(TEST_GRADLE_VERSION) >= GradleVersion.version("3.2") })
-  def "sourceSet.allJava includes generated sources"() {
-    given:
-    buildFile << """\
-      apply plugin: 'java'
-      apply plugin: 'net.ltgt.apt'
-
-      task sourceJar(type: Jar) {
-        from sourceSets.main.allJava
-        classifier "sources"
-      }
-    """.stripIndent()
-
-    when:
-    def result = GradleRunner.create()
-        .withGradleVersion(TEST_GRADLE_VERSION)
-        .withProjectDir(testProjectDir.root)
-        .withArguments(':sourceJar')
-        .build()
-
-    then:
-    result.task(':compileJava') != null
-  }
-
-  @Requires({ GradleVersion.version(TEST_GRADLE_VERSION) >= GradleVersion.version("3.2") })
-  def "sourceSet.allSource includes generated sources"() {
-    given:
-    buildFile << """\
-      apply plugin: 'java'
-      apply plugin: 'net.ltgt.apt'
-
-      task sourceJar(type: Jar) {
-        from sourceSets.main.allSource
-        classifier "sources"
-      }
-    """.stripIndent()
-
-    when:
-    def result = GradleRunner.create()
-        .withGradleVersion(TEST_GRADLE_VERSION)
-        .withProjectDir(testProjectDir.root)
-        .withArguments(':sourceJar')
-        .build()
-
-    then:
-    result.task(':compileJava') != null
-  }
-
   def "simple non-groovy project"() {
     given:
     buildFile << """\

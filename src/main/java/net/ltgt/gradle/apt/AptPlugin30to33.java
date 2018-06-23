@@ -20,7 +20,7 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.api.tasks.compile.CompileOptions;
 
-class AptPlugin32to33 extends AptPlugin.Impl {
+class AptPlugin30to33 extends AptPlugin.Impl {
 
   @Override
   protected <T> void addExtension(
@@ -31,13 +31,13 @@ class AptPlugin32to33 extends AptPlugin.Impl {
   @Override
   protected AptPlugin.AptConvention createAptConvention(
       Project project, AbstractCompile task, CompileOptions compileOptions) {
-    return new AptConvention32to33(project);
+    return new AptConvention30to33(project);
   }
 
   @Override
   protected AptPlugin.AptOptions createAptOptions(
       Project project, AbstractCompile task, CompileOptions compileOptions) {
-    return new AptOptions32to33(project);
+    return new AptOptions30to33(project);
   }
 
   @Override
@@ -103,8 +103,8 @@ class AptPlugin32to33 extends AptPlugin.Impl {
         new Action<Task>() {
           @Override
           public void execute(Task task) {
-            AptConvention32to33 convention =
-                task.getConvention().getPlugin(AptConvention32to33.class);
+            AptConvention30to33 convention =
+                task.getConvention().getPlugin(AptConvention30to33.class);
             convention.makeDirectories();
             compileOptions.getCompilerArgs().addAll(convention.asArguments());
             compileOptions
@@ -117,7 +117,7 @@ class AptPlugin32to33 extends AptPlugin.Impl {
   @Override
   protected AptPlugin.AptSourceSetConvention createAptSourceSetConvention(
       Project project, SourceSet sourceSet) {
-    return new AptSourceSetConvention32to33(project, sourceSet);
+    return new AptSourceSetConvention30to33(project, sourceSet);
   }
 
   @Override
@@ -155,42 +155,18 @@ class AptPlugin32to33 extends AptPlugin.Impl {
                     .getAnnotationProcessorPath();
               }
             });
-    final AptPlugin.AptConvention convention =
-        task.getConvention().getPlugin(AptPlugin.AptConvention.class);
-    convention.setGeneratedSourcesDestinationDir(
-        new Callable<File>() {
-          @Override
-          public File call() {
-            return ((HasConvention) sourceSet.getOutput())
-                .getConvention()
-                .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
-                .getGeneratedSourcesDir();
-          }
-        });
-    sourceSet
-        .getAllJava()
-        .srcDir(
-            project
-                .files(
-                    new Callable<File>() {
-                      @Override
-                      public File call() {
-                        return convention.getGeneratedSourcesDestinationDir();
-                      }
-                    })
-                .builtBy(task));
-    sourceSet
-        .getAllSource()
-        .srcDir(
-            project
-                .files(
-                    new Callable<File>() {
-                      @Override
-                      public File call() {
-                        return convention.getGeneratedSourcesDestinationDir();
-                      }
-                    })
-                .builtBy(task));
+    task.getConvention()
+        .getPlugin(AptPlugin.AptConvention.class)
+        .setGeneratedSourcesDestinationDir(
+            new Callable<File>() {
+              @Override
+              public File call() {
+                return ((HasConvention) sourceSet.getOutput())
+                    .getConvention()
+                    .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
+                    .getGeneratedSourcesDir();
+              }
+            });
   }
 
   @Override
@@ -206,10 +182,10 @@ class AptPlugin32to33 extends AptPlugin.Impl {
     return sourceSet.getCompileOnlyConfigurationName();
   }
 
-  private static class AptSourceSetConvention32to33 extends AptPlugin.AptSourceSetConvention {
+  private static class AptSourceSetConvention30to33 extends AptPlugin.AptSourceSetConvention {
     private FileCollection annotationProcessorPath;
 
-    private AptSourceSetConvention32to33(Project project, SourceSet sourceSet) {
+    private AptSourceSetConvention30to33(Project project, SourceSet sourceSet) {
       super(project, sourceSet);
     }
 
@@ -236,12 +212,12 @@ class AptPlugin32to33 extends AptPlugin.Impl {
     }
   }
 
-  private static class AptConvention32to33 extends AptPlugin.AptConvention {
+  private static class AptConvention30to33 extends AptPlugin.AptConvention {
     private final Project project;
 
     private Object generatedSourcesDestinationDir;
 
-    AptConvention32to33(Project project) {
+    AptConvention30to33(Project project) {
       this.project = project;
     }
 
@@ -276,12 +252,12 @@ class AptPlugin32to33 extends AptPlugin.Impl {
     }
   }
 
-  private static class AptOptions32to33 extends AptPlugin.AptOptions {
+  private static class AptOptions30to33 extends AptPlugin.AptOptions {
     private final Project project;
 
     private Object processorpath;
 
-    private AptOptions32to33(Project project) {
+    private AptOptions30to33(Project project) {
       this.project = project;
     }
 

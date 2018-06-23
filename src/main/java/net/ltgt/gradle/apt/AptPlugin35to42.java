@@ -29,7 +29,7 @@ class AptPlugin35to42 extends AptPlugin.Impl {
   // options.annotationProcessorPath actually fails with GroovyCompile;
   // let's use it only where we know it works (JavaCompile),
   // and keep using the previous implementation otherwise.
-  final AptPlugin.Impl prevImpl = new AptPlugin32to33();
+  final AptPlugin.Impl prevImpl = new AptPlugin30to33();
 
   @Override
   protected <T> void addExtension(
@@ -166,42 +166,18 @@ class AptPlugin35to42 extends AptPlugin.Impl {
                     .getAnnotationProcessorPath();
               }
             }));
-    final AptPlugin.AptConvention convention =
-        task.getConvention().getPlugin(AptPlugin.AptConvention.class);
-    convention.setGeneratedSourcesDestinationDir(
-        new Callable<File>() {
-          @Override
-          public File call() {
-            return ((HasConvention) sourceSet.getOutput())
-                .getConvention()
-                .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
-                .getGeneratedSourcesDir();
-          }
-        });
-    sourceSet
-        .getAllJava()
-        .srcDir(
-            project
-                .files(
-                    new Callable<File>() {
-                      @Override
-                      public File call() {
-                        return convention.getGeneratedSourcesDestinationDir();
-                      }
-                    })
-                .builtBy(task));
-    sourceSet
-        .getAllSource()
-        .srcDir(
-            project
-                .files(
-                    new Callable<File>() {
-                      @Override
-                      public File call() {
-                        return convention.getGeneratedSourcesDestinationDir();
-                      }
-                    })
-                .builtBy(task));
+    task.getConvention()
+        .getPlugin(AptPlugin.AptConvention.class)
+        .setGeneratedSourcesDestinationDir(
+            new Callable<File>() {
+              @Override
+              public File call() {
+                return ((HasConvention) sourceSet.getOutput())
+                    .getConvention()
+                    .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
+                    .getGeneratedSourcesDir();
+              }
+            });
   }
 
   @Override
