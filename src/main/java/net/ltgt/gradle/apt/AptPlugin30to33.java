@@ -58,6 +58,7 @@ class AptPlugin30to33 extends AptPlugin.Impl {
         task.getInputs(),
         "aptOptions.processors",
         new Callable<Object>() {
+          @Nullable
           @Override
           public Object call() {
             return task.getExtensions().getByType(AptPlugin.AptOptions.class).getProcessors();
@@ -67,6 +68,7 @@ class AptPlugin30to33 extends AptPlugin.Impl {
         task.getInputs(),
         "aptOptions.processorArgs",
         new Callable<Object>() {
+          @Nullable
           @Override
           public Object call() {
             return task.getExtensions().getByType(AptPlugin.AptOptions.class).getProcessorArgs();
@@ -76,6 +78,7 @@ class AptPlugin30to33 extends AptPlugin.Impl {
     task.getInputs()
         .files(
             new Callable<Object>() {
+              @Nullable
               @Override
               public Object call() {
                 return task.getExtensions()
@@ -89,6 +92,7 @@ class AptPlugin30to33 extends AptPlugin.Impl {
     task.getOutputs()
         .dir(
             new Callable<Object>() {
+              @Nullable
               @Override
               public Object call() {
                 return task.getConvention()
@@ -147,6 +151,7 @@ class AptPlugin30to33 extends AptPlugin.Impl {
         .getByType(AptPlugin.AptOptions.class)
         .setProcessorpath(
             new Callable<FileCollection>() {
+              @Nullable
               @Override
               public FileCollection call() {
                 return ((HasConvention) sourceSet)
@@ -159,6 +164,7 @@ class AptPlugin30to33 extends AptPlugin.Impl {
         .getPlugin(AptPlugin.AptConvention.class)
         .setGeneratedSourcesDestinationDir(
             new Callable<File>() {
+              @Nullable
               @Override
               public File call() {
                 return ((HasConvention) sourceSet.getOutput())
@@ -183,7 +189,7 @@ class AptPlugin30to33 extends AptPlugin.Impl {
   }
 
   private static class AptSourceSetConvention30to33 extends AptPlugin.AptSourceSetConvention {
-    private FileCollection annotationProcessorPath;
+    @Nullable private FileCollection annotationProcessorPath;
 
     private AptSourceSetConvention30to33(Project project, SourceSet sourceSet) {
       super(project, sourceSet);
@@ -215,7 +221,7 @@ class AptPlugin30to33 extends AptPlugin.Impl {
   private static class AptConvention30to33 extends AptPlugin.AptConvention {
     private final Project project;
 
-    private Object generatedSourcesDestinationDir;
+    @Nullable private Object generatedSourcesDestinationDir;
 
     AptConvention30to33(Project project) {
       this.project = project;
@@ -242,12 +248,13 @@ class AptPlugin30to33 extends AptPlugin.Impl {
     }
 
     List<String> asArguments() {
+      File generatedSourcesDestinationDir = getGeneratedSourcesDestinationDir();
       if (generatedSourcesDestinationDir == null) {
         return Collections.emptyList();
       }
       List<String> result = new ArrayList<>();
       result.add("-s");
-      result.add(getGeneratedSourcesDestinationDir().getPath());
+      result.add(generatedSourcesDestinationDir.getPath());
       return result;
     }
   }
@@ -255,7 +262,7 @@ class AptPlugin30to33 extends AptPlugin.Impl {
   private static class AptOptions30to33 extends AptPlugin.AptOptions {
     private final Project project;
 
-    private Object processorpath;
+    @Nullable private Object processorpath;
 
     private AptOptions30to33(Project project) {
       this.project = project;
@@ -277,12 +284,13 @@ class AptPlugin30to33 extends AptPlugin.Impl {
 
     @Override
     protected List<String> asArguments() {
-      if (processorpath == null || getProcessorpath().isEmpty()) {
+      FileCollection processorpath = getProcessorpath();
+      if (processorpath == null || processorpath.isEmpty()) {
         return super.asArguments();
       }
       List<String> result = new ArrayList<>();
       result.add("-processorpath");
-      result.add(getProcessorpath().getAsPath());
+      result.add(processorpath.getAsPath());
       result.addAll(super.asArguments());
       return result;
     }

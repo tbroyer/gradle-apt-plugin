@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import javax.annotation.Nullable;
 import org.codehaus.groovy.runtime.MethodClosure;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
@@ -120,6 +121,7 @@ public class AptEclipsePlugin implements Plugin<Project> {
                       conventionMapping.map(
                           "processorOptions",
                           new Callable<Map<String, ?>>() {
+                            @Nullable
                             @Override
                             public Map<String, ?> call() throws Exception {
                               return project

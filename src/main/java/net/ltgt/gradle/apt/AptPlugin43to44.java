@@ -59,6 +59,7 @@ class AptPlugin43to44 extends AptPlugin.Impl {
         .property(
             "aptOptions.processors",
             new Callable<Object>() {
+              @Nullable
               @Override
               public Object call() {
                 return task.getExtensions().getByType(AptPlugin.AptOptions.class).getProcessors();
@@ -69,6 +70,7 @@ class AptPlugin43to44 extends AptPlugin.Impl {
         .property(
             "aptOptions.processorArgs",
             new Callable<Object>() {
+              @Nullable
               @Override
               public Object call() {
                 return task.getExtensions()
@@ -122,6 +124,7 @@ class AptPlugin43to44 extends AptPlugin.Impl {
     compileOptions.setAnnotationProcessorPath(
         project.files(
             new Callable<FileCollection>() {
+              @Nullable
               @Override
               public FileCollection call() {
                 return ((HasConvention) sourceSet)
@@ -133,6 +136,7 @@ class AptPlugin43to44 extends AptPlugin.Impl {
     compileOptions.setAnnotationProcessorGeneratedSourcesDirectory(
         project.provider(
             new Callable<File>() {
+              @Nullable
               @Override
               public File call() {
                 return ((HasConvention) sourceSet.getOutput())
@@ -157,7 +161,7 @@ class AptPlugin43to44 extends AptPlugin.Impl {
   }
 
   private static class AptSourceSetConvention43to44 extends AptPlugin.AptSourceSetConvention {
-    private FileCollection annotationProcessorPath;
+    @Nullable private FileCollection annotationProcessorPath;
 
     private AptSourceSetConvention43to44(Project project, SourceSet sourceSet) {
       super(project, sourceSet);

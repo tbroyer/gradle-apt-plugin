@@ -1,3 +1,4 @@
+import net.ltgt.gradle.errorprone.javacplugin.errorprone
 import java.util.concurrent.Callable
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
@@ -19,11 +20,13 @@ group = "net.ltgt.gradle"
 
 if (JavaVersion.current().isJava9Compatible) {
     apply(plugin = "net.ltgt.errorprone-javacplugin")
+    tasks.getByName<JavaCompile>("compileJava").options.errorprone.option("NullAway:AnnotatedPackages", "net.ltgt.gradle.apt")
 
     tasks.withType<JavaCompile> { options.compilerArgs.addAll(arrayOf("--release", "7")) }
     tasks.withType<GroovyCompile> { options.compilerArgs.addAll(arrayOf("--release", "7")) }
 } else {
     apply(plugin = "net.ltgt.errorprone")
+    tasks.getByName<JavaCompile>("compileJava").options.compilerArgs.add("-XepOpt:NullAway:AnnotatedPackages=net.ltgt.gradle.apt")
 }
 gradle.taskGraph.whenReady {
     val publishPlugins by tasks.getting
@@ -43,6 +46,8 @@ repositories {
 
 dependencies {
     "errorprone"("com.google.errorprone:error_prone_core:2.3.1")
+
+    annotationProcessor("com.uber.nullaway:nullaway:0.4.7")
 
     testImplementation(localGroovy())
     testImplementation("com.netflix.nebula:nebula-test:6.4.2")

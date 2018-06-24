@@ -283,8 +283,8 @@ public class AptPlugin implements Plugin<Project> {
 
   public abstract static class AptOptions {
     private boolean annotationProcessing = true;
-    private List<?> processors = new ArrayList<>();
-    private Map<String, ?> processorArgs = new LinkedHashMap<>();
+    @Nullable private List<?> processors = new ArrayList<>();
+    @Nullable private Map<String, ?> processorArgs = new LinkedHashMap<>();
 
     @Input
     public boolean isAnnotationProcessing() {
@@ -369,6 +369,7 @@ public class AptPlugin implements Plugin<Project> {
     public abstract void setAnnotationProcessorPath(
         @Nullable FileCollection annotationProcessorPath);
 
+    @Nullable
     @Deprecated
     public FileCollection getProcessorpath() {
       DeprecationLogger.nagUserWith(
@@ -401,7 +402,7 @@ public class AptPlugin implements Plugin<Project> {
   public static class AptSourceSetOutputConvention {
     private final Project project;
 
-    private Object generatedSourcesDir;
+    @Nullable private Object generatedSourcesDir;
 
     public AptSourceSetOutputConvention(Project project) {
       this.project = project;

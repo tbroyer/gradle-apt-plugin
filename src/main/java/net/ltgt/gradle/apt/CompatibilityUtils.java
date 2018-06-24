@@ -2,6 +2,7 @@ package net.ltgt.gradle.apt;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import javax.annotation.Nullable;
 import org.gradle.api.Action;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.TaskInputs;
@@ -19,7 +20,7 @@ class CompatibilityUtils {
   private static final Method taskInputsFilesMethod;
   private static final Method taskInputsPropertyMethod;
   private static final Method taskOutputsDirMethod;
-  private static final Method taskInputPropertyBuilderOptionalMethod;
+  @Nullable private static final Method taskInputPropertyBuilderOptionalMethod;
   private static final Method fileContentMergerGetBeforeMergedMethod;
   private static final Method fileContentMergerGetWhenMergedMethod;
 
@@ -42,6 +43,7 @@ class CompatibilityUtils {
     fileContentMergerGetWhenMergedMethod = getMethod(FileContentMerger.class, "getWhenMerged");
   }
 
+  @Nullable
   private static Class<?> classForName(String className) {
     try {
       return Class.forName(className);
@@ -58,6 +60,7 @@ class CompatibilityUtils {
     }
   }
 
+  @Nullable
   private static Method findMethod(Class<?> klass, String methodName, Class<?>... parameterTypes) {
     try {
       return klass.getMethod(methodName, parameterTypes);

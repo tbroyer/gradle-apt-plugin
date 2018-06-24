@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -163,12 +164,8 @@ public class AptIdeaPlugin implements Plugin<Project> {
                         .getByName(
                             AptPlugin.IMPL.getAnnotationProcessorConfigurationName(testSourceSet)));
               }
-              ideaModule
-                  .getScopes()
-                  .get(apt.getMainDependenciesScope())
-                  .get("plus")
-                  .addAll(mainConfigurations);
-              ideaModule.getScopes().get("TEST").get("plus").addAll(testConfigurations);
+              getScope(apt.getMainDependenciesScope(), "plus").addAll(mainConfigurations);
+              getScope("TEST", "plus").addAll(testConfigurations);
               project
                   .getTasks()
                   .withType(
@@ -187,6 +184,11 @@ public class AptIdeaPlugin implements Plugin<Project> {
             Set<File> newSet = new LinkedHashSet<>(sourceDirs);
             newSet.addAll(Arrays.asList(dirs));
             return newSet;
+          }
+
+          @SuppressWarnings("NullAway")
+          private Collection<Configuration> getScope(String scope, String plusOrMinus) {
+            return ideaModule.getScopes().get(scope).get(plusOrMinus);
           }
         });
   }

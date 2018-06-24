@@ -5,11 +5,12 @@ import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import org.gradle.internal.xml.XmlTransformer;
 import org.gradle.plugins.ide.internal.generator.XmlPersistableConfigurationObject;
 
 public class Factorypath extends XmlPersistableConfigurationObject {
-  private List<File> entries;
+  @Nullable private List<File> entries;
 
   Factorypath(XmlTransformer xmlTransformer) {
     super(xmlTransformer);
@@ -35,6 +36,7 @@ public class Factorypath extends XmlPersistableConfigurationObject {
     }
   }
 
+  @Nullable
   public List<File> getEntries() {
     return entries;
   }

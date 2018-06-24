@@ -83,6 +83,7 @@ class AptPlugin45 extends AptPlugin.Impl {
       compileOptions.setAnnotationProcessorPath(
           project.files(
               new Callable<FileCollection>() {
+                @Nullable
                 @Override
                 public FileCollection call() {
                   return ((HasConvention) sourceSet)
@@ -95,6 +96,7 @@ class AptPlugin45 extends AptPlugin.Impl {
     compileOptions.setAnnotationProcessorGeneratedSourcesDirectory(
         project.provider(
             new Callable<File>() {
+              @Nullable
               @Override
               public File call() {
                 return ((HasConvention) sourceSet.getOutput())
@@ -119,7 +121,7 @@ class AptPlugin45 extends AptPlugin.Impl {
   }
 
   private static class AptSourceSetConvention45 extends AptPlugin.AptSourceSetConvention {
-    private FileCollection annotationProcessorPath;
+    @Nullable private FileCollection annotationProcessorPath;
 
     private AptSourceSetConvention45(Project project, SourceSet sourceSet) {
       super(project, sourceSet);

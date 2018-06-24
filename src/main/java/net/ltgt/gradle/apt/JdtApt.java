@@ -3,13 +3,14 @@ package net.ltgt.gradle.apt;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
+import javax.annotation.Nullable;
 import org.gradle.api.internal.PropertiesTransformer;
 import org.gradle.plugins.ide.internal.generator.PropertiesPersistableConfigurationObject;
 
 public class JdtApt extends PropertiesPersistableConfigurationObject {
 
   private boolean aptEnabled;
-  private String genSrcDir;
+  @Nullable private String genSrcDir;
   private boolean reconcileEnabled;
   private Map<String, String> processorOptions = new LinkedHashMap<>();
 
@@ -51,11 +52,12 @@ public class JdtApt extends PropertiesPersistableConfigurationObject {
     this.aptEnabled = aptEnabled;
   }
 
+  @Nullable
   public String getGenSrcDir() {
     return genSrcDir;
   }
 
-  public void setGenSrcDir(String genSrcDir) {
+  public void setGenSrcDir(@Nullable String genSrcDir) {
     this.genSrcDir = genSrcDir;
   }
 

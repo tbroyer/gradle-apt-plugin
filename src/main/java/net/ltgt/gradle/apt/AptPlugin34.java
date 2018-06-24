@@ -78,6 +78,7 @@ class AptPlugin34 extends AptPlugin.Impl {
         task.getInputs(),
         "aptOptions.processors",
         new Callable<Object>() {
+          @Nullable
           @Override
           public Object call() {
             return task.getExtensions().getByType(AptPlugin.AptOptions.class).getProcessors();
@@ -87,6 +88,7 @@ class AptPlugin34 extends AptPlugin.Impl {
         task.getInputs(),
         "aptOptions.processorArgs",
         new Callable<Object>() {
+          @Nullable
           @Override
           public Object call() {
             return task.getExtensions().getByType(AptPlugin.AptOptions.class).getProcessorArgs();
@@ -96,6 +98,7 @@ class AptPlugin34 extends AptPlugin.Impl {
     task.getOutputs()
         .dir(
             new Callable<Object>() {
+              @Nullable
               @Override
               public Object call() {
                 return task.getConvention()
@@ -158,6 +161,7 @@ class AptPlugin34 extends AptPlugin.Impl {
     compileOptions.setAnnotationProcessorPath(
         project.files(
             new Callable<FileCollection>() {
+              @Nullable
               @Override
               public FileCollection call() {
                 return ((HasConvention) sourceSet)
@@ -170,6 +174,7 @@ class AptPlugin34 extends AptPlugin.Impl {
         task.getConvention().getPlugin(AptPlugin.AptConvention.class);
     convention.setGeneratedSourcesDestinationDir(
         new Callable<File>() {
+          @Nullable
           @Override
           public File call() {
             return ((HasConvention) sourceSet.getOutput())
@@ -194,7 +199,7 @@ class AptPlugin34 extends AptPlugin.Impl {
   }
 
   private static class AptSourceSetConvention34to42 extends AptPlugin.AptSourceSetConvention {
-    private FileCollection annotationProcessorPath;
+    @Nullable private FileCollection annotationProcessorPath;
 
     private AptSourceSetConvention34to42(Project project, SourceSet sourceSet) {
       super(project, sourceSet);
@@ -226,7 +231,7 @@ class AptPlugin34 extends AptPlugin.Impl {
   private static class AptConvention34to42 extends AptPlugin.AptConvention {
     private final Project project;
 
-    private Object generatedSourcesDestinationDir;
+    @Nullable private Object generatedSourcesDestinationDir;
 
     AptConvention34to42(Project project) {
       this.project = project;
@@ -253,12 +258,13 @@ class AptPlugin34 extends AptPlugin.Impl {
     }
 
     List<String> asArguments() {
+      File generatedSourcesDestinationDir = getGeneratedSourcesDestinationDir();
       if (generatedSourcesDestinationDir == null) {
         return Collections.emptyList();
       }
       List<String> result = new ArrayList<>();
       result.add("-s");
-      result.add(getGeneratedSourcesDestinationDir().getPath());
+      result.add(generatedSourcesDestinationDir.getPath());
       return result;
     }
   }

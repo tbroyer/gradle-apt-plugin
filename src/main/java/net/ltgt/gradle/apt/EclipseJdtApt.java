@@ -50,7 +50,7 @@ public class EclipseJdtApt {
     this.genSrcDir = Objects.requireNonNull(genSrcDir);
   }
 
-  private Map<String, ?> processorOptions = new LinkedHashMap<>();
+  @Nullable private Map<String, ?> processorOptions = new LinkedHashMap<>();
 
   @Nullable
   public Map<String, ?> getProcessorOptions() {
