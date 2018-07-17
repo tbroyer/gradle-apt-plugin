@@ -78,13 +78,27 @@ caches:
 
     - &save-gradle-wrapper-current
       save_cache:
+        name: Saving Gradle wrapper 4.9
+        key: v2-gradle-wrapper-4.9
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-4.9-bin/
+          - ~/.gradle/caches/4.9/generated-gradle-jars/
+          - ~/.gradle/notifications/4.9/
+    - &restore-gradle-wrapper-current
+      restore_cache:
+        name: Restoring Gradle wrapper 4.9
+        keys:
+          - v2-gradle-wrapper-4.9
+    
+    - &save-gradle-wrapper-4-8-1
+      save_cache:
         name: Saving Gradle wrapper 4.8.1
         key: v2-gradle-wrapper-4.8.1
         paths:
           - ~/.gradle/wrapper/dists/gradle-4.8.1-bin/
           - ~/.gradle/caches/4.8.1/generated-gradle-jars/
           - ~/.gradle/notifications/4.8.1/
-    - &restore-gradle-wrapper-current
+    - &restore-gradle-wrapper-4-8-1
       restore_cache:
         name: Restoring Gradle wrapper 4.8.1
         keys:
@@ -480,6 +494,45 @@ jobs:
       - *save-gradle-dependencies-java10
       - *persist-workspace
     
+  java8_gradle48:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-8-1
+      - run:
+          name: Test against Gradle 4.8.1
+          command: ./gradlew test -Ptest.gradle-version=4.8.1
+      - *store-test-results
+      - *save-gradle-wrapper-4-8-1
+        
+  java9_gradle48:
+    <<: *java9
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java9
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-8-1
+      - run:
+          name: Test against Gradle 4.8.1
+          command: ./gradlew test -Ptest.gradle-version=4.8.1
+      - *store-test-results
+      - *save-gradle-wrapper-4-8-1
+        
+  java10_gradle48:
+    <<: *java10
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java10
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-8-1
+      - run:
+          name: Test against Gradle 4.8.1
+          command: ./gradlew test -Ptest.gradle-version=4.8.1
+      - *store-test-results
+      - *save-gradle-wrapper-4-8-1
+        
   java8_gradle47:
     <<: *java8
     steps:
@@ -902,6 +955,21 @@ workflows:
           requires:
             - java8
     
+      - java8_gradle48:
+          requires:
+            - java8
+            
+        
+      - java9_gradle48:
+          requires:
+            - java9
+            - java8_gradle48
+        
+      - java10_gradle48:
+          requires:
+            - java10
+            - java8_gradle48
+        
       - java8_gradle47:
           requires:
             - java8
