@@ -32,6 +32,18 @@ class AptPlugin35to42 extends AptPlugin.Impl {
   final AptPlugin.Impl prevImpl = new AptPlugin30to33();
 
   @Override
+  protected <T extends Task> void configureTasks(
+      Project project, Class<T> taskClass, Action<T> configure) {
+    project.getTasks().withType(taskClass, configure);
+  }
+
+  @Override
+  protected <T extends Task> void configureTask(
+      Project project, Class<T> taskClass, String taskName, Action<T> configure) {
+    project.getTasks().withType(taskClass).getByName(taskName, configure);
+  }
+
+  @Override
   protected <T> void addExtension(
       ExtensionContainer extensionContainer, Class<T> publicType, String name, T extension) {
     extensionContainer.add(publicType, name, extension);

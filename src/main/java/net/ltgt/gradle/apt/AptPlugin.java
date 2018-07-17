@@ -9,6 +9,7 @@ import javax.annotation.Nullable;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.file.FileCollection;
@@ -144,25 +145,24 @@ public class AptPlugin implements Plugin<Project> {
       final Project project,
       Class<T> compileTaskClass,
       final GetCompileOptions<T> getCompileOptions) {
-    project
-        .getTasks()
-        .withType(
-            compileTaskClass,
-            new Action<T>() {
-              @Override
-              public void execute(T task) {
-                CompileOptions compileOptions = getCompileOptions.getCompileOptions(task);
-                task.getConvention()
-                    .getPlugins()
-                    .put(PLUGIN_ID, IMPL.createAptConvention(project, task, compileOptions));
-                IMPL.addExtension(
-                    task.getExtensions(),
-                    AptOptions.class,
-                    "aptOptions",
-                    IMPL.createAptOptions(project, task, compileOptions));
-                IMPL.configureCompileTask(project, task, compileOptions);
-              }
-            });
+    IMPL.configureTasks(
+        project,
+        compileTaskClass,
+        new Action<T>() {
+          @Override
+          public void execute(T task) {
+            CompileOptions compileOptions = getCompileOptions.getCompileOptions(task);
+            task.getConvention()
+                .getPlugins()
+                .put(PLUGIN_ID, IMPL.createAptConvention(project, task, compileOptions));
+            IMPL.addExtension(
+                task.getExtensions(),
+                AptOptions.class,
+                "aptOptions",
+                IMPL.createAptOptions(project, task, compileOptions));
+            IMPL.configureCompileTask(project, task, compileOptions);
+          }
+        });
   }
 
   private void ensureConfigurations(
@@ -207,14 +207,22 @@ public class AptPlugin implements Plugin<Project> {
   }
 
   private <T extends AbstractCompile> void configureCompileTaskForSourceSet(
-      Project project,
-      SourceSet sourceSet,
+      final Project project,
+      final SourceSet sourceSet,
       String compileTaskName,
       Class<T> compileTaskClass,
-      GetCompileOptions<T> getCompileOptions) {
-    T task = project.getTasks().withType(compileTaskClass).getByName(compileTaskName);
-    IMPL.configureCompileTaskForSourceSet(
-        project, sourceSet, task, getCompileOptions.getCompileOptions(task));
+      final GetCompileOptions<T> getCompileOptions) {
+    IMPL.configureTask(
+        project,
+        compileTaskClass,
+        compileTaskName,
+        new Action<T>() {
+          @Override
+          public void execute(T task) {
+            IMPL.configureCompileTaskForSourceSet(
+                project, sourceSet, task, getCompileOptions.getCompileOptions(task));
+          }
+        });
   }
 
   private interface GetCompileOptions<T extends AbstractCompile> {
@@ -223,8 +231,10 @@ public class AptPlugin implements Plugin<Project> {
 
   abstract static class Impl {
     static Impl newInstance() {
-      if (GradleVersion.current().compareTo(GradleVersion.version("4.6")) >= 0) {
-        return new AptPlugin46();
+      if (GradleVersion.current().compareTo(GradleVersion.version("4.9")) >= 0) {
+        return new AptPlugin49();
+      } else if (GradleVersion.current().compareTo(GradleVersion.version("4.6")) >= 0) {
+        return new AptPlugin46to48();
       } else if (GradleVersion.current().compareTo(GradleVersion.version("4.5")) >= 0) {
         return new AptPlugin45();
       } else if (GradleVersion.current().compareTo(GradleVersion.version("4.3")) >= 0) {
@@ -243,6 +253,12 @@ public class AptPlugin implements Plugin<Project> {
         throw new UnsupportedOperationException();
       }
     }
+
+    protected abstract <T extends Task> void configureTasks(
+        Project project, Class<T> taskClass, Action<T> configure);
+
+    protected abstract <T extends Task> void configureTask(
+        Project project, Class<T> taskClass, String taskName, Action<T> configure);
 
     protected abstract <T> void addExtension(
         ExtensionContainer extensionContainer, Class<T> publicType, String name, T extension);

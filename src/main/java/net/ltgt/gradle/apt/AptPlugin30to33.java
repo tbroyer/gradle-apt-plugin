@@ -23,6 +23,19 @@ import org.gradle.api.tasks.compile.CompileOptions;
 class AptPlugin30to33 extends AptPlugin.Impl {
 
   @Override
+  protected <T extends Task> void configureTasks(
+      Project project, Class<T> taskClass, Action<T> configure) {
+    project.getTasks().withType(taskClass, configure);
+  }
+
+  @Override
+  protected <T extends Task> void configureTask(
+      Project project, Class<T> taskClass, String taskName, Action<T> configure) {
+    // getByName(String,Action) was added in Gradle 3.1
+    configure.execute(project.getTasks().withType(taskClass).getByName(taskName));
+  }
+
+  @Override
   protected <T> void addExtension(
       ExtensionContainer extensionContainer, Class<T> publicType, String name, T extension) {
     extensionContainer.add(name, extension);

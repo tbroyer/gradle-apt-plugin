@@ -4,8 +4,10 @@ import java.io.File;
 import java.util.List;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
+import org.gradle.api.Action;
 import org.gradle.api.Named;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.HasConvention;
@@ -16,12 +18,24 @@ import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.api.tasks.compile.CompileOptions;
 import org.gradle.process.CommandLineArgumentProvider;
 
-class AptPlugin46 extends AptPlugin.Impl {
+class AptPlugin46to48 extends AptPlugin.Impl {
 
   static final String GENERATED_SOURCES_DESTINATION_DIR_DEPRECATION_MESSAGE =
       "The generatedSourcesDestinationDir property has been deprecated. Please use the options.annotationProcessorGeneratedSourcesDirectory property instead.";
   static final String APT_OPTIONS_PROCESSORPATH_DEPRECATION_MESSAGE =
       "The aptOptions.processorpath property has been deprecated. Please use the options.annotationProcessorPath property instead.";
+
+  @Override
+  protected <T extends Task> void configureTasks(
+      Project project, Class<T> taskClass, Action<T> configure) {
+    project.getTasks().withType(taskClass, configure);
+  }
+
+  @Override
+  protected <T extends Task> void configureTask(
+      Project project, Class<T> taskClass, String taskName, Action<T> configure) {
+    project.getTasks().withType(taskClass).getByName(taskName, configure);
+  }
 
   @Override
   protected <T> void addExtension(
@@ -32,13 +46,13 @@ class AptPlugin46 extends AptPlugin.Impl {
   @Override
   protected AptPlugin.AptConvention createAptConvention(
       Project project, AbstractCompile task, CompileOptions compileOptions) {
-    return new AptConvention46(project, task, compileOptions);
+    return new AptConvention46to48(project, task, compileOptions);
   }
 
   @Override
   protected AptPlugin.AptOptions createAptOptions(
       Project project, AbstractCompile task, CompileOptions compileOptions) {
-    return new AptOptions46(project, task, compileOptions);
+    return new AptOptions46to48(project, task, compileOptions);
   }
 
   @Override
@@ -54,7 +68,7 @@ class AptPlugin46 extends AptPlugin.Impl {
   @Override
   protected AptPlugin.AptSourceSetConvention createAptSourceSetConvention(
       Project project, SourceSet sourceSet) {
-    return new AptSourceSetConvention46(project, sourceSet);
+    return new AptSourceSetConvention46to48(project, sourceSet);
   }
 
   @Override
@@ -101,8 +115,8 @@ class AptPlugin46 extends AptPlugin.Impl {
     return sourceSet.getCompileOnlyConfigurationName();
   }
 
-  private static class AptSourceSetConvention46 extends AptPlugin.AptSourceSetConvention {
-    private AptSourceSetConvention46(Project project, SourceSet sourceSet) {
+  private static class AptSourceSetConvention46to48 extends AptPlugin.AptSourceSetConvention {
+    private AptSourceSetConvention46to48(Project project, SourceSet sourceSet) {
       super(project, sourceSet);
     }
 
@@ -127,12 +141,12 @@ class AptPlugin46 extends AptPlugin.Impl {
     }
   }
 
-  private static class AptConvention46 extends AptPlugin.AptConvention {
+  private static class AptConvention46to48 extends AptPlugin.AptConvention {
     private final Project project;
     private final AbstractCompile task;
     private final CompileOptions compileOptions;
 
-    AptConvention46(Project project, AbstractCompile task, CompileOptions compileOptions) {
+    AptConvention46to48(Project project, AbstractCompile task, CompileOptions compileOptions) {
       this.project = project;
       this.task = task;
       this.compileOptions = compileOptions;
@@ -163,13 +177,13 @@ class AptPlugin46 extends AptPlugin.Impl {
     }
   }
 
-  private static class AptOptions46 extends AptPlugin.AptOptions
+  private static class AptOptions46to48 extends AptPlugin.AptOptions
       implements CommandLineArgumentProvider, Named {
     private final Project project;
     private final AbstractCompile task;
     private final CompileOptions compileOptions;
 
-    private AptOptions46(Project project, AbstractCompile task, CompileOptions compileOptions) {
+    private AptOptions46to48(Project project, AbstractCompile task, CompileOptions compileOptions) {
       this.project = project;
       this.task = task;
       this.compileOptions = compileOptions;

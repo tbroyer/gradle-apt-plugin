@@ -166,17 +166,16 @@ public class AptIdeaPlugin implements Plugin<Project> {
               }
               getScope(apt.getMainDependenciesScope(), "plus").addAll(mainConfigurations);
               getScope("TEST", "plus").addAll(testConfigurations);
-              project
-                  .getTasks()
-                  .withType(
-                      GenerateIdeaModule.class,
-                      new Action<GenerateIdeaModule>() {
-                        @Override
-                        public void execute(GenerateIdeaModule generateIdeaModule) {
-                          generateIdeaModule.dependsOn(mainConfigurations.toArray());
-                          generateIdeaModule.dependsOn(testConfigurations.toArray());
-                        }
-                      });
+              AptPlugin.IMPL.configureTasks(
+                  project,
+                  GenerateIdeaModule.class,
+                  new Action<GenerateIdeaModule>() {
+                    @Override
+                    public void execute(GenerateIdeaModule generateIdeaModule) {
+                      generateIdeaModule.dependsOn(mainConfigurations.toArray());
+                      generateIdeaModule.dependsOn(testConfigurations.toArray());
+                    }
+                  });
             }
           }
 
