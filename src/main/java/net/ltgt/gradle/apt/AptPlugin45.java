@@ -24,6 +24,12 @@ class AptPlugin45 extends AptPlugin.Impl {
       "The aptOptions.processorpath property has been deprecated. Please use the options.annotationProcessorPath property instead.";
 
   @Override
+  protected <T extends Task> Object createTask(
+      Project project, String taskName, Class<T> taskClass, Action<T> configure) {
+    return project.getTasks().create(taskName, taskClass, configure);
+  }
+
+  @Override
   protected <T extends Task> void configureTasks(
       Project project, Class<T> taskClass, Action<T> configure) {
     project.getTasks().withType(taskClass, configure);

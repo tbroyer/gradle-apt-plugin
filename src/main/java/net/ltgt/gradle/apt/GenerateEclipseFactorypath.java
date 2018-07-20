@@ -9,14 +9,14 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.tasks.Internal;
-import org.gradle.plugins.ide.api.XmlFileContentMerger;
 import org.gradle.plugins.ide.api.XmlGeneratorTask;
 
 public class GenerateEclipseFactorypath extends XmlGeneratorTask<Factorypath> {
-  private EclipseFactorypath factorypath =
-      getInstantiator()
-          .newInstance(EclipseFactorypath.class, new XmlFileContentMerger(getXmlTransformer()));
+  @SuppressWarnings("NullAway.Init") // will be initialized by setFactorypath right after creation
+  private EclipseFactorypath factorypath;
 
+  @SuppressWarnings(
+      "NullAway") // factorypath will be initialized by setFactorypath right after creation
   public GenerateEclipseFactorypath() {
     this.getXmlTransformer().setIndentation("\t");
   }

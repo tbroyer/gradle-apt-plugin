@@ -254,6 +254,9 @@ public class AptPlugin implements Plugin<Project> {
       }
     }
 
+    protected abstract <T extends Task> Object createTask(
+        Project project, String taskName, Class<T> taskClass, Action<T> configure);
+
     protected abstract <T extends Task> void configureTasks(
         Project project, Class<T> taskClass, Action<T> configure);
 

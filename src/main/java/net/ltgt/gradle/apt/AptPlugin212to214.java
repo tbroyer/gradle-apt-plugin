@@ -27,6 +27,12 @@ import org.gradle.api.tasks.compile.CompileOptions;
 class AptPlugin212to214 extends AptPlugin.Impl {
 
   @Override
+  protected <T extends Task> Object createTask(
+      Project project, String taskName, Class<T> taskClass, Action<T> configure) {
+    return project.getTasks().create(taskName, taskClass, configure);
+  }
+
+  @Override
   protected <T extends Task> void configureTasks(
       Project project, Class<T> taskClass, Action<T> configure) {
     project.getTasks().withType(taskClass, configure);

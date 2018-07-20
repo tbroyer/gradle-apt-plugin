@@ -5,14 +5,11 @@ import static net.ltgt.gradle.apt.CompatibilityUtils.getWhenMerged;
 
 import java.util.Map;
 import org.gradle.api.tasks.Internal;
-import org.gradle.plugins.ide.api.PropertiesFileContentMerger;
 import org.gradle.plugins.ide.api.PropertiesGeneratorTask;
 
 public class GenerateEclipseJdtApt extends PropertiesGeneratorTask<JdtApt> {
-  private EclipseJdtApt jdtApt =
-      getInstantiator()
-          .newInstance(
-              EclipseJdtApt.class, getProject(), new PropertiesFileContentMerger(getTransformer()));
+  @SuppressWarnings("NullAway.Init") // will be initialized by setJdtApt right after creation
+  private EclipseJdtApt jdtApt;
 
   @Override
   protected void configure(JdtApt jdtApt) {
