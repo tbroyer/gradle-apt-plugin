@@ -97,145 +97,154 @@ public class AptEclipsePlugin implements Plugin<Project> {
                                 AptPlugin.IMPL.getCompileOnlyConfigurationName(testSourceSet))));
           }
         });
-    if (project.getTasks().findByName("eclipseJdtApt") == null) {
-      final EclipseJdtApt jdtApt =
-          instantiator.newInstance(
-              EclipseJdtApt.class,
-              project,
-              new PropertiesFileContentMerger(new PropertiesTransformer()));
-      ((ExtensionAware) eclipseModel.getJdt()).getExtensions().add("apt", jdtApt);
-      ConventionMapping conventionMapping = ((IConventionAware) jdtApt).getConventionMapping();
-      conventionMapping.map(
-          "aptEnabled",
-          new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws Exception {
-              return project
-                  .getTasks()
-                  .getByName(mainSourceSet.getCompileJavaTaskName())
-                  .getExtensions()
-                  .getByType(AptPlugin.AptOptions.class)
-                  .isAnnotationProcessing();
-            }
-          });
-      conventionMapping.map(
-          "genSrcDir",
-          new Callable<File>() {
-            @Override
-            public File call() throws Exception {
-              return project.file(".apt_generated");
-            }
-          });
-      conventionMapping.map(
-          "processorOptions",
-          new Callable<Map<String, ?>>() {
-            @Nullable
-            @Override
-            public Map<String, ?> call() throws Exception {
-              return project
-                  .getTasks()
-                  .getByName(mainSourceSet.getCompileJavaTaskName())
-                  .getExtensions()
-                  .getByType(AptPlugin.AptOptions.class)
-                  .getProcessorArgs();
-            }
-          });
 
-      eclipseModel
-          .getJdt()
-          .getFile()
-          .withProperties(
-              // withProperties(Action) overload was added in Gradle 2.14
-              new MethodClosure(
-                  new Action<Properties>() {
-                    @Override
-                    public void execute(Properties properties) {
-                      properties.setProperty(
-                          "org.eclipse.jdt.core.compiler.processAnnotations",
-                          jdtApt.isAptEnabled() ? "enabled" : "disabled");
-                    }
-                  },
-                  "execute"));
+    configureJdtApt(project, eclipseModel, mainSourceSet);
+    configureFactorypath(project, eclipseModel, mainSourceSet, testSourceSet);
+  }
 
-      final Object task =
-          AptPlugin.IMPL.createTask(
-              project,
-              "eclipseJdtApt",
-              GenerateEclipseJdtApt.class,
-              new Action<GenerateEclipseJdtApt>() {
-                @Override
-                public void execute(GenerateEclipseJdtApt generateEclipseJdtApt) {
-                  generateEclipseJdtApt.setDescription(
-                      "Generates the Eclipse JDT APT settings file.");
-                  generateEclipseJdtApt.setInputFile(
-                      project.file(".settings/org.eclipse.jdt.apt.core.prefs"));
-                  generateEclipseJdtApt.setOutputFile(
-                      project.file(".settings/org.eclipse.jdt.apt.core.prefs"));
+  private void configureJdtApt(
+      final Project project, EclipseModel eclipseModel, final SourceSet mainSourceSet) {
+    final EclipseJdtApt jdtApt =
+        instantiator.newInstance(
+            EclipseJdtApt.class,
+            project,
+            new PropertiesFileContentMerger(new PropertiesTransformer()));
+    ((ExtensionAware) eclipseModel.getJdt()).getExtensions().add("apt", jdtApt);
+    ConventionMapping conventionMapping = ((IConventionAware) jdtApt).getConventionMapping();
+    conventionMapping.map(
+        "aptEnabled",
+        new Callable<Boolean>() {
+          @Override
+          public Boolean call() throws Exception {
+            return project
+                .getTasks()
+                .getByName(mainSourceSet.getCompileJavaTaskName())
+                .getExtensions()
+                .getByType(AptPlugin.AptOptions.class)
+                .isAnnotationProcessing();
+          }
+        });
+    conventionMapping.map(
+        "genSrcDir",
+        new Callable<File>() {
+          @Override
+          public File call() throws Exception {
+            return project.file(".apt_generated");
+          }
+        });
+    conventionMapping.map(
+        "processorOptions",
+        new Callable<Map<String, ?>>() {
+          @Nullable
+          @Override
+          public Map<String, ?> call() throws Exception {
+            return project
+                .getTasks()
+                .getByName(mainSourceSet.getCompileJavaTaskName())
+                .getExtensions()
+                .getByType(AptPlugin.AptOptions.class)
+                .getProcessorArgs();
+          }
+        });
 
-                  generateEclipseJdtApt.setJdtApt(jdtApt);
-                }
-              });
-      AptPlugin.IMPL.configureTask(project, Task.class, "eclipse", dependsOn(task));
-      final Object cleanTask =
-          AptPlugin.IMPL.createTask(
-              project,
-              "cleanEclipseJdtApt",
-              Delete.class,
-              new Action<Delete>() {
-                @Override
-                public void execute(Delete cleanEclipseJdtApt) {
-                  cleanEclipseJdtApt.delete(task);
-                }
-              });
-      AptPlugin.IMPL.configureTask(project, Task.class, "cleanEclipse", dependsOn(cleanTask));
-    }
-    if (!project.getTasks().getNames().contains("eclipseFactorypath")) {
-      final EclipseFactorypath factorypath =
-          instantiator.newInstance(
-              EclipseFactorypath.class, new XmlFileContentMerger(new XmlTransformer()));
-      ((ExtensionAware) eclipseModel).getExtensions().add("factorypath", factorypath);
-      factorypath.setPlusConfigurations(
-          new ArrayList<>(
-              Arrays.asList(
-                  project
-                      .getConfigurations()
-                      .getByName(
-                          AptPlugin.IMPL.getAnnotationProcessorConfigurationName(mainSourceSet)),
-                  project
-                      .getConfigurations()
-                      .getByName(
-                          AptPlugin.IMPL.getAnnotationProcessorConfigurationName(testSourceSet)))));
-      final Object task =
-          AptPlugin.IMPL.createTask(
-              project,
-              "eclipseFactorypath",
-              GenerateEclipseFactorypath.class,
-              new Action<GenerateEclipseFactorypath>() {
-                @Override
-                public void execute(GenerateEclipseFactorypath generateEclipseFactorypath) {
-                  generateEclipseFactorypath.setDescription(
-                      "Generates the Eclipse factorypath file.");
-                  generateEclipseFactorypath.setInputFile(project.file(".factorypath"));
-                  generateEclipseFactorypath.setOutputFile(project.file(".factorypath"));
+    eclipseModel
+        .getJdt()
+        .getFile()
+        .withProperties(
+            // withProperties(Action) overload was added in Gradle 2.14
+            new MethodClosure(
+                new Action<Properties>() {
+                  @Override
+                  public void execute(Properties properties) {
+                    properties.setProperty(
+                        "org.eclipse.jdt.core.compiler.processAnnotations",
+                        jdtApt.isAptEnabled() ? "enabled" : "disabled");
+                  }
+                },
+                "execute"));
 
-                  generateEclipseFactorypath.setFactorypath(factorypath);
-                  generateEclipseFactorypath.dependsOn(
-                      factorypath.getPlusConfigurations().toArray());
-                }
-              });
-      AptPlugin.IMPL.configureTask(project, Task.class, "eclipse", dependsOn(task));
-      final Object cleanTask =
-          AptPlugin.IMPL.createTask(
-              project,
-              "cleanEclipseFactorypath",
-              Delete.class,
-              new Action<Delete>() {
-                @Override
-                public void execute(Delete cleanEclipseFactorypath) {
-                  cleanEclipseFactorypath.delete(task);
-                }
-              });
-      AptPlugin.IMPL.configureTask(project, Task.class, "cleanEclipse", dependsOn(cleanTask));
-    }
+    final Object task =
+        AptPlugin.IMPL.createTask(
+            project,
+            "eclipseJdtApt",
+            GenerateEclipseJdtApt.class,
+            new Action<GenerateEclipseJdtApt>() {
+              @Override
+              public void execute(GenerateEclipseJdtApt generateEclipseJdtApt) {
+                generateEclipseJdtApt.setDescription(
+                    "Generates the Eclipse JDT APT settings file.");
+                generateEclipseJdtApt.setInputFile(
+                    project.file(".settings/org.eclipse.jdt.apt.core.prefs"));
+                generateEclipseJdtApt.setOutputFile(
+                    project.file(".settings/org.eclipse.jdt.apt.core.prefs"));
+
+                generateEclipseJdtApt.setJdtApt(jdtApt);
+              }
+            });
+    AptPlugin.IMPL.configureTask(project, Task.class, "eclipse", dependsOn(task));
+    final Object cleanTask =
+        AptPlugin.IMPL.createTask(
+            project,
+            "cleanEclipseJdtApt",
+            Delete.class,
+            new Action<Delete>() {
+              @Override
+              public void execute(Delete cleanEclipseJdtApt) {
+                cleanEclipseJdtApt.delete(task);
+              }
+            });
+    AptPlugin.IMPL.configureTask(project, Task.class, "cleanEclipse", dependsOn(cleanTask));
+  }
+
+  private void configureFactorypath(
+      final Project project,
+      EclipseModel eclipseModel,
+      SourceSet mainSourceSet,
+      SourceSet testSourceSet) {
+    final EclipseFactorypath factorypath =
+        instantiator.newInstance(
+            EclipseFactorypath.class, new XmlFileContentMerger(new XmlTransformer()));
+    ((ExtensionAware) eclipseModel).getExtensions().add("factorypath", factorypath);
+    factorypath.setPlusConfigurations(
+        new ArrayList<>(
+            Arrays.asList(
+                project
+                    .getConfigurations()
+                    .getByName(
+                        AptPlugin.IMPL.getAnnotationProcessorConfigurationName(mainSourceSet)),
+                project
+                    .getConfigurations()
+                    .getByName(
+                        AptPlugin.IMPL.getAnnotationProcessorConfigurationName(testSourceSet)))));
+    final Object task =
+        AptPlugin.IMPL.createTask(
+            project,
+            "eclipseFactorypath",
+            GenerateEclipseFactorypath.class,
+            new Action<GenerateEclipseFactorypath>() {
+              @Override
+              public void execute(GenerateEclipseFactorypath generateEclipseFactorypath) {
+                generateEclipseFactorypath.setDescription(
+                    "Generates the Eclipse factorypath file.");
+                generateEclipseFactorypath.setInputFile(project.file(".factorypath"));
+                generateEclipseFactorypath.setOutputFile(project.file(".factorypath"));
+
+                generateEclipseFactorypath.setFactorypath(factorypath);
+                generateEclipseFactorypath.dependsOn(factorypath.getPlusConfigurations().toArray());
+              }
+            });
+    AptPlugin.IMPL.configureTask(project, Task.class, "eclipse", dependsOn(task));
+    final Object cleanTask =
+        AptPlugin.IMPL.createTask(
+            project,
+            "cleanEclipseFactorypath",
+            Delete.class,
+            new Action<Delete>() {
+              @Override
+              public void execute(Delete cleanEclipseFactorypath) {
+                cleanEclipseFactorypath.delete(task);
+              }
+            });
+    AptPlugin.IMPL.configureTask(project, Task.class, "cleanEclipse", dependsOn(cleanTask));
   }
 }
