@@ -4,6 +4,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
 plugins {
     `java-gradle-plugin`
+    `maven-publish`
     groovy
     id("com.gradle.plugin-publish") version "0.9.10"
     id("com.github.sherter.google-java-format") version "0.7.1"
@@ -50,6 +51,15 @@ dependencies {
     }
 }
 
+// See https://github.com/gradle/kotlin-dsl/issues/492
+publishing {
+    repositories {
+        maven(url = "$buildDir/repository") {
+            name = "test"
+        }
+    }
+}
+
 tasks.withType<JavaCompile> {
     options.compilerArgs.addAll(arrayOf("-Xlint:all", "-Werror"))
     options.errorprone.option("NullAway:AnnotatedPackages", "net.ltgt.gradle.apt")
@@ -59,14 +69,20 @@ val jar by tasks.getting(Jar::class) {
     from(Callable { project(":kotlin-extensions").java.sourceSets["main"].output })
 }
 
+val publishPluginsToTestRepository by tasks.creating {
+    dependsOn("publishPluginMavenPublicationToTestRepository")
+    dependsOn("publishAptPluginMarkerMavenPublicationToTestRepository")
+    dependsOn("publishAptEclipsePluginMarkerMavenPublicationToTestRepository")
+    dependsOn("publishAptIdeaPluginMarkerMavenPublicationToTestRepository")
+}
+
 val test by tasks.getting(Test::class) {
+    dependsOn(publishPluginsToTestRepository)
+
     val testGradleVersion = project.findProperty("test.gradle-version")
     testGradleVersion?.also { systemProperty("test.gradle-version", testGradleVersion) }
 
-    dependsOn(jar)
-    inputs.file(jar.archivePath).withPathSensitivity(PathSensitivity.NONE)
-
-    systemProperty("plugin", jar.archivePath)
+    systemProperty("plugin.version", version)
 
     testLogging {
         showExceptions = true
@@ -77,15 +93,15 @@ val test by tasks.getting(Test::class) {
 
 gradlePlugin {
     (plugins) {
-        "aptPlugin" {
+        "apt" {
             id = "net.ltgt.apt"
             implementationClass = "net.ltgt.gradle.apt.AptPlugin"
         }
-        "aptEclipsePlugin" {
+        "aptEclipse" {
             id = "net.ltgt.apt-eclipse"
             implementationClass = "net.ltgt.gradle.apt.AptEclipsePlugin"
         }
-        "aptIdeaPlugin" {
+        "aptIdea" {
             id = "net.ltgt.apt-idea"
             implementationClass = "net.ltgt.gradle.apt.AptIdeaPlugin"
         }
@@ -99,15 +115,15 @@ pluginBundle {
     tags = listOf("annotation-processing", "annotation-processors", "apt")
 
     (plugins) {
-        "aptPlugin" {
+        "apt" {
             id = "net.ltgt.apt"
             displayName = "Gradle APT plugin"
         }
-        "aptEclipsePlugin" {
+        "aptEclipse" {
             id = "net.ltgt.apt-eclipse"
             displayName = "Gradle APT plugin (Eclipse integration)"
         }
-        "aptIdeaPlugin" {
+        "aptIdea" {
             id = "net.ltgt.apt-idea"
             displayName = "Gradle APT plugin (IDEA integration)"
         }

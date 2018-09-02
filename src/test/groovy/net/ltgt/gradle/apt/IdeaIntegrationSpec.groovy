@@ -11,6 +11,7 @@ import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.ProjectConnection
 import org.gradle.tooling.model.idea.IdeaProject
 import org.gradle.util.GradleVersion
+import org.gradle.util.TextUtil
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
@@ -28,8 +29,11 @@ class IdeaIntegrationSpec extends Specification {
     buildFile = testProjectDir.newFile('build.gradle')
     buildFile << """\
       buildscript {
+        repositories {
+          maven { url = uri("${TextUtil.normaliseFileSeparators(new File('build/repository').absolutePath)}") }
+        }
         dependencies {
-          classpath files(\$/${System.getProperty('plugin')}/\$)
+          classpath 'net.ltgt.gradle:gradle-apt-plugin:${System.getProperty('plugin.version')}'
         }
       }
       apply plugin: 'net.ltgt.apt-idea'

@@ -2,6 +2,7 @@ package net.ltgt.gradle.apt
 
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
+import org.gradle.util.TextUtil
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import spock.lang.Specification
@@ -15,14 +16,12 @@ class KotlinDslIntegrationSpec extends Specification {
     settingsFile = testProjectDir.newFile('settings.gradle.kts') << """\
       pluginManagement {
         repositories {
-          ivy {
-            artifactPattern("\${File(""\"${System.getProperty('plugin')}""\").parentFile.toURI()}/[artifact]")
-          }
+          maven { url = uri("${TextUtil.normaliseFileSeparators(new File('build/repository').absolutePath)}") }
         }
         resolutionStrategy {
           eachPlugin {
             if (requested.id.id.startsWith("net.ltgt.apt")) {
-              useModule("org:\${File(""\"${System.getProperty('plugin')}""\").name}:version")
+              useVersion("${System.getProperty('plugin.version')}")
             }
           }
         }
