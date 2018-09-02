@@ -7,9 +7,7 @@ plugins {
     groovy
     id("com.gradle.plugin-publish") version "0.9.10"
     id("com.github.sherter.google-java-format") version "0.7.1"
-
-    id("net.ltgt.errorprone") version "0.0.15" apply false
-    id("net.ltgt.errorprone-javacplugin") version "0.2" apply false
+    id("net.ltgt.errorprone-javacplugin") version "0.5"
 }
 
 googleJavaFormat {
@@ -19,15 +17,10 @@ googleJavaFormat {
 group = "net.ltgt.gradle"
 
 if (JavaVersion.current().isJava9Compatible) {
-    apply(plugin = "net.ltgt.errorprone-javacplugin")
-    tasks.getByName<JavaCompile>("compileJava").options.errorprone.option("NullAway:AnnotatedPackages", "net.ltgt.gradle.apt")
-
     tasks.withType<JavaCompile> { options.compilerArgs.addAll(arrayOf("--release", "7")) }
     tasks.withType<GroovyCompile> { options.compilerArgs.addAll(arrayOf("--release", "7")) }
-} else {
-    apply(plugin = "net.ltgt.errorprone")
-    tasks.getByName<JavaCompile>("compileJava").options.compilerArgs.add("-XepOpt:NullAway:AnnotatedPackages=net.ltgt.gradle.apt")
 }
+
 gradle.taskGraph.whenReady {
     val publishPlugins by tasks.getting
     if (hasTask(publishPlugins)) {
@@ -45,7 +38,8 @@ repositories {
 }
 
 dependencies {
-    "errorprone"("com.google.errorprone:error_prone_core:2.3.1")
+    errorprone("com.google.errorprone:error_prone_core:2.3.1")
+    errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
 
     annotationProcessor("com.uber.nullaway:nullaway:0.4.7")
 
@@ -58,6 +52,7 @@ dependencies {
 
 tasks.withType<JavaCompile> {
     options.compilerArgs.addAll(arrayOf("-Xlint:all", "-Werror"))
+    options.errorprone.option("NullAway:AnnotatedPackages", "net.ltgt.gradle.apt")
 }
 
 val jar by tasks.getting(Jar::class) {
