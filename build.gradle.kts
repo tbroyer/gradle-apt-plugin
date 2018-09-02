@@ -6,7 +6,7 @@ plugins {
     `java-gradle-plugin`
     `maven-publish`
     groovy
-    id("com.gradle.plugin-publish") version "0.9.10"
+    id("com.gradle.plugin-publish") version "0.10.0"
     id("com.github.sherter.google-java-format") version "0.7.1"
     id("net.ltgt.errorprone-javacplugin") version "0.5"
 }
@@ -18,18 +18,17 @@ googleJavaFormat {
 group = "net.ltgt.gradle"
 
 if (JavaVersion.current().isJava9Compatible) {
-    tasks.withType<JavaCompile> { options.compilerArgs.addAll(arrayOf("--release", "7")) }
-    tasks.withType<GroovyCompile> { options.compilerArgs.addAll(arrayOf("--release", "7")) }
+    tasks.withType<JavaCompile>().configureEach { options.compilerArgs.addAll(arrayOf("--release", "7")) }
+    tasks.withType<GroovyCompile>().configureEach { options.compilerArgs.addAll(arrayOf("--release", "7")) }
 }
 
 gradle.taskGraph.whenReady {
-    val publishPlugins by tasks.getting
-    if (hasTask(publishPlugins)) {
-        check(JavaVersion.current().isJava9Compatible, { "Releases must be built with JDK 9" })
+    if (hasTask(":publishPlugins")) {
+        check(JavaVersion.current().isJava9Compatible) { "Releases must be built with JDK 9" }
 
-        check("git diff --quiet --exit-code".execute(null, rootDir).waitFor() == 0, { "Working tree is dirty" })
+        check("git diff --quiet --exit-code".execute(null, rootDir).waitFor() == 0) { "Working tree is dirty" }
         val process = "git describe --exact-match".execute(null, rootDir)
-        check(process.waitFor() == 0, { "Version is not tagged" })
+        check(process.waitFor() == 0) { "Version is not tagged" }
         version = process.text.trim().removePrefix("v")
     }
 }
@@ -60,49 +59,54 @@ publishing {
     }
 }
 
-tasks.withType<JavaCompile> {
-    options.compilerArgs.addAll(arrayOf("-Xlint:all", "-Werror"))
-    options.errorprone.option("NullAway:AnnotatedPackages", "net.ltgt.gradle.apt")
-}
+tasks {
+    withType<JavaCompile>().configureEach {
+        options.compilerArgs.addAll(arrayOf("-Xlint:all", "-Werror"))
+        options.errorprone.option("NullAway:AnnotatedPackages", "net.ltgt.gradle.apt")
+    }
 
-val jar by tasks.getting(Jar::class) {
-    from(Callable { project(":kotlin-extensions").java.sourceSets["main"].output })
-}
+    "jar"(Jar::class) {
+        from(Callable { project(":kotlin-extensions").sourceSets["main"].output })
+    }
 
-val publishPluginsToTestRepository by tasks.creating {
-    dependsOn("publishPluginMavenPublicationToTestRepository")
-    dependsOn("publishAptPluginMarkerMavenPublicationToTestRepository")
-    dependsOn("publishAptEclipsePluginMarkerMavenPublicationToTestRepository")
-    dependsOn("publishAptIdeaPluginMarkerMavenPublicationToTestRepository")
-}
+    val publishPluginsToTestRepository by registering {
+        dependsOn("publishPluginMavenPublicationToTestRepository")
+        dependsOn("publishAptPluginMarkerMavenPublicationToTestRepository")
+        dependsOn("publishAptEclipsePluginMarkerMavenPublicationToTestRepository")
+        dependsOn("publishAptIdeaPluginMarkerMavenPublicationToTestRepository")
+    }
 
-val test by tasks.getting(Test::class) {
-    dependsOn(publishPluginsToTestRepository)
+    "test"(Test::class) {
+        dependsOn(publishPluginsToTestRepository)
 
-    val testGradleVersion = project.findProperty("test.gradle-version")
-    testGradleVersion?.also { systemProperty("test.gradle-version", testGradleVersion) }
+        val testGradleVersion = project.findProperty("test.gradle-version")
+        testGradleVersion?.also { systemProperty("test.gradle-version", testGradleVersion) }
 
-    systemProperty("plugin.version", version)
+        systemProperty("plugin.version", version)
 
-    testLogging {
-        showExceptions = true
-        showStackTraces = true
-        exceptionFormat = TestExceptionFormat.FULL
+        testLogging {
+            showExceptions = true
+            showStackTraces = true
+            exceptionFormat = TestExceptionFormat.FULL
+        }
     }
 }
 
 gradlePlugin {
-    (plugins) {
-        "apt" {
+    plugins {
+        register("apt") {
             id = "net.ltgt.apt"
+            displayName = "Gradle APT plugin"
             implementationClass = "net.ltgt.gradle.apt.AptPlugin"
         }
-        "aptEclipse" {
+        register("aptEclipse") {
             id = "net.ltgt.apt-eclipse"
+            displayName = "Gradle APT plugin (Eclipse integration)"
             implementationClass = "net.ltgt.gradle.apt.AptEclipsePlugin"
         }
-        "aptIdea" {
+        register("aptIdea") {
             id = "net.ltgt.apt-idea"
+            displayName = "Gradle APT plugin (IDEA integration)"
             implementationClass = "net.ltgt.gradle.apt.AptIdeaPlugin"
         }
     }
@@ -113,21 +117,6 @@ pluginBundle {
     vcsUrl = "https://github.com/tbroyer/gradle-apt-plugin"
     description = "Gradle plugin making it easier/safer to use Java annotation processors"
     tags = listOf("annotation-processing", "annotation-processors", "apt")
-
-    (plugins) {
-        "apt" {
-            id = "net.ltgt.apt"
-            displayName = "Gradle APT plugin"
-        }
-        "aptEclipse" {
-            id = "net.ltgt.apt-eclipse"
-            displayName = "Gradle APT plugin (Eclipse integration)"
-        }
-        "aptIdea" {
-            id = "net.ltgt.apt-idea"
-            displayName = "Gradle APT plugin (IDEA integration)"
-        }
-    }
 
     mavenCoordinates {
         groupId = project.group.toString()
@@ -141,20 +130,23 @@ dependencies {
     ktlint("com.github.shyiko:ktlint:0.27.0")
 }
 
-val verifyKtlint by tasks.creating(JavaExec::class) {
-    description = "Check Kotlin code style."
-    classpath = ktlint
-    main = "com.github.shyiko.ktlint.Main"
-    args("**/*.gradle.kts", "**/*.kt")
-}
-tasks["check"].dependsOn(verifyKtlint)
+tasks {
+    val verifyKtlint by registering(JavaExec::class) {
+        description = "Check Kotlin code style."
+        classpath = ktlint
+        main = "com.github.shyiko.ktlint.Main"
+        args("**/*.gradle.kts", "**/*.kt")
+    }
+    "check" {
+        dependsOn(verifyKtlint)
+    }
 
-task("ktlint", JavaExec::class) {
-    description = "Fix Kotlin code style violations."
-    classpath = verifyKtlint.classpath
-    main = verifyKtlint.main
-    args("-F")
-    args(verifyKtlint.args)
+    register("ktlint", JavaExec::class) {
+        description = "Fix Kotlin code style violations."
+        classpath = ktlint
+        main = "com.github.shyiko.ktlint.Main"
+        args("-F", "**/*.gradle.kts", "**/*.kt")
+    }
 }
 
 fun String.execute(envp: Array<String>?, workingDir: File?) =

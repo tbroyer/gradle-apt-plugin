@@ -27,9 +27,11 @@ var AptPlugin.AptOptions.annotationProcessing: Boolean
         isAnnotationProcessing = value
     }
 
+@Suppress("ConflictingExtensionProperty")
 val SourceSet.annotationProcessorConfigurationName: String
     get() = withConvention(AptPlugin.AptSourceSetConvention::class) { annotationProcessorConfigurationName }
 
+@Suppress("ConflictingExtensionProperty")
 var SourceSet.annotationProcessorPath: FileCollection?
     get() = withConvention(AptPlugin.AptSourceSetConvention::class) { annotationProcessorPath }
     set(value) = withConvention(AptPlugin.AptSourceSetConvention::class) { annotationProcessorPath = value }

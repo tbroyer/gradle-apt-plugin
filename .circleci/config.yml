@@ -78,13 +78,27 @@ caches:
 
     - &save-gradle-wrapper-current
       save_cache:
+        name: Saving Gradle wrapper 4.10
+        key: v2-gradle-wrapper-4.10
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-4.10-bin/
+          - ~/.gradle/caches/4.10/generated-gradle-jars/
+          - ~/.gradle/notifications/4.10/
+    - &restore-gradle-wrapper-current
+      restore_cache:
+        name: Restoring Gradle wrapper 4.10
+        keys:
+          - v2-gradle-wrapper-4.10
+    
+    - &save-gradle-wrapper-4-9
+      save_cache:
         name: Saving Gradle wrapper 4.9
         key: v2-gradle-wrapper-4.9
         paths:
           - ~/.gradle/wrapper/dists/gradle-4.9-bin/
           - ~/.gradle/caches/4.9/generated-gradle-jars/
           - ~/.gradle/notifications/4.9/
-    - &restore-gradle-wrapper-current
+    - &restore-gradle-wrapper-4-9
       restore_cache:
         name: Restoring Gradle wrapper 4.9
         keys:
@@ -494,6 +508,45 @@ jobs:
       - *save-gradle-dependencies-java10
       - *persist-workspace
     
+  java8_gradle49:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-9
+      - run:
+          name: Test against Gradle 4.9
+          command: ./gradlew test -Ptest.gradle-version=4.9
+      - *store-test-results
+      - *save-gradle-wrapper-4-9
+        
+  java9_gradle49:
+    <<: *java9
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java9
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-9
+      - run:
+          name: Test against Gradle 4.9
+          command: ./gradlew test -Ptest.gradle-version=4.9
+      - *store-test-results
+      - *save-gradle-wrapper-4-9
+        
+  java10_gradle49:
+    <<: *java10
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java10
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-4-9
+      - run:
+          name: Test against Gradle 4.9
+          command: ./gradlew test -Ptest.gradle-version=4.9
+      - *store-test-results
+      - *save-gradle-wrapper-4-9
+        
   java8_gradle48:
     <<: *java8
     steps:
@@ -955,6 +1008,21 @@ workflows:
           requires:
             - java8
     
+      - java8_gradle49:
+          requires:
+            - java8
+            
+        
+      - java9_gradle49:
+          requires:
+            - java9
+            - java8_gradle49
+        
+      - java10_gradle49:
+          requires:
+            - java10
+            - java8_gradle49
+        
       - java8_gradle48:
           requires:
             - java8
