@@ -41,7 +41,7 @@ dependencies {
     errorprone("com.google.errorprone:error_prone_core:2.3.1")
     errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
 
-    annotationProcessor("com.uber.nullaway:nullaway:0.4.7")
+    annotationProcessor("com.uber.nullaway:nullaway:0.5.4")
 
     testImplementation(localGroovy())
     testImplementation("com.netflix.nebula:nebula-test:6.7.1")
@@ -122,7 +122,7 @@ pluginBundle {
 val ktlint by configurations.creating
 
 dependencies {
-    ktlint("com.github.shyiko:ktlint:0.24.0")
+    ktlint("com.github.shyiko:ktlint:0.27.0")
 }
 
 val verifyKtlint by tasks.creating(JavaExec::class) {
