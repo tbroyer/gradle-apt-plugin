@@ -1,5 +1,6 @@
-import net.ltgt.gradle.errorprone.javacplugin.errorprone
 import java.util.concurrent.Callable
+import java.time.Year
+import net.ltgt.gradle.errorprone.javacplugin.errorprone
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
 plugins {
@@ -9,6 +10,7 @@ plugins {
     id("com.gradle.plugin-publish") version "0.10.0"
     id("com.github.sherter.google-java-format") version "0.7.1"
     id("net.ltgt.errorprone-javacplugin") version "0.5"
+    id("com.github.hierynomus.license") version "0.14.0"
 }
 
 googleJavaFormat {
@@ -146,6 +148,22 @@ tasks {
         classpath = ktlint
         main = "com.github.shyiko.ktlint.Main"
         args("-F", "**/*.gradle.kts", "**/*.kt")
+    }
+}
+
+allprojects {
+    apply {
+        plugin("com.github.hierynomus.license")
+    }
+    license {
+        header = rootProject.file("LICENSE.header")
+        skipExistingHeaders = true
+        mapping("java", "SLASHSTAR_STYLE")
+        mapping("kt", "SLASHSTAR_STYLE")
+        exclude("**/default*.*")
+
+        (this as ExtensionAware).extra["year"] = Year.now()
+        (this as ExtensionAware).extra["name"] = "Thomas Broyer"
     }
 }
 
