@@ -16,16 +16,20 @@
 package net.ltgt.gradle.apt;
 
 import groovy.util.Node;
+import groovy.util.NodeList;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
+import java.util.Set;
 import org.gradle.internal.xml.XmlTransformer;
 import org.gradle.plugins.ide.internal.generator.XmlPersistableConfigurationObject;
 
 public class Factorypath extends XmlPersistableConfigurationObject {
-  @Nullable private List<File> entries;
+  private List<File> entries = new ArrayList<>();
 
   Factorypath(XmlTransformer xmlTransformer) {
     super(xmlTransformer);
@@ -37,10 +41,35 @@ public class Factorypath extends XmlPersistableConfigurationObject {
   }
 
   @Override
-  protected void load(Node xml) {}
+  protected void load(Node xml) {
+    for (Object e : (NodeList) xml.get("factorypathentry")) {
+      Node entryNode = (Node) e;
+      if (isFileEntry(entryNode)) {
+        this.entries.add(new File((String) entryNode.attribute("id")));
+      }
+    }
+  }
+
+  void mergeEntries(Collection<File> newEntries) {
+    Set<File> updatedEntries = new LinkedHashSet<>();
+    for (File f : entries) {
+      updatedEntries.add(f.getAbsoluteFile());
+    }
+    for (File f : newEntries) {
+      updatedEntries.add(f.getAbsoluteFile());
+    }
+    entries = new ArrayList<>(updatedEntries);
+  }
 
   @Override
   protected void store(Node xml) {
+    for (Object e : (NodeList) xml.get("factorypathentry")) {
+      Node entryNode = (Node) e;
+      if (isFileEntry(entryNode)) {
+        xml.remove(entryNode);
+      }
+    }
+
     for (File entry : entries) {
       Map<String, Object> attributes = new LinkedHashMap<>();
       attributes.put("kind", "EXTJAR");
@@ -51,12 +80,16 @@ public class Factorypath extends XmlPersistableConfigurationObject {
     }
   }
 
-  @Nullable
   public List<File> getEntries() {
     return entries;
   }
 
   public void setEntries(List<File> entries) {
     this.entries = entries;
+  }
+
+  private static boolean isFileEntry(Node entryNode) {
+    return "EXTJAR".equals(entryNode.attribute("kind"))
+        && Boolean.valueOf(String.valueOf(entryNode.attribute("enabled")));
   }
 }

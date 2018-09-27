@@ -19,7 +19,6 @@ import static net.ltgt.gradle.apt.CompatibilityUtils.getBeforeMerged;
 import static net.ltgt.gradle.apt.CompatibilityUtils.getWhenMerged;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.gradle.api.artifacts.Configuration;
@@ -47,7 +46,7 @@ public class GenerateEclipseFactorypath extends XmlGeneratorTask<Factorypath> {
     for (Configuration configuration : factorypathModel.getMinusConfigurations()) {
       entries.removeAll(configuration.getFiles());
     }
-    factorypath.setEntries(new ArrayList<>(entries));
+    factorypath.mergeEntries(entries);
     getWhenMerged(factorypathModel.getFile()).execute(factorypath);
   }
 

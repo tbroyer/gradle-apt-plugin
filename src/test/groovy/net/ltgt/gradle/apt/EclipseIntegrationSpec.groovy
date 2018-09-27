@@ -136,16 +136,40 @@ class EclipseIntegrationSpec extends Specification {
     aptSettings.getProperty('org.eclipse.jdt.apt.genSrcDir') == '.apt_generated'
     aptSettings.getProperty('org.eclipse.jdt.apt.reconcileEnabled') == 'true'
 
+    // Test idempotency of eclipseFactorypath
     when:
     def result2 = GradleRunner.create()
+        .withGradleVersion(TEST_GRADLE_VERSION)
+        .withProjectDir(testProjectDir.root)
+        .withArguments('eclipseFactorypath')
+        .build()
+
+    then:
+    result2.task(':eclipseFactorypath').outcome == TaskOutcome.SUCCESS
+    factorypath.exists()
+    def entries2 = new XmlSlurper().parse(factorypath).factorypathentry
+    entries2.size() == 6
+    entries2.every { it.@kind == 'EXTJAR' && it.@enabled == true && it.@runInBatchMode == false }
+    (entries2.@id as Set).equals([
+        "$mavenRepo/leaf/compile/2.0/compile-2.0.jar",
+        "$mavenRepo/annotations/compile/1.0/compile-1.0.jar",
+        "$mavenRepo/processor/compile/1.0/compile-1.0.jar",
+        "$mavenRepo/leaf/testCompile/2.0/testCompile-2.0.jar",
+        "$mavenRepo/annotations/testCompile/1.0/testCompile-1.0.jar",
+        "$mavenRepo/processor/testCompile/1.0/testCompile-1.0.jar",
+    ].collect { it.replace('/', File.separator) }.toSet())
+
+    // Test cleanEclipse task
+    when:
+    def result3 = GradleRunner.create()
         .withGradleVersion(TEST_GRADLE_VERSION)
         .withProjectDir(testProjectDir.root)
         .withArguments('cleanEclipse')
         .build()
 
     then:
-    result2.task(':cleanEclipseJdtApt').outcome == TaskOutcome.SUCCESS
-    result2.task(':cleanEclipseFactorypath').outcome == TaskOutcome.SUCCESS
+    result3.task(':cleanEclipseJdtApt').outcome == TaskOutcome.SUCCESS
+    result3.task(':cleanEclipseFactorypath').outcome == TaskOutcome.SUCCESS
     !factorypath.exists()
     !new File(testProjectDir.root, '.settings/org.eclipse.jdt.apt.core.prefs').exists()
   }
@@ -188,6 +212,25 @@ class EclipseIntegrationSpec extends Specification {
     entries.size() == 1
     entries.every { it.@kind == 'EXTJAR' && it.@enabled == true && it.@runInBatchMode == false }
     (entries.@id as Set).equals([
+        "${testProjectDir.root}/processor/build/libs/processor.jar",
+    ].collect { it.replace('/', File.separator) }.toSet())
+
+    // Test idempotency of the task
+    when:
+    def result2 = GradleRunner.create()
+        .withGradleVersion(TEST_GRADLE_VERSION)
+        .withProjectDir(testProjectDir.root)
+        .withArguments(':eclipseFactorypath')
+        .build()
+
+    then:
+    result2.task(':eclipseFactorypath').outcome == TaskOutcome.SUCCESS
+    result2.task(':processor:jar').outcome == TaskOutcome.UP_TO_DATE
+    factorypath.exists()
+    def entries2 = new XmlSlurper().parse(factorypath).factorypathentry
+    entries2.size() == 1
+    entries2.every { it.@kind == 'EXTJAR' && it.@enabled == true && it.@runInBatchMode == false }
+    (entries2.@id as Set).equals([
         "${testProjectDir.root}/processor/build/libs/processor.jar",
     ].collect { it.replace('/', File.separator) }.toSet())
   }
