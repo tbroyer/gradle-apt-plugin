@@ -78,17 +78,17 @@ caches:
 
     - &save-gradle-wrapper-current
       save_cache:
-        name: Saving Gradle wrapper 4.10
-        key: v2-gradle-wrapper-4.10
+        name: Saving Gradle wrapper 4.10.2
+        key: v2-gradle-wrapper-4.10.2
         paths:
-          - ~/.gradle/wrapper/dists/gradle-4.10-bin/
-          - ~/.gradle/caches/4.10/generated-gradle-jars/
-          - ~/.gradle/notifications/4.10/
+          - ~/.gradle/wrapper/dists/gradle-4.10.2-bin/
+          - ~/.gradle/caches/4.10.2/generated-gradle-jars/
+          - ~/.gradle/notifications/4.10.2/
     - &restore-gradle-wrapper-current
       restore_cache:
-        name: Restoring Gradle wrapper 4.10
+        name: Restoring Gradle wrapper 4.10.2
         keys:
-          - v2-gradle-wrapper-4.10
+          - v2-gradle-wrapper-4.10.2
     
     - &save-gradle-wrapper-4-9
       save_cache:
