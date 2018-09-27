@@ -241,7 +241,7 @@ class EclipseIntegrationSpec extends Specification {
       apply plugin: 'java'
       compileJava {
         aptOptions.processorArgs = [
-          'foo': 'bar',
+          (project.hasProperty('procArgKey') ? procArgKey : 'foo'): 'bar',
           'baz': 'willBeOverwritten',
           'hasNullValue': null,
         ]
@@ -299,6 +299,27 @@ class EclipseIntegrationSpec extends Specification {
     aptSettings.getProperty('org.eclipse.jdt.apt.processorOptions/baz') == 'qux'
     aptSettings.getProperty('org.eclipse.jdt.apt.processorOptions/hasNullValue') == 'org.eclipse.jdt.apt.NULLVALUE'
     !aptSettings.containsKey('org.eclipse.jdt.apt.processorOptions/ignoredOption')
+
+    // Test that removing processor options effectively removes it from settings
+    // We test this by actually renaming the option
+    when:
+    def result2 = GradleRunner.create()
+        .withGradleVersion(TEST_GRADLE_VERSION)
+        .withProjectDir(testProjectDir.root)
+        .withArguments('-PprocArgKey=quux', 'eclipseJdtApt')
+        .build()
+
+    then:
+    result2.task(':eclipseJdtApt').outcome == TaskOutcome.SUCCESS
+
+    def aptSettings2 = loadProperties('.settings/org.eclipse.jdt.apt.core.prefs')
+    aptSettings2.getProperty('org.eclipse.jdt.apt.aptEnabled') == 'false'
+    aptSettings2.getProperty('org.eclipse.jdt.apt.genSrcDir') == 'whatever'
+    aptSettings2.getProperty('org.eclipse.jdt.apt.reconcileEnabled') == 'false'
+    aptSettings2.getProperty('org.eclipse.jdt.apt.processorOptions/quux') == 'bar'
+    !aptSettings2.containsKey('org.eclipse.jdt.apt.processorOptions/foo')
+    aptSettings2.getProperty('org.eclipse.jdt.apt.processorOptions/baz') == 'qux'
+    aptSettings2.getProperty('org.eclipse.jdt.apt.processorOptions/hasNullValue') == 'org.eclipse.jdt.apt.NULLVALUE'
   }
 
   def "tooling api"() {

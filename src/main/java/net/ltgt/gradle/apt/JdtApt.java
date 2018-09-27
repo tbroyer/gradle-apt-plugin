@@ -24,6 +24,12 @@ import org.gradle.plugins.ide.internal.generator.PropertiesPersistableConfigurat
 
 public class JdtApt extends PropertiesPersistableConfigurationObject {
 
+  private static final String GEN_SRC_DIR_KEY = "org.eclipse.jdt.apt.genSrcDir";
+  private static final String RECONCILE_ENABLED_KEY = "org.eclipse.jdt.apt.reconcileEnabled";
+  private static final String PROCESSOR_OPTIONS_KEY_PREFIX =
+      "org.eclipse.jdt.apt.processorOptions/";
+  private static final String PROCESSOR_OPTION_NULLVALUE = "org.eclipse.jdt.apt.NULLVALUE";
+
   private boolean aptEnabled;
   @Nullable private String genSrcDir;
   private boolean reconcileEnabled;
@@ -39,7 +45,19 @@ public class JdtApt extends PropertiesPersistableConfigurationObject {
   }
 
   @Override
-  protected void load(Properties properties) {}
+  protected void load(Properties properties) {
+    // Ignore aptEnabled when loading, see comment about storing it
+    genSrcDir = properties.getProperty(GEN_SRC_DIR_KEY);
+    reconcileEnabled = Boolean.parseBoolean(RECONCILE_ENABLED_KEY);
+    for (String name : properties.stringPropertyNames()) {
+      if (name.startsWith(PROCESSOR_OPTIONS_KEY_PREFIX)) {
+        final String value = properties.getProperty(name);
+        processorOptions.put(
+            name.substring(PROCESSOR_OPTIONS_KEY_PREFIX.length()),
+            PROCESSOR_OPTION_NULLVALUE.equals(value) ? null : value);
+      }
+    }
+  }
 
   @Override
   protected void store(Properties properties) {
@@ -49,13 +67,19 @@ public class JdtApt extends PropertiesPersistableConfigurationObject {
     // in ".settings/org.eclipse.jdt.core.prefs", configured by AptEclipsePlugin.
     properties.setProperty("org.eclipse.jdt.apt.aptEnabled", Boolean.toString(isAptEnabled()));
 
-    properties.setProperty("org.eclipse.jdt.apt.genSrcDir", getGenSrcDir());
-    properties.setProperty(
-        "org.eclipse.jdt.apt.reconcileEnabled", Boolean.toString(isReconcileEnabled()));
+    properties.setProperty(GEN_SRC_DIR_KEY, getGenSrcDir());
+    properties.setProperty(RECONCILE_ENABLED_KEY, Boolean.toString(isReconcileEnabled()));
+    for (String name : properties.stringPropertyNames()) {
+      if (name.startsWith(PROCESSOR_OPTIONS_KEY_PREFIX)
+          && !getProcessorOptions()
+              .containsKey(name.substring(PROCESSOR_OPTIONS_KEY_PREFIX.length()))) {
+        properties.remove(name);
+      }
+    }
     for (Map.Entry<String, String> option : getProcessorOptions().entrySet()) {
       properties.setProperty(
-          "org.eclipse.jdt.apt.processorOptions/" + option.getKey(),
-          option.getValue() == null ? "org.eclipse.jdt.apt.NULLVALUE" : option.getValue());
+          PROCESSOR_OPTIONS_KEY_PREFIX + option.getKey(),
+          option.getValue() == null ? PROCESSOR_OPTION_NULLVALUE : option.getValue());
     }
   }
 
