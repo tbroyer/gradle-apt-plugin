@@ -1,6 +1,6 @@
 import java.util.concurrent.Callable
 import java.time.Year
-import net.ltgt.gradle.errorprone.javacplugin.errorprone
+import net.ltgt.gradle.errorprone.errorprone
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 
 plugins {
@@ -9,7 +9,7 @@ plugins {
     groovy
     id("com.gradle.plugin-publish") version "0.10.0"
     id("com.github.sherter.google-java-format") version "0.7.1"
-    id("net.ltgt.errorprone-javacplugin") version "0.5"
+    id("net.ltgt.errorprone") version "0.6"
     id("com.github.hierynomus.license") version "0.14.0"
 }
 
@@ -43,10 +43,10 @@ dependencies {
     errorprone("com.google.errorprone:error_prone_core:2.3.1")
     errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
 
-    annotationProcessor("com.uber.nullaway:nullaway:0.5.4")
+    annotationProcessor("com.uber.nullaway:nullaway:0.5.6")
 
     testImplementation(localGroovy())
-    testImplementation("com.netflix.nebula:nebula-test:6.7.1")
+    testImplementation("com.netflix.nebula:nebula-test:7.1.0")
     testImplementation("org.spockframework:spock-core:1.1-groovy-2.4") {
         exclude(group = "org.codehaus.groovy")
     }
