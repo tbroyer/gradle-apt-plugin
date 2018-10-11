@@ -709,6 +709,11 @@ class AptPluginIntegrationSpec extends Specification {
         sourceSets.main.output.classesDir = new File(buildDir, 'classes/main')
         sourceSets.test.output.classesDir = new File(buildDir, 'classes/test')
       }
+      // With JDK 11, Gradle < 4.10 will choke on class version 55
+      subprojects {
+        sourceCompatibility = 8
+        targetCompatibility = 8
+      }
     """.stripIndent()
 
     def f = new File(testProjectDir.newFolder('annotations', 'src', 'main', 'java', 'annotations'), 'Helper.java')

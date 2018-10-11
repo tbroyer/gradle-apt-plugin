@@ -1,16 +1,16 @@
 import org.gradle.util.GradleVersion
 
 tasks.register("generateCircleciConfig", GenerateCircleciConfig::class) {
-    jdks = listOf(8, 9, 10)
+    jdks = listOf(8, 11)
     crossVersion = mapOf(
-        "gradle49" to CrossVersion("4.9", listOf(8, 9, 10)),
-        "gradle48" to CrossVersion("4.8.1", listOf(8, 9, 10)),
-        "gradle47" to CrossVersion("4.7", listOf(8, 9, 10)),
-        "gradle46" to CrossVersion("4.6", listOf(8, 9)),
-        "gradle45" to CrossVersion("4.5.1", listOf(8, 9)),
-        "gradle44" to CrossVersion("4.4.1", listOf(8, 9)),
-        "gradle43" to CrossVersion("4.3.1", listOf(8, 9)),
-        "gradle42" to CrossVersion("4.2.1", listOf(8, 9)),
+        "gradle49" to CrossVersion("4.9", listOf(8, 11)),
+        "gradle48" to CrossVersion("4.8.1", listOf(8, 11)),
+        "gradle47" to CrossVersion("4.7", 8),
+        "gradle46" to CrossVersion("4.6", 8),
+        "gradle45" to CrossVersion("4.5.1", 8),
+        "gradle44" to CrossVersion("4.4.1", 8),
+        "gradle43" to CrossVersion("4.3.1", 8),
+        "gradle42" to CrossVersion("4.2.1", 8),
         "gradle41" to CrossVersion("4.1", 8),
         "gradle40" to CrossVersion("4.0.2", 8),
         "gradle35" to CrossVersion("3.5.1", 8),

@@ -12,15 +12,10 @@ platforms:
     docker:
       - image: circleci/openjdk:8-jdk
     
-  - &java9
+  - &java11
     <<: *defaults
     docker:
-      - image: circleci/openjdk:9-jdk
-    
-  - &java10
-    <<: *defaults
-    docker:
-      - image: circleci/openjdk:10-jdk
+      - image: circleci/openjdk:11-jdk
     
 
 caches:
@@ -50,29 +45,17 @@ caches:
         keys:
           - v3-gradle-java8-{{ checksum "build.gradle.kts" }}
     
-    - &save-gradle-dependencies-java9
+    - &save-gradle-dependencies-java11
       save_cache:
         name: Saving Gradle dependencies
-        key: v3-gradle-java9-{{ checksum "build.gradle.kts" }}
+        key: v3-gradle-java11-{{ checksum "build.gradle.kts" }}
         paths:
           - ~/.gradle/caches/modules-2/
-    - &restore-gradle-dependencies-java9
+    - &restore-gradle-dependencies-java11
       restore_cache:
         name: Restoring Gradle dependencies
         keys:
-          - v3-gradle-java9-{{ checksum "build.gradle.kts" }}
-    
-    - &save-gradle-dependencies-java10
-      save_cache:
-        name: Saving Gradle dependencies
-        key: v3-gradle-java10-{{ checksum "build.gradle.kts" }}
-        paths:
-          - ~/.gradle/caches/modules-2/
-    - &restore-gradle-dependencies-java10
-      restore_cache:
-        name: Restoring Gradle dependencies
-        keys:
-          - v3-gradle-java10-{{ checksum "build.gradle.kts" }}
+          - v3-gradle-java11-{{ checksum "build.gradle.kts" }}
     
   wrapper:
 
@@ -480,32 +463,18 @@ jobs:
       - *save-gradle-dependencies-java8
       - *persist-workspace
     
-  java9:
-    <<: *java9
+  java11:
+    <<: *java11
     steps:
       - *attach-workspace
-      - *restore-gradle-dependencies-java9
+      - *restore-gradle-dependencies-java11
       - *restore-gradle-wrapper-current
       - run:
           name: Build
           command: ./gradlew build
       - *store-test-results
       - *save-gradle-wrapper-current
-      - *save-gradle-dependencies-java9
-      - *persist-workspace
-    
-  java10:
-    <<: *java10
-    steps:
-      - *attach-workspace
-      - *restore-gradle-dependencies-java10
-      - *restore-gradle-wrapper-current
-      - run:
-          name: Build
-          command: ./gradlew build
-      - *store-test-results
-      - *save-gradle-wrapper-current
-      - *save-gradle-dependencies-java10
+      - *save-gradle-dependencies-java11
       - *persist-workspace
     
   java8_gradle49:
@@ -521,24 +490,11 @@ jobs:
       - *store-test-results
       - *save-gradle-wrapper-4-9
         
-  java9_gradle49:
-    <<: *java9
+  java11_gradle49:
+    <<: *java11
     steps:
       - *attach-workspace
-      - *restore-gradle-dependencies-java9
-      - *restore-gradle-wrapper-current
-      - *restore-gradle-wrapper-4-9
-      - run:
-          name: Test against Gradle 4.9
-          command: ./gradlew test -Ptest.gradle-version=4.9
-      - *store-test-results
-      - *save-gradle-wrapper-4-9
-        
-  java10_gradle49:
-    <<: *java10
-    steps:
-      - *attach-workspace
-      - *restore-gradle-dependencies-java10
+      - *restore-gradle-dependencies-java11
       - *restore-gradle-wrapper-current
       - *restore-gradle-wrapper-4-9
       - run:
@@ -560,24 +516,11 @@ jobs:
       - *store-test-results
       - *save-gradle-wrapper-4-8-1
         
-  java9_gradle48:
-    <<: *java9
+  java11_gradle48:
+    <<: *java11
     steps:
       - *attach-workspace
-      - *restore-gradle-dependencies-java9
-      - *restore-gradle-wrapper-current
-      - *restore-gradle-wrapper-4-8-1
-      - run:
-          name: Test against Gradle 4.8.1
-          command: ./gradlew test -Ptest.gradle-version=4.8.1
-      - *store-test-results
-      - *save-gradle-wrapper-4-8-1
-        
-  java10_gradle48:
-    <<: *java10
-    steps:
-      - *attach-workspace
-      - *restore-gradle-dependencies-java10
+      - *restore-gradle-dependencies-java11
       - *restore-gradle-wrapper-current
       - *restore-gradle-wrapper-4-8-1
       - run:
@@ -599,50 +542,11 @@ jobs:
       - *store-test-results
       - *save-gradle-wrapper-4-7
         
-  java9_gradle47:
-    <<: *java9
-    steps:
-      - *attach-workspace
-      - *restore-gradle-dependencies-java9
-      - *restore-gradle-wrapper-current
-      - *restore-gradle-wrapper-4-7
-      - run:
-          name: Test against Gradle 4.7
-          command: ./gradlew test -Ptest.gradle-version=4.7
-      - *store-test-results
-      - *save-gradle-wrapper-4-7
-        
-  java10_gradle47:
-    <<: *java10
-    steps:
-      - *attach-workspace
-      - *restore-gradle-dependencies-java10
-      - *restore-gradle-wrapper-current
-      - *restore-gradle-wrapper-4-7
-      - run:
-          name: Test against Gradle 4.7
-          command: ./gradlew test -Ptest.gradle-version=4.7
-      - *store-test-results
-      - *save-gradle-wrapper-4-7
-        
   java8_gradle46:
     <<: *java8
     steps:
       - *attach-workspace
       - *restore-gradle-dependencies-java8
-      - *restore-gradle-wrapper-current
-      - *restore-gradle-wrapper-4-6
-      - run:
-          name: Test against Gradle 4.6
-          command: ./gradlew test -Ptest.gradle-version=4.6
-      - *store-test-results
-      - *save-gradle-wrapper-4-6
-        
-  java9_gradle46:
-    <<: *java9
-    steps:
-      - *attach-workspace
-      - *restore-gradle-dependencies-java9
       - *restore-gradle-wrapper-current
       - *restore-gradle-wrapper-4-6
       - run:
@@ -664,37 +568,11 @@ jobs:
       - *store-test-results
       - *save-gradle-wrapper-4-5-1
         
-  java9_gradle45:
-    <<: *java9
-    steps:
-      - *attach-workspace
-      - *restore-gradle-dependencies-java9
-      - *restore-gradle-wrapper-current
-      - *restore-gradle-wrapper-4-5-1
-      - run:
-          name: Test against Gradle 4.5.1
-          command: ./gradlew test -Ptest.gradle-version=4.5.1
-      - *store-test-results
-      - *save-gradle-wrapper-4-5-1
-        
   java8_gradle44:
     <<: *java8
     steps:
       - *attach-workspace
       - *restore-gradle-dependencies-java8
-      - *restore-gradle-wrapper-current
-      - *restore-gradle-wrapper-4-4-1
-      - run:
-          name: Test against Gradle 4.4.1
-          command: ./gradlew test -Ptest.gradle-version=4.4.1
-      - *store-test-results
-      - *save-gradle-wrapper-4-4-1
-        
-  java9_gradle44:
-    <<: *java9
-    steps:
-      - *attach-workspace
-      - *restore-gradle-dependencies-java9
       - *restore-gradle-wrapper-current
       - *restore-gradle-wrapper-4-4-1
       - run:
@@ -716,37 +594,11 @@ jobs:
       - *store-test-results
       - *save-gradle-wrapper-4-3-1
         
-  java9_gradle43:
-    <<: *java9
-    steps:
-      - *attach-workspace
-      - *restore-gradle-dependencies-java9
-      - *restore-gradle-wrapper-current
-      - *restore-gradle-wrapper-4-3-1
-      - run:
-          name: Test against Gradle 4.3.1
-          command: ./gradlew test -Ptest.gradle-version=4.3.1
-      - *store-test-results
-      - *save-gradle-wrapper-4-3-1
-        
   java8_gradle42:
     <<: *java8
     steps:
       - *attach-workspace
       - *restore-gradle-dependencies-java8
-      - *restore-gradle-wrapper-current
-      - *restore-gradle-wrapper-4-2-1
-      - run:
-          name: Test against Gradle 4.2.1
-          command: ./gradlew test -Ptest.gradle-version=4.2.1
-      - *store-test-results
-      - *save-gradle-wrapper-4-2-1
-        
-  java9_gradle42:
-    <<: *java9
-    steps:
-      - *attach-workspace
-      - *restore-gradle-dependencies-java9
       - *restore-gradle-wrapper-current
       - *restore-gradle-wrapper-4-2-1
       - run:
@@ -1000,11 +852,7 @@ workflows:
           requires:
             - checkout_code
     
-      - java9:
-          requires:
-            - java8
-    
-      - java10:
+      - java11:
           requires:
             - java8
     
@@ -1013,14 +861,9 @@ workflows:
             - java8
             
         
-      - java9_gradle49:
+      - java11_gradle49:
           requires:
-            - java9
-            - java8_gradle49
-        
-      - java10_gradle49:
-          requires:
-            - java10
+            - java11
             - java8_gradle49
         
       - java8_gradle48:
@@ -1028,14 +871,9 @@ workflows:
             - java8
             
         
-      - java9_gradle48:
+      - java11_gradle48:
           requires:
-            - java9
-            - java8_gradle48
-        
-      - java10_gradle48:
-          requires:
-            - java10
+            - java11
             - java8_gradle48
         
       - java8_gradle47:
@@ -1043,65 +881,30 @@ workflows:
             - java8
             
         
-      - java9_gradle47:
-          requires:
-            - java9
-            - java8_gradle47
-        
-      - java10_gradle47:
-          requires:
-            - java10
-            - java8_gradle47
-        
       - java8_gradle46:
           requires:
             - java8
             
-        
-      - java9_gradle46:
-          requires:
-            - java9
-            - java8_gradle46
         
       - java8_gradle45:
           requires:
             - java8
             
         
-      - java9_gradle45:
-          requires:
-            - java9
-            - java8_gradle45
-        
       - java8_gradle44:
           requires:
             - java8
             
-        
-      - java9_gradle44:
-          requires:
-            - java9
-            - java8_gradle44
         
       - java8_gradle43:
           requires:
             - java8
             
         
-      - java9_gradle43:
-          requires:
-            - java9
-            - java8_gradle43
-        
       - java8_gradle42:
           requires:
             - java8
             
-        
-      - java9_gradle42:
-          requires:
-            - java9
-            - java8_gradle42
         
       - java8_gradle41:
           requires:
