@@ -40,10 +40,10 @@ repositories {
 }
 
 dependencies {
-    errorprone("com.google.errorprone:error_prone_core:2.3.1")
+    errorprone("com.google.errorprone:error_prone_core:2.3.2")
     errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
 
-    annotationProcessor("com.uber.nullaway:nullaway:0.5.6")
+    annotationProcessor("com.uber.nullaway:nullaway:0.6.0")
 
     testImplementation(localGroovy())
     testImplementation("com.netflix.nebula:nebula-test:7.1.0")
