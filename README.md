@@ -1,10 +1,18 @@
 # gradle-apt-plugin
 
-This plugin does a few things to make it easier/safer to use Java annotation processors in a Gradle build:
+This plugin originally did a few things to make it easier/safer to use Java annotation processors in a Gradle build.
+Those things are now available natively in Gradle, so what's this plugin about?
 
+If you use older versions of Gradle, you can still benefit from those features:
 * it ensures the presence of configurations for your compile-time only dependencies (annotations, generally) and annotation processors, consistently across all supported Gradle versions;
-* automatically configures the corresponding `JavaCompile` and `GroovyCompile` tasks to make use of these configurations, when the `java` or `groovy` plugin is applied;
-* automatically configures IntelliJ IDEA and/or Eclipse when the `net.ltgt.apt-idea` or `net.ltgt.apt-eclipse` plugins are applied.
+* automatically configures the corresponding `JavaCompile` and `GroovyCompile` tasks to make use of these configurations, when the `java` or `groovy` plugin is applied.
+
+With recent versions of Gradle, this plugin will actually only:
+* configure `JavaCompile` and `GroovyCompile` tasks' `options.annotationProcessorGeneratedSourcesDirectory` with a _sane_ default value so you can see the generated sources in your IDE and for debugging;
+* add some DSL to configure annotation processors; it is however recommended to directly configure the tasks' `options.compilerArgs`.
+
+Quite ironically, what you'll probably find the most useful here is the part that's only provided as a "best effort",
+namely the `net.ltgt.apt-idea` or `net.ltgt.apt-eclipse` plugins that will automatically configures IntelliJ IDEA and Eclipse respectively.
 
 ## Using the plugin
 
