@@ -115,7 +115,7 @@ eclipse {
   }
 
   factorypath {
-    plusConfigurations = [ configurations.apt, configurations.testApt ]
+    plusConfigurations = [ configurations.annotationProcessor, configurations.testAnnotationProcessor ]
     minusConfigurations = []
 
     file {
