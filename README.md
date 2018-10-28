@@ -1,6 +1,8 @@
 # gradle-apt-plugin
 
-This plugin originally did a few things to make it easier/safer to use Java annotation processors in a Gradle build.
+The goal of this plugin is to eventually no longer be needed, being superseded by built-in features.
+
+It originally did a few things to make it easier/safer to use Java annotation processors in a Gradle build.
 Those things are now available natively in Gradle, so what's this plugin about?
 
 If you use older versions of Gradle, you can still benefit from those features:
@@ -8,11 +10,17 @@ If you use older versions of Gradle, you can still benefit from those features:
 * automatically configures the corresponding `JavaCompile` and `GroovyCompile` tasks to make use of these configurations, when the `java` or `groovy` plugin is applied.
 
 With recent versions of Gradle, this plugin will actually only:
-* configure `JavaCompile` and `GroovyCompile` tasks' `options.annotationProcessorGeneratedSourcesDirectory` with a _sane_ default value so you can see the generated sources in your IDE and for debugging;
+* configure `JavaCompile` and `GroovyCompile` tasks' `options.annotationProcessorGeneratedSourcesDirectory` with a _sane_ default value so you can see the generated sources in your IDE and for debugging, and avoid shipping them in your JARs ([see Gradle issue](https://github.com/gradle/gradle/issues/4956));
 * add some DSL to configure annotation processors; it is however recommended to directly configure the tasks' `options.compilerArgs`.
 
 Quite ironically, what you'll probably find the most useful here is the part that's only provided as a "best effort",
 namely the `net.ltgt.apt-idea` or `net.ltgt.apt-eclipse` plugins that will automatically configures IntelliJ IDEA and Eclipse respectively.
+
+If you're interested in better IDE support, please vote for those issues to eventually have built-in support:
+ * [in Gradle](https://github.com/gradle/gradle/issues/2300) for the `idea` and `eclipse` plugins
+ * [in Eclipse Buildship](https://github.com/eclipse/buildship/issues/329)
+ * in IntelliJ IDEA: [for annotation processing in the IDE](https://youtrack.jetbrains.com/issue/IDEA-187868),
+   and/or simply [`options.annotationProcessorGeneratedSourcesDirectory` (e.g. if delegating build/run actions to Gradle)](https://youtrack.jetbrains.com/issue/IDEA-182577)
 
 ## Using the plugin
 
