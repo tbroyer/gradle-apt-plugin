@@ -33,8 +33,14 @@ import java.io.File
 val JavaCompile.aptOptions: AptPlugin.AptOptions
     get() = the()
 
+fun JavaCompile.aptOptions(configure: AptPlugin.AptOptions.() -> Unit) =
+    configure(configure)
+
 val GroovyCompile.aptOptions: AptPlugin.AptOptions
     get() = the()
+
+fun GroovyCompile.aptOptions(configure: AptPlugin.AptOptions.() -> Unit) =
+    configure(configure)
 
 var AptPlugin.AptOptions.annotationProcessing: Boolean
     get() = isAnnotationProcessing

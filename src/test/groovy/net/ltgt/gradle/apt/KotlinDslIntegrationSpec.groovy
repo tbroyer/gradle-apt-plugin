@@ -56,13 +56,13 @@ class KotlinDslIntegrationSpec extends Specification {
       }
 
       val compileJava by tasks.getting(JavaCompile::class) {
-        aptOptions.run {
+        aptOptions {
           processors = listOf("processor")
           processorArgs = mapOf("foo" to "bar", "baz" to 5)
         }
       }
       val compileTestJava by tasks.getting(JavaCompile::class) {
-        aptOptions.run {
+        aptOptions {
           annotationProcessing = false
         }
       }
@@ -75,7 +75,6 @@ class KotlinDslIntegrationSpec extends Specification {
         .build()
 
     then:
-    println(result.output)
     result.task(":compileJava").outcome == TaskOutcome.NO_SOURCE
   }
 
@@ -90,13 +89,13 @@ class KotlinDslIntegrationSpec extends Specification {
       }
 
       val compileGroovy by tasks.getting(GroovyCompile::class) {
-        aptOptions.run {
+        aptOptions {
           processors = listOf("processor")
           processorArgs = mapOf("foo" to "bar", "baz" to 5)
         }
       }
       val compileTestGroovy by tasks.getting(GroovyCompile::class) {
-        aptOptions.run {
+        aptOptions {
           annotationProcessing = false
         }
       }
@@ -109,7 +108,6 @@ class KotlinDslIntegrationSpec extends Specification {
         .build()
 
     then:
-    println(result.output)
     result.task(":compileGroovy").outcome == TaskOutcome.NO_SOURCE
   }
 
@@ -125,11 +123,14 @@ class KotlinDslIntegrationSpec extends Specification {
 
       eclipse {
         factorypath {
-          minusConfigurations.add(configurations["apt"])
+          minusConfigurations.add(configurations.apt)
         }
         jdt {
           apt {
-            isAptEnabled = false
+            isAptEnabled = true
+            genSrcDir = file(".apt_generated")
+            isReconcileEnabled = true
+            processorOptions = mapOf("foo" to "bar")
           }
         }
       }
@@ -142,7 +143,6 @@ class KotlinDslIntegrationSpec extends Specification {
         .build()
 
     then:
-    println(result.output)
     result.task(":eclipse").outcome == TaskOutcome.SUCCESS
     result.task(":eclipseJdtApt").outcome == TaskOutcome.SUCCESS
     result.task(":eclipseFactorypath").outcome == TaskOutcome.SUCCESS
@@ -160,11 +160,14 @@ class KotlinDslIntegrationSpec extends Specification {
 
       idea {
         project {
-          configureAnnotationProcessing = false
+          configureAnnotationProcessing = true
         }
         module {
           apt {
-            addAptDependencies = false
+            addGeneratedSourcesDirs = true
+            addAptDependencies = true
+            addCompileOnlyDependencies = false
+            mainDependenciesScope = "PROVIDED"
           }
         }
       }
@@ -177,7 +180,6 @@ class KotlinDslIntegrationSpec extends Specification {
         .build()
 
     then:
-    println(result.output)
     result.task(":idea").outcome == TaskOutcome.SUCCESS
   }
 }

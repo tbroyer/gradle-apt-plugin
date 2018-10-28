@@ -61,6 +61,10 @@ public class EclipseJdtApt {
     return project.file(genSrcDir);
   }
 
+  public void setGenSrcDir(File genSrcDir) {
+    this.genSrcDir = Objects.requireNonNull(genSrcDir);
+  }
+
   public void setGenSrcDir(Object genSrcDir) {
     this.genSrcDir = Objects.requireNonNull(genSrcDir);
   }
