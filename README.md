@@ -47,15 +47,15 @@ After applying the plugin following the above instructions, those added configur
 
 ```gradle
 dependencies {
-  compile             "com.google.dagger:dagger:2.14.1"
-  annotationProcessor "com.google.dagger:dagger-compiler:2.14.1"
+  compile("com.google.dagger:dagger:2.18")
+  annotationProcessor("com.google.dagger:dagger-compiler:2.18")
 
   // auto-factory contains both annotations and their processor, neither is needed at runtime
-  compileOnly         "com.google.auto.factory:auto-factory:1.0-beta5"
-  annotationProcessor "com.google.auto.factory:auto-factory:1.0-beta5"
+  compileOnly("com.google.auto.factory:auto-factory:1.0-beta6")
+  annotationProcessor("com.google.auto.factory:auto-factory:1.0-beta6")
 
-  compileOnly         "org.immutables:value:2.5.6:annotations"
-  annotationProcessor "org.immutables:value:2.5.6"
+  compileOnly("org.immutables:value-annotations:2.7.1")
+  annotationProcessor("org.immutables:value:2.7.1")
 }
 ```
 
@@ -65,11 +65,26 @@ Starting with version 0.6, the plugin also configures `GroovyCompile` tasks adde
 It does not however configure annotation processing for Groovy sources, only for Java sources used in joint compilation.
 To process annotations on Groovy sources, you'll have to configure your `GroovyCompile` tasks; e.g.
 
+<details open>
+<summary>Groovy</summary>
+
 ```gradle
 compileGroovy {
   groovyOptions.javaAnnotationProcessing = true
 }
 ```
+
+</details>
+<details>
+<summary>Kotlin</summary>
+
+```kotlin
+tasks.named<GroovyCompile>("compileGroovy") {
+  groovyOptions.isJavaAnnotationProcessing = true
+}
+```
+
+</details>
 
 ## Build cache
 
@@ -95,17 +110,19 @@ Starting with version 0.11, applying the `net.ltgt.apt-eclipse` plugin will auto
 In prior versions (until 0.10), that configuration would automatically happen whenever both the `net.ltgt.apt` and `eclipse` were applied (the new `net.ltgt.apt-eclipse` plugin will also automatically apply the `net.ltgt.apt` and `eclipse` plugins).
 
 From version 0.11 onwards, Eclipse annotation processing can be configured through a DSL, as an extension to the Eclipse JDT DSL (presented here with the default values):
+
+<details open>
+<summary>Groovy</summary>
+
 ```gradle
 eclipse {
   jdt {
     apt {
       // whether annotation processing is enabled in Eclipse
-      // (isAptEnabled in Kotlin)
       aptEnabled = compileJava.aptOptions.annotationProcessing
       // where Eclipse will output the generated sources; value is interpreted as per project.file()
       genSrcDir = file('.apt_generated')
       // whether annotation processing is enabled in the editor
-      // (isReconcileEnabled in Kotlin)
       reconcileEnabled = true
       // a map of annotation processor options; a null value will pass the argument as -Akey rather than -Akey=value
       processorOptions = compileJava.aptOptions.processorArgs
@@ -138,6 +155,54 @@ eclipse {
   }
 }
 ```
+
+</details>
+<details>
+<summary>Kotlin</summary>
+
+```kotlin
+eclipse {
+  jdt {
+    apt {
+      // whether annotation processing is enabled in Eclipse
+      isAptEnabled = tasks.getByName<JavaCompile>("compileJava").aptOptions.annotationProcessing
+      // where Eclipse will output the generated sources; value is interpreted as per project.file()
+      genSrcDir = file(".apt_generated")
+      // whether annotation processing is enabled in the editor
+      isReconcileEnabled = true
+      // a map of annotation processor options; a null value will pass the argument as -Akey rather than -Akey=value
+      processorOptions = tasks.getByName<JavaCompile>("compileJava").aptOptions.processorArgs
+
+      file {
+        whenMerged {
+          // you can tinker with the JdtApt here, you'll need to cast 'this' to JdtApt
+        }
+
+        withProperties {
+          // you can tinker with the Properties here
+        }
+      }
+    }
+  }
+
+  factorypath {
+    plusConfigurations = [ configurations.annotationProcessor, configurations.testAnnotationProcessor ]
+    minusConfigurations = []
+
+    file {
+      whenMerged {
+        // you can tinker with the Factorypath here, you'll need to cast 'this' to Factorypath
+      }
+
+      withXml {
+        // you can tinker with the Node here
+      }
+    }
+  }
+}
+```
+
+</details>
 
 When using Buildship, you'll have to manually run the `eclipseJdtApt` and `eclipseFactorypath` tasks to generate the Eclipse configuration files, then either run the `eclipseJdt` task or manually enable annotation processing: in the project properties → Java Compiler → Annotation Processing, check `Enable Annotation Processing`. Note that while all those tasks are depended on by the `eclipse` task, that one is incompatible with Buildship, so you have to explicitly run the two or three aforementioned tasks and _not_ run the `eclipse` task.
 
