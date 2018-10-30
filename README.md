@@ -22,6 +22,208 @@ If you're interested in better IDE support, please vote for those issues to even
  * in IntelliJ IDEA: [for annotation processing in the IDE](https://youtrack.jetbrains.com/issue/IDEA-187868),
    and/or simply [`options.annotationProcessorGeneratedSourcesDirectory` (e.g. if delegating build/run actions to Gradle)](https://youtrack.jetbrains.com/issue/IDEA-182577)
 
+## Do without the plugin
+
+<details>
+<summary>This only applies if you are using Gradle ≥ 4.3</summary>
+
+### Do without `net.ltgt.apt`
+
+DSL aside, the `net.ltgt.apt` plugin, is equivalent to the following snippet
+(unless otherwise noted, all snippets here assume Gradle ≥ 4.9, and only deal with Java projects, not Groovy ones):
+
+<details open>
+<summary>Groovy</summary>
+
+```gradle
+// Workaround for https://github.com/gradle/gradle/issues/4956
+sourceSets.configureEach { sourceSet ->
+  tasks.named(sourceSet.compileJavaTaskName).configure {
+    options.annotationProcessorGeneratedSourcesDirectory = file("$buildDir/generated/source/apt/${sourceSet.name})
+  }
+}
+```
+
+</details>
+<details>
+<summary>Kotlin</summary>
+
+```kotlin
+// Workaround for https://github.com/gradle/gradle/issues/4956
+sourceSets.configureEach {
+    tasks.named<JavaCompile>(compileJavaTaskName) {
+        options.annotationProcessorGeneratedSourcesDirectory = file("$buildDir/generated/source/apt/${this@configureEach.name}")
+    }
+}
+```
+
+</details>
+
+With Gradle ≤ 4.6, you'll also need to create the `<sourceSet>AnnotationProcessor` configurations and configure the tasks' `options.annotationProcessorPath`
+(the following snippet will disable falling back to the compilation classpath to resolve annotation processors though):
+
+```gradle
+sourceSets.all {
+  def annotationProcessorConfiguration = configurations.create(name == "main" ? "annotationProcessor" : "${name}AnnotationProcessor")
+  tasks[compileJavaTaskName].options.annotationProcessorPath = annotationProcessorConfiguration
+}
+```
+
+Alternatively, you can selectively create configurations and configure tasks as needed:
+
+```gradle
+configurations {
+  annotationProcessor
+}
+compileJava {
+  options.annotationProcessorPath = configurations.annotationProcessor
+}
+```
+
+### Do without `net.ltgt.apt-idea`
+
+If you're delegating IDEA build/run actions to Gradle, and/or somehow don't want or need IntelliJ IDEA to do the annotation processing,
+the `net.ltgt.apt-idea` plugin is roughly equivalent to the following snippet
+(this assumes a somewhat recent version of IntelliJ IDEA that automatically unexcludes source folders inside excluded folders):
+
+<details open>
+<summary>Groovy</summary>
+
+```gradle
+// Workaround for https://youtrack.jetbrains.com/issue/IDEA-182577
+idea {
+  module {
+    sourceDirs += compileJava.options.annotationProcessorGeneratedSourcesDirectory
+    generatedSourceDirs += compileJava.options.annotationProcessorGeneratedSourcesDirectory
+    testSourceDirs += compileTestJava.options.annotationProcessorGeneratedSourcesDirectory
+    generatedSourceDirs += compileTestJava.options.annotationProcessorGeneratedSourcesDirectory
+  }
+}
+```
+
+</details>
+<details>
+<summary>Kotlin</summary>
+
+```kotlin
+// Workaround for https://youtrack.jetbrains.com/issue/IDEA-182577
+idea {
+    module {
+        tasks.getByName<JavaCompile>("compileJava").options.annotationProcessorGeneratedSourcesDirectory?.also {
+            // For some reason, modifying the existing collections doesn't work. We need to copy the values and then assign it back.
+            sourceDirs = sourceDirs + it
+            generatedSourceDirs = generatedSourceDirs + it
+        }
+        tasks.getByName<JavaCompile>("compileTestJava").options.annotationProcessorGeneratedSourcesDirectory?.also {
+            // For some reason, modifying the existing collections doesn't work. We need to copy the values and then assign it back.
+            testSourceDirs = testSourceDirs + it
+            generatedSourceDirs = generatedSourceDirs + it
+        }
+    }
+}
+```
+
+</details>
+
+If you want IntelliJ IDEA to process annotations, you'll have to do some manual configuration to enable annotation processing,
+and add the annotation processors to the project's compilation classpath:
+
+<details open>
+<summary>Groovy</summary>
+
+```gradle
+// Workaround for https://youtrack.jetbrains.com/issue/IDEA-187868
+idea {
+  module {
+    scopes.PROVIDED.plus += configurations.annotationProcessor
+    scopes.TEST.plus += configurations.testAnnotationProcessor
+  }
+}
+```
+
+</details>
+<details>
+<summary>Kotlin</summary>
+
+```kotlin
+// Workaround for https://youtrack.jetbrains.com/issue/IDEA-187868
+idea {
+    module {
+        scopes["PROVIDED"]["plus"].add(configurations.annotationProcessor)
+        scopes["TEST"]["plus"].add(configurations.testAnnotationProcessor)
+    }
+}
+```
+
+</details>
+
+If you want to apply this configuration automatically for every project,
+you can do this with an init script similar to the following:
+
+```gradle
+import org.gradle.util.GradleVersion;
+
+// If running from IntelliJ IDEA (such as when importing the project)
+if (Boolean.getBoolean("idea.active")) {
+  def HAS_PROCESSOR_GENERATED_SOURCES_DIR = GradleVersion.current() >= GradleVersion.version("4.3")
+
+  allprojects { project ->
+    project.apply plugin: 'idea'
+
+    if (HAS_PROCESSOR_GENERATED_SOURCES_DIR) {
+      project.plugins.withType(JavaPlugin) {
+        project.afterEvaluate {
+          project.idea.module {
+            def mainGeneratedSources = project.tasks["compileJava"].options.annotationProcessorGeneratedSourcesDirectory
+            if (mainGeneratedSources) {
+              sourceDirs += mainGeneratedSources
+              generatedSourceDirs += mainGeneratedSources
+            }
+            def testGeneratedSources = project.tasks["compileTestJava"].options.annotationProcessorGeneratedSourcesDirectory
+            if (testGeneratedSources) {
+              testSourceDirs += testGeneratedSources
+              generatedSourceDirs += testGeneratedSources
+            }
+
+            // Uncomment if you want to do annotation processing in IntelliJ IDEA:
+            // def annotationProcessorConfiguration = configurations.findByName("annotationProcessor")
+            // if (annotationProcessorConfiguration) {
+            //   scopes.PROVIDED.plus += annotationProcessorConfiguration
+            // }
+            // def testAnnotationProcessorConfiguration = configurations.findByName("testAnnotationProcessor")
+            // if (testAnnotationProcessorConfiguration) {
+            //   scopes.TEST.plus += testAnnotationProcessorConfiguration
+            // }
+          }
+        }
+      }
+    } else {
+      // fallback to automatically applying net.ltgt.apt-eclipse whenever net.ltgt.apt is used
+      project.plugins.withId("net.ltgt.apt") {
+        try {
+          project.apply plugin: "net.ltgt.apt-idea"
+          // Comment if you want to do annotation processing in IntelliJ IDEA:
+          project.plugins.withType(JavaPlugin) {
+            project.afterEvaluate {
+              project.idea.module.apt.addAptDependencies = false
+            }
+          }
+        } catch (UnknownPluginException) {
+          // ignore, in case an older version of net.ltgt.apt is being used
+          // that doesn't come with net.ltgt.apt-idea.
+        }
+      }
+    }
+  }
+}
+```
+
+### Do without `net.ltgt.apt-eclipse`
+
+There's no easy workaround at this point, sorry :man_shrugging:
+
+</details>
+
 ## Using the plugin
 
 The plugin is published to the Plugin Portal; see instructions there: https://plugins.gradle.org/plugin/net.ltgt.apt
