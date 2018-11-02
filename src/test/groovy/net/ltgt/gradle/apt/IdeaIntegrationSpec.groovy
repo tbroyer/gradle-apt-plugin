@@ -328,9 +328,9 @@ class IdeaIntegrationSpec extends Specification {
     def ideaModule = connection.getModel(IdeaProject).modules[0]
 
     then:
-    ideaModule.contentRoots*.generatedSourceDirectories*.directory.flatten()
+    ideaModule.contentRoots*.sourceDirectories*.findAll { it.generated }*.directory.flatten()
         .contains(new File(testProjectDir.root, 'build/generated/source/apt/main'))
-    ideaModule.contentRoots*.generatedTestDirectories*.directory.flatten()
+    ideaModule.contentRoots*.testDirectories*.findAll { it.generated }*.directory.flatten()
         .contains(new File(testProjectDir.root, 'build/generated/source/apt/test'))
 
     def dependencies = ideaModule.dependencies.collect {
@@ -425,12 +425,10 @@ class IdeaIntegrationSpec extends Specification {
     def ideaModule = connection.getModel(IdeaProject).modules[0]
 
     then:
-    !ideaModule.contentRoots*.generatedSourceDirectories*.directory.flatten()
+    !ideaModule.contentRoots*.sourceDirectories*.directory.flatten()
         .contains(new File(testProjectDir.root, 'build/generated/source/apt/main'))
-    !ideaModule.contentRoots*.generatedTestDirectories*.directory.flatten()
+    !ideaModule.contentRoots*.testDirectories*.directory.flatten()
         .contains(new File(testProjectDir.root, 'build/generated/source/apt/test'))
-    ideaModule.contentRoots*.excludeDirectories.flatten()
-        .contains(new File(testProjectDir.root, 'build'))
 
     def dependencies = ideaModule.dependencies.collect {
       "${it.gradleModuleVersion.group}:${it.gradleModuleVersion.name}:${it.gradleModuleVersion.version}:${it.scope.scope}" as String
