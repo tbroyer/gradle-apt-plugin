@@ -332,9 +332,6 @@ class IdeaIntegrationSpec extends Specification {
         .contains(new File(testProjectDir.root, 'build/generated/source/apt/main'))
     ideaModule.contentRoots*.generatedTestDirectories*.directory.flatten()
         .contains(new File(testProjectDir.root, 'build/generated/source/apt/test'))
-    !ideaModule.contentRoots*.excludeDirectories.flatten()
-        .contains(new File(testProjectDir.root, 'build'))
-    // XXX: We can't test buildDir subdirectories unless we also build the project, should we?
 
     def dependencies = ideaModule.dependencies.collect {
       "${it.gradleModuleVersion.group}:${it.gradleModuleVersion.name}:${it.gradleModuleVersion.version}:${it.scope.scope}" as String

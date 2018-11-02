@@ -90,43 +90,6 @@ public class AptIdeaPlugin implements Plugin<Project> {
           @Override
           public void execute(Project project) {
             if (apt.isAddGeneratedSourcesDirs()) {
-              Set<File> excl = new LinkedHashSet<>();
-              for (SourceSet sourceSet : new SourceSet[] {mainSourceSet, testSourceSet}) {
-                File generatedSourcesDir =
-                    ((HasConvention) sourceSet.getOutput())
-                        .getConvention()
-                        .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
-                        .getGeneratedSourcesDir();
-                for (File f = generatedSourcesDir;
-                    f != null && !f.equals(project.getProjectDir());
-                    f = f.getParentFile()) {
-                  excl.add(f);
-                }
-              }
-              // For some reason, modifying the existing collections doesn't work.
-              // We need to copy the values and then assign it back.
-              Set<File> excludeDirs = new LinkedHashSet<>(ideaModule.getExcludeDirs());
-              if (excl.contains(project.getBuildDir())
-                  && excludeDirs.contains(project.getBuildDir())) {
-                excludeDirs.remove(project.getBuildDir());
-                // Race condition: many of these will actually be created afterwards…
-                File[] subdirs =
-                    project
-                        .getBuildDir()
-                        .listFiles(
-                            new FileFilter() {
-                              @Override
-                              public boolean accept(File pathname) {
-                                return pathname.isDirectory();
-                              }
-                            });
-                if (subdirs != null) {
-                  excludeDirs.addAll(Arrays.asList(subdirs));
-                }
-              }
-              excludeDirs.removeAll(excl);
-              ideaModule.setExcludeDirs(excludeDirs);
-
               File mainGeneratedSourcesDir =
                   ((HasConvention) mainSourceSet.getOutput())
                       .getConvention()

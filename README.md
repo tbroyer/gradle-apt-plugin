@@ -430,7 +430,7 @@ Applying the `net.ltgt.apt-idea` plugin will auto-configure the generated files 
 When using the Gradle integration in IntelliJ IDEA (rather than the `idea` task), it is recommended to delegate the IDE build actions to Gradle itself starting with IDEA 2016.3: https://www.jetbrains.com/help/idea/gradle.html#delegate_build_gradle
 Otherwise, you'll have to manually enable annotation processing: in Settings… → Build, Execution, Deployment → Compiler → Annotation Processors, check `Enable annotation processing` and `Obtain processors from project classpath` (you'll have to make sure `idea.module.apt.addAptDependencies` is enabled). To mimic the Gradle behavior and generated files behavior, you can configure the production and test sources directories to `build/generated/source/apt/main` and `build/generated/source/apt/test` respectively and choose to `Store generated sources relative to:` `Module content root`.
 
-Note that starting with IntelliJ IDEA 2016.1, and unless you delegate build actions to Gradle, you'll have to uncheck `Create separate module per source set` when importing the project.
+Note that unless you delegate build actions to Gradle, you'll have to uncheck `Create separate module per source set` when importing the project.
 
 IntelliJ IDEA annotation processing can be configured through a DSL, as an extension to the IDEA DSL (presented here with the default values):
 ```gradle
