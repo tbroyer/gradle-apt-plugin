@@ -166,7 +166,6 @@ class KotlinDslIntegrationSpec extends Specification {
           apt {
             addGeneratedSourcesDirs = true
             addAptDependencies = true
-            addCompileOnlyDependencies = false
             mainDependenciesScope = "PROVIDED"
           }
         }

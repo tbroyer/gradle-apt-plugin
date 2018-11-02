@@ -24,9 +24,6 @@ import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.HasConvention;
-import org.gradle.api.plugins.ExtensionContainer;
-import org.gradle.api.reflect.HasPublicType;
-import org.gradle.api.reflect.TypeOf;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.api.tasks.compile.CompileOptions;
@@ -54,12 +51,6 @@ class AptPlugin43to44 extends AptPlugin.Impl {
   protected <T extends Task> void configureTask(
       Project project, Class<T> taskClass, String taskName, Action<T> configure) {
     project.getTasks().withType(taskClass).getByName(taskName, configure);
-  }
-
-  @Override
-  protected <T> void addExtension(
-      ExtensionContainer extensionContainer, Class<T> publicType, String name, T extension) {
-    extensionContainer.add(publicType, name, extension);
   }
 
   @Override
@@ -132,12 +123,6 @@ class AptPlugin43to44 extends AptPlugin.Impl {
   }
 
   @Override
-  protected void ensureCompileOnlyConfiguration(
-      Project project, SourceSet sourceSet, AptPlugin.AptSourceSetConvention convention) {
-    // no-op
-  }
-
-  @Override
   protected Configuration ensureAnnotationProcessorConfiguration(
       Project project, SourceSet sourceSet, AptPlugin.AptSourceSetConvention convention) {
     Configuration annotationProcessorConfiguration =
@@ -188,11 +173,6 @@ class AptPlugin43to44 extends AptPlugin.Impl {
         .getAnnotationProcessorConfigurationName();
   }
 
-  @Override
-  String getCompileOnlyConfigurationName(SourceSet sourceSet) {
-    return sourceSet.getCompileOnlyConfigurationName();
-  }
-
   private static class AptSourceSetConvention43to44 extends AptPlugin.AptSourceSetConvention {
     @Nullable private FileCollection annotationProcessorPath;
 
@@ -209,11 +189,6 @@ class AptPlugin43to44 extends AptPlugin.Impl {
     @Override
     public void setAnnotationProcessorPath(@Nullable FileCollection annotationProcessorPath) {
       this.annotationProcessorPath = annotationProcessorPath;
-    }
-
-    @Override
-    public String getCompileOnlyConfigurationName() {
-      return sourceSet.getCompileOnlyConfigurationName();
     }
 
     @Override
@@ -260,7 +235,7 @@ class AptPlugin43to44 extends AptPlugin.Impl {
     }
   }
 
-  private static class AptOptions43to44 extends AptPlugin.AptOptions implements HasPublicType {
+  private static class AptOptions43to44 extends AptPlugin.AptOptions {
     private final Project project;
     private final AbstractCompile task;
     private final CompileOptions compileOptions;
@@ -269,11 +244,6 @@ class AptPlugin43to44 extends AptPlugin.Impl {
       this.project = project;
       this.task = task;
       this.compileOptions = compileOptions;
-    }
-
-    @Override
-    public TypeOf<?> getPublicType() {
-      return TypeOf.typeOf(AptPlugin.AptOptions.class);
     }
 
     @Nullable

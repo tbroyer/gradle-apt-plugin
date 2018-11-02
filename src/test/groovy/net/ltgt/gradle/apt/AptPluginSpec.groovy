@@ -47,8 +47,6 @@ class AptPluginSpec extends PluginProjectSpec {
     project.configurations.findByName('testAnnotationProcessor')
     project.configurations.findByName('apt')
     project.configurations.findByName('testApt')
-    project.configurations.findByName('compileOnly')
-    project.configurations.findByName('testCompileOnly')
     with(project.tasks.compileJava) { JavaCompile task ->
       task.effectiveAnnotationProcessorPath.empty
       task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/source/apt/main')
@@ -72,8 +70,6 @@ class AptPluginSpec extends PluginProjectSpec {
     project.configurations.findByName('testAnnotationProcessor')
     project.configurations.findByName('apt')
     project.configurations.findByName('testApt')
-    project.configurations.findByName('compileOnly')
-    project.configurations.findByName('testCompileOnly')
     with(project.tasks.compileJava) { JavaCompile task ->
       task.effectiveAnnotationProcessorPath.empty
       task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/source/apt/main')

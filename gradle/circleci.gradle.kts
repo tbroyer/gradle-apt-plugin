@@ -9,26 +9,7 @@ tasks.register("generateCircleciConfig", GenerateCircleciConfig::class) {
         "gradle46" to CrossVersion("4.6", 8),
         "gradle45" to CrossVersion("4.5.1", 8),
         "gradle44" to CrossVersion("4.4.1", 8),
-        "gradle43" to CrossVersion("4.3.1", 8),
-        "gradle42" to CrossVersion("4.2.1", 8),
-        "gradle41" to CrossVersion("4.1", 8),
-        "gradle40" to CrossVersion("4.0.2", 8),
-        "gradle35" to CrossVersion("3.5.1", 8),
-        "gradle34" to CrossVersion("3.4.1", 8),
-        "gradle33" to CrossVersion("3.3", 8),
-        "gradle32" to CrossVersion("3.2.1", 8),
-        "gradle31" to CrossVersion("3.1", 8),
-        "gradle30" to CrossVersion("3.0", 8),
-        "gradle214" to CrossVersion("2.14.1", 8),
-        "gradle213" to CrossVersion("2.13", 8),
-        "gradle212" to CrossVersion("2.12", 8),
-        "gradle211" to CrossVersion("2.11", 8),
-        "gradle210" to CrossVersion("2.10", 8),
-        "gradle29" to CrossVersion("2.9", 8),
-        "gradle28" to CrossVersion("2.8", 8),
-        "gradle27" to CrossVersion("2.7", 8),
-        "gradle26" to CrossVersion("2.6", 8),
-        "gradle25" to CrossVersion("2.5", 8)
+        "gradle43" to CrossVersion("4.3.1", 8)
     )
     outputFile = file(".circleci/config.yml")
 }

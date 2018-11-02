@@ -15,9 +15,6 @@
  */
 package net.ltgt.gradle.apt;
 
-import static net.ltgt.gradle.apt.CompatibilityUtils.getBeforeMerged;
-import static net.ltgt.gradle.apt.CompatibilityUtils.getWhenMerged;
-
 import java.io.File;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -35,10 +32,11 @@ public class GenerateEclipseFactorypath extends XmlGeneratorTask<Factorypath> {
     this.getXmlTransformer().setIndentation("\t");
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   protected void configure(Factorypath factorypath) {
     EclipseFactorypath factorypathModel = getFactorypath();
-    getBeforeMerged(factorypathModel.getFile()).execute(factorypath);
+    factorypathModel.getFile().getBeforeMerged().execute(factorypath);
     Set<File> entries = new LinkedHashSet<>();
     for (Configuration configuration : factorypathModel.getPlusConfigurations()) {
       entries.addAll(configuration.getFiles());
@@ -47,7 +45,7 @@ public class GenerateEclipseFactorypath extends XmlGeneratorTask<Factorypath> {
       entries.removeAll(configuration.getFiles());
     }
     factorypath.mergeEntries(entries);
-    getWhenMerged(factorypathModel.getFile()).execute(factorypath);
+    factorypathModel.getFile().getWhenMerged().execute(factorypath);
   }
 
   @Internal

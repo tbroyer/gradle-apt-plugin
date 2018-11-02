@@ -29,10 +29,11 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.HasConvention;
-import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.plugins.GroovyBasePlugin;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
+import org.gradle.api.reflect.HasPublicType;
+import org.gradle.api.reflect.TypeOf;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Optional;
@@ -170,11 +171,11 @@ public class AptPlugin implements Plugin<Project> {
             task.getConvention()
                 .getPlugins()
                 .put(PLUGIN_ID, IMPL.createAptConvention(project, task, compileOptions));
-            IMPL.addExtension(
-                task.getExtensions(),
-                AptOptions.class,
-                "aptOptions",
-                IMPL.createAptOptions(project, task, compileOptions));
+            task.getExtensions()
+                .add(
+                    AptOptions.class,
+                    "aptOptions",
+                    IMPL.createAptOptions(project, task, compileOptions));
             IMPL.configureCompileTask(project, task, compileOptions);
           }
         });
@@ -182,7 +183,6 @@ public class AptPlugin implements Plugin<Project> {
 
   private void ensureConfigurations(
       Project project, SourceSet sourceSet, AptSourceSetConvention convention) {
-    IMPL.ensureCompileOnlyConfiguration(project, sourceSet, convention);
     Configuration annotationProcessorConfiguration =
         IMPL.ensureAnnotationProcessorConfiguration(project, sourceSet, convention);
     convention.setAnnotationProcessorPath(annotationProcessorConfiguration);
@@ -254,16 +254,6 @@ public class AptPlugin implements Plugin<Project> {
         return new AptPlugin45();
       } else if (GradleVersion.current().compareTo(GradleVersion.version("4.3")) >= 0) {
         return new AptPlugin43to44();
-      } else if (GradleVersion.current().compareTo(GradleVersion.version("3.5")) >= 0) {
-        return new AptPlugin35to42();
-      } else if (GradleVersion.current().compareTo(GradleVersion.version("3.4")) >= 0) {
-        return new AptPlugin34();
-      } else if (GradleVersion.current().compareTo(GradleVersion.version("3.0")) >= 0) {
-        return new AptPlugin30to33();
-      } else if (GradleVersion.current().compareTo(GradleVersion.version("2.12")) >= 0) {
-        return new AptPlugin212to214();
-      } else if (GradleVersion.current().compareTo(GradleVersion.version("2.5")) >= 0) {
-        return new AptPlugin25to211();
       } else {
         throw new UnsupportedOperationException();
       }
@@ -278,9 +268,6 @@ public class AptPlugin implements Plugin<Project> {
     protected abstract <T extends Task> void configureTask(
         Project project, Class<T> taskClass, String taskName, Action<T> configure);
 
-    protected abstract <T> void addExtension(
-        ExtensionContainer extensionContainer, Class<T> publicType, String name, T extension);
-
     protected abstract AptConvention createAptConvention(
         Project project, AbstractCompile task, CompileOptions compileOptions);
 
@@ -293,9 +280,6 @@ public class AptPlugin implements Plugin<Project> {
     protected abstract AptSourceSetConvention createAptSourceSetConvention(
         Project project, SourceSet sourceSet);
 
-    protected abstract void ensureCompileOnlyConfiguration(
-        Project project, SourceSet sourceSet, AptSourceSetConvention convention);
-
     protected abstract Configuration ensureAnnotationProcessorConfiguration(
         Project project, SourceSet sourceSet, AptSourceSetConvention convention);
 
@@ -303,8 +287,6 @@ public class AptPlugin implements Plugin<Project> {
         Project project, SourceSet sourceSet, AbstractCompile task, CompileOptions compileOptions);
 
     abstract String getAnnotationProcessorConfigurationName(SourceSet sourceSet);
-
-    abstract String getCompileOnlyConfigurationName(SourceSet sourceSet);
   }
 
   public abstract static class AptConvention {
@@ -315,10 +297,15 @@ public class AptPlugin implements Plugin<Project> {
         @Nullable Object generatedSourcesDestinationDir);
   }
 
-  public abstract static class AptOptions {
+  public abstract static class AptOptions implements HasPublicType {
     private boolean annotationProcessing = true;
     @Nullable private List<?> processors = new ArrayList<>();
     @Nullable private Map<String, ?> processorArgs = new LinkedHashMap<>();
+
+    @Override
+    public TypeOf<?> getPublicType() {
+      return TypeOf.typeOf(AptOptions.class);
+    }
 
     @Input
     public boolean isAnnotationProcessing() {
@@ -421,8 +408,6 @@ public class AptPlugin implements Plugin<Project> {
         setAnnotationProcessorPath(project.files(processorpath));
       }
     }
-
-    public abstract String getCompileOnlyConfigurationName();
 
     @Deprecated
     public String getAptConfigurationName() {

@@ -60,12 +60,6 @@ class AptPluginIntegrationSpec extends Specification {
         targetCompatibility = org.gradle.api.JavaVersion.current()
       }
     """.stripIndent()
-    if (GradleVersion.version(TEST_GRADLE_VERSION) < GradleVersion.version("4.0")) {
-      // dependencyCacheDir is required up until Gradle 3.2, deprecated in 3.3, and removed in 4.x
-      buildFile << """\
-        javaCompilationTask.dependencyCacheDir = project.file('build/dependency-cache')
-      """.stripIndent()
-    }
 
     def f = new File(testProjectDir.newFolder('src', 'simple'), 'HelloWorld.java')
     f.createNewFile()
@@ -213,9 +207,6 @@ class AptPluginIntegrationSpec extends Specification {
           compileOnly project(':annotations')
           annotationProcessor project(':processor')
         }
-
-        // Get Gradle 4.x to behave like previous versions
-        sourceSets.main.output.classesDir = new File(buildDir, 'classes/main')
       }
     """.stripIndent()
 
@@ -316,7 +307,7 @@ class AptPluginIntegrationSpec extends Specification {
     result.task(':processor:compileJava').outcome == TaskOutcome.SUCCESS
     result.task(':core:compileJava').outcome == TaskOutcome.SUCCESS
     result.task(':core:javadoc').outcome == TaskOutcome.SUCCESS
-    new File(testProjectDir.root, 'core/build/classes/main/annotated-elements').text.trim() == "core.HelloWorld"
+    new File(testProjectDir.root, 'core/build/classes/java/main/annotated-elements').text.trim() == "core.HelloWorld"
   }
 
   def 'deprecated features'() {
@@ -556,9 +547,6 @@ class AptPluginIntegrationSpec extends Specification {
         tasks.withType(GroovyCompile) {
           groovyOptions.javaAnnotationProcessing = true
         }
-
-        // Get Gradle 4.x to behave like previous versions
-        sourceSets.main.output.classesDir = new File(buildDir, 'classes/main')
       }
     """.stripIndent()
 
@@ -655,7 +643,7 @@ class AptPluginIntegrationSpec extends Specification {
     result.task(':processor:compileGroovy').outcome == TaskOutcome.SUCCESS
     result.task(':core:compileGroovy').outcome == TaskOutcome.SUCCESS
     result.task(':core:groovydoc').outcome == TaskOutcome.SUCCESS
-    new File(testProjectDir.root, 'core/build/classes/main/annotated-elements').text.trim() == "core.HelloWorld"
+    new File(testProjectDir.root, 'core/build/classes/groovy/main/annotated-elements').text.trim() == "core.HelloWorld"
   }
 
   @Requires({ GradleVersion.version(TEST_GRADLE_VERSION) >= GradleVersion.version("3.5") })
@@ -703,11 +691,6 @@ class AptPluginIntegrationSpec extends Specification {
         compileTestGroovy {
           groovyOptions.javaAnnotationProcessing = true
         }
-
-        // Get Gradle 4.x to behave like previous versions
-        // This works here because we don't use more than one "language" per source set
-        sourceSets.main.output.classesDir = new File(buildDir, 'classes/main')
-        sourceSets.test.output.classesDir = new File(buildDir, 'classes/test')
       }
       // With JDK 11, Gradle < 4.10 will choke on class version 55
       subprojects {
@@ -850,21 +833,16 @@ class AptPluginIntegrationSpec extends Specification {
     new File(testProjectDir.root, 'core/build/generated/source/apt/main/core/HelloWorldJHelper.java').exists()
     new File(testProjectDir.root, 'core/build/generated/source/apt/test/test/HelloWorldJHelper.java').exists()
     new File(testProjectDir.root, 'core/build/generated/source/apt/test/test/HelloWorldGHelper.java').exists()
-    new File(testProjectDir.root, 'core/build/classes/main/core/HelloWorldJ.class').exists()
-    new File(testProjectDir.root, 'core/build/classes/main/core/HelloWorldJHelper.class').exists()
-    new File(testProjectDir.root, 'core/build/classes/test/test/HelloWorldJ.class').exists()
-    new File(testProjectDir.root, 'core/build/classes/test/test/HelloWorldJHelper.class').exists()
-    new File(testProjectDir.root, 'core/build/classes/test/test/HelloWorldG.class').exists()
-    new File(testProjectDir.root, 'core/build/classes/test/test/HelloWorldGHelper.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/java/main/core/HelloWorldJ.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/java/main/core/HelloWorldJHelper.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/groovy/test/test/HelloWorldJ.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/groovy/test/test/HelloWorldJHelper.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/groovy/test/test/HelloWorldG.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/groovy/test/test/HelloWorldGHelper.class').exists()
 
     when:
-    final usesClasspathNormalization = GradleVersion.version(TEST_GRADLE_VERSION) >= GradleVersion.version("4.3")
-    // Reuse JARs for GroovyCompile 'til Gradle 4.3 where options.annotationProcessorPath cannot be used,
-    // and classpath normalization cannot be declared through TaskInputs.
-    if (usesClasspathNormalization) {
-      new File(testProjectDir.root, 'annotations/build').deleteDir()
-      new File(testProjectDir.root, 'processor/build').deleteDir()
-    }
+    new File(testProjectDir.root, 'annotations/build').deleteDir()
+    new File(testProjectDir.root, 'processor/build').deleteDir()
     new File(testProjectDir.root, 'core/build').deleteDir()
     result = GradleRunner.create()
         .withGradleVersion(TEST_GRADLE_VERSION)
@@ -873,9 +851,9 @@ class AptPluginIntegrationSpec extends Specification {
         .build()
 
     then:
-    result.task(':annotations:compileJava').outcome == (usesClasspathNormalization ? TaskOutcome.FROM_CACHE : TaskOutcome.UP_TO_DATE)
+    result.task(':annotations:compileJava').outcome == TaskOutcome.FROM_CACHE
     result.task(':processor:compileJava').outcome == TaskOutcome.NO_SOURCE
-    result.task(':processor:compileGroovy').outcome == (usesClasspathNormalization ? TaskOutcome.FROM_CACHE : TaskOutcome.UP_TO_DATE)
+    result.task(':processor:compileGroovy').outcome == TaskOutcome.FROM_CACHE
     result.task(':core:compileJava').outcome == TaskOutcome.FROM_CACHE
     result.task(':core:compileGroovy').outcome == TaskOutcome.NO_SOURCE
     result.task(':core:compileTestJava').outcome == TaskOutcome.NO_SOURCE
@@ -885,11 +863,11 @@ class AptPluginIntegrationSpec extends Specification {
     new File(testProjectDir.root, 'core/build/generated/source/apt/main/core/HelloWorldJHelper.java').exists()
     new File(testProjectDir.root, 'core/build/generated/source/apt/test/test/HelloWorldJHelper.java').exists()
     new File(testProjectDir.root, 'core/build/generated/source/apt/test/test/HelloWorldGHelper.java').exists()
-    new File(testProjectDir.root, 'core/build/classes/main/core/HelloWorldJ.class').exists()
-    new File(testProjectDir.root, 'core/build/classes/main/core/HelloWorldJHelper.class').exists()
-    new File(testProjectDir.root, 'core/build/classes/test/test/HelloWorldJ.class').exists()
-    new File(testProjectDir.root, 'core/build/classes/test/test/HelloWorldJHelper.class').exists()
-    new File(testProjectDir.root, 'core/build/classes/test/test/HelloWorldG.class').exists()
-    new File(testProjectDir.root, 'core/build/classes/test/test/HelloWorldGHelper.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/java/main/core/HelloWorldJ.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/java/main/core/HelloWorldJHelper.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/groovy/test/test/HelloWorldJ.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/groovy/test/test/HelloWorldJHelper.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/groovy/test/test/HelloWorldG.class').exists()
+    new File(testProjectDir.root, 'core/build/classes/groovy/test/test/HelloWorldGHelper.class').exists()
   }
 }

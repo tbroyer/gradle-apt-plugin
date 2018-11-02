@@ -19,17 +19,14 @@ import groovy.util.Node;
 import groovy.util.NodeList;
 import java.io.File;
 import java.io.FileFilter;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import org.codehaus.groovy.runtime.MethodClosure;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -45,7 +42,6 @@ import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
 import org.gradle.plugins.ide.idea.model.IdeaModule;
 import org.gradle.plugins.ide.idea.model.IdeaProject;
-import org.gradle.util.GradleVersion;
 
 public class AptIdeaPlugin implements Plugin<Project> {
   private static final boolean isIdeaImport =
@@ -154,41 +150,26 @@ public class AptIdeaPlugin implements Plugin<Project> {
                       testGeneratedSourcesDir));
             }
 
-            if (apt.isAddCompileOnlyDependencies() || apt.isAddAptDependencies()) {
-              final List<Configuration> mainConfigurations = new ArrayList<>();
-              final List<Configuration> testConfigurations = new ArrayList<>();
-              if (apt.isAddCompileOnlyDependencies()) {
-                mainConfigurations.add(
-                    project
-                        .getConfigurations()
-                        .getByName(AptPlugin.IMPL.getCompileOnlyConfigurationName(mainSourceSet)));
-                testConfigurations.add(
-                    project
-                        .getConfigurations()
-                        .getByName(AptPlugin.IMPL.getCompileOnlyConfigurationName(testSourceSet)));
-              }
-              if (apt.isAddAptDependencies()) {
-                mainConfigurations.add(
-                    project
-                        .getConfigurations()
-                        .getByName(
-                            AptPlugin.IMPL.getAnnotationProcessorConfigurationName(mainSourceSet)));
-                testConfigurations.add(
-                    project
-                        .getConfigurations()
-                        .getByName(
-                            AptPlugin.IMPL.getAnnotationProcessorConfigurationName(testSourceSet)));
-              }
-              getScope(apt.getMainDependenciesScope(), "plus").addAll(mainConfigurations);
-              getScope("TEST", "plus").addAll(testConfigurations);
+            if (apt.isAddAptDependencies()) {
+              final Configuration annotationProcessor =
+                  project
+                      .getConfigurations()
+                      .getByName(
+                          AptPlugin.IMPL.getAnnotationProcessorConfigurationName(mainSourceSet));
+              final Configuration testAnnotationProcessor =
+                  project
+                      .getConfigurations()
+                      .getByName(
+                          AptPlugin.IMPL.getAnnotationProcessorConfigurationName(testSourceSet));
+              getScope(apt.getMainDependenciesScope(), "plus").add(annotationProcessor);
+              getScope("TEST", "plus").add(testAnnotationProcessor);
               AptPlugin.IMPL.configureTasks(
                   project,
                   GenerateIdeaModule.class,
                   new Action<GenerateIdeaModule>() {
                     @Override
                     public void execute(GenerateIdeaModule generateIdeaModule) {
-                      generateIdeaModule.dependsOn(mainConfigurations.toArray());
-                      generateIdeaModule.dependsOn(testConfigurations.toArray());
+                      generateIdeaModule.dependsOn(annotationProcessor, testAnnotationProcessor);
                     }
                   });
             }
@@ -216,77 +197,60 @@ public class AptIdeaPlugin implements Plugin<Project> {
       ideaProject
           .getIpr()
           .withXml(
-              // withXml(Action) overload was added in Gradle 2.14
-              new MethodClosure(
-                  new Action<XmlProvider>() {
-                    @Override
-                    public void execute(XmlProvider xmlProvider) {
-                      if (!apt.isConfigureAnnotationProcessing()) {
-                        return;
-                      }
+              new Action<XmlProvider>() {
+                @Override
+                public void execute(XmlProvider xmlProvider) {
+                  if (!apt.isConfigureAnnotationProcessing()) {
+                    return;
+                  }
 
-                      for (Object it : (NodeList) xmlProvider.asNode().get("component")) {
-                        Node compilerConfiguration = (Node) it;
-                        if (!Objects.equals(
-                            compilerConfiguration.attribute("name"), "CompilerConfiguration")) {
-                          continue;
-                        }
-                        for (Object n :
-                            (NodeList) compilerConfiguration.get("annotationProcessing")) {
-                          compilerConfiguration.remove((Node) n);
-                        }
-                        Node annotationProcessing =
-                            compilerConfiguration.appendNode("annotationProcessing");
-                        Map<String, Object> profileAttributes = new LinkedHashMap<>();
-                        profileAttributes.put("name", "Default");
-                        profileAttributes.put("enabled", true);
-                        profileAttributes.put("default", true);
-                        Node profile =
-                            annotationProcessing.appendNode("profile", profileAttributes);
-                        // XXX: this assumes that all subprojects use the same name for their
-                        // buildDir
-                        profile.appendNode(
-                            "sourceOutputDir",
-                            Collections.singletonMap(
-                                "name",
-                                project.relativePath(project.getBuildDir())
-                                    + "/generated/source/apt/"
-                                    + SourceSet.MAIN_SOURCE_SET_NAME));
-                        profile.appendNode(
-                            "sourceTestOutputDir",
-                            Collections.singletonMap(
-                                "name",
-                                project.relativePath(project.getBuildDir())
-                                    + "/generated/source/apt/"
-                                    + SourceSet.TEST_SOURCE_SET_NAME));
-                        profile.appendNode(
-                            "outputRelativeToContentRoot", Collections.singletonMap("value", true));
-                        profile.appendNode(
-                            "processorPath", Collections.singletonMap("useClasspath", true));
-                      }
+                  for (Object it : (NodeList) xmlProvider.asNode().get("component")) {
+                    Node compilerConfiguration = (Node) it;
+                    if (!Objects.equals(
+                        compilerConfiguration.attribute("name"), "CompilerConfiguration")) {
+                      continue;
                     }
-                  },
-                  "execute"));
+                    for (Object n : (NodeList) compilerConfiguration.get("annotationProcessing")) {
+                      compilerConfiguration.remove((Node) n);
+                    }
+                    Node annotationProcessing =
+                        compilerConfiguration.appendNode("annotationProcessing");
+                    Map<String, Object> profileAttributes = new LinkedHashMap<>();
+                    profileAttributes.put("name", "Default");
+                    profileAttributes.put("enabled", true);
+                    profileAttributes.put("default", true);
+                    Node profile = annotationProcessing.appendNode("profile", profileAttributes);
+                    // XXX: this assumes that all subprojects use the same name for their
+                    // buildDir
+                    profile.appendNode(
+                        "sourceOutputDir",
+                        Collections.singletonMap(
+                            "name",
+                            project.relativePath(project.getBuildDir())
+                                + "/generated/source/apt/"
+                                + SourceSet.MAIN_SOURCE_SET_NAME));
+                    profile.appendNode(
+                        "sourceTestOutputDir",
+                        Collections.singletonMap(
+                            "name",
+                            project.relativePath(project.getBuildDir())
+                                + "/generated/source/apt/"
+                                + SourceSet.TEST_SOURCE_SET_NAME));
+                    profile.appendNode(
+                        "outputRelativeToContentRoot", Collections.singletonMap("value", true));
+                    profile.appendNode(
+                        "processorPath", Collections.singletonMap("useClasspath", true));
+                  }
+                }
+              });
     }
   }
 
   public static class ModuleApt {
     private boolean addGeneratedSourcesDirs = true;
-    private boolean addCompileOnlyDependencies =
-        GradleVersion.current().compareTo(GradleVersion.version("2.12")) < 0;
     private boolean addAptDependencies = true;
-    private String mainDependenciesScope =
-        isIdeaImport
-            // Gradle integration in IDEA uses COMPILE scope
-            ? "COMPILE"
-            : (GradleVersion.current().compareTo(GradleVersion.version("3.4")) >= 0)
-                // Gradle 3.4 changed IDEA mappings; see
-                // https://docs.gradle.org/3.4/release-notes.html#idea-mapping-has-been-simplified
-                ? "PROVIDED"
-                // NOTE: ideally we'd use PROVIDED for both, but then every transitive dependency in
-                // compile or testCompile configurations that would also be in compileOnly and
-                // testCompileOnly would end up in PROVIDED.
-                : "COMPILE";
+    // Gradle integration in IDEA uses COMPILE scope
+    private String mainDependenciesScope = isIdeaImport ? "COMPILE" : "PROVIDED";
 
     public boolean isAddGeneratedSourcesDirs() {
       return addGeneratedSourcesDirs;
@@ -294,14 +258,6 @@ public class AptIdeaPlugin implements Plugin<Project> {
 
     public void setAddGeneratedSourcesDirs(boolean addGeneratedSourcesDirs) {
       this.addGeneratedSourcesDirs = addGeneratedSourcesDirs;
-    }
-
-    public boolean isAddCompileOnlyDependencies() {
-      return addCompileOnlyDependencies;
-    }
-
-    public void setAddCompileOnlyDependencies(boolean addCompileOnlyDependencies) {
-      this.addCompileOnlyDependencies = addCompileOnlyDependencies;
     }
 
     public boolean isAddAptDependencies() {

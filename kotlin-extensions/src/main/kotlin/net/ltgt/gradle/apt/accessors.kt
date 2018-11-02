@@ -90,12 +90,6 @@ var AptIdeaPlugin.ModuleApt.addGeneratedSourcesDirs: Boolean
         isAddGeneratedSourcesDirs = value
     }
 inline
-var AptIdeaPlugin.ModuleApt.addCompileOnlyDependencies: Boolean
-    get() = isAddCompileOnlyDependencies
-    set(value) {
-        isAddCompileOnlyDependencies = value
-    }
-inline
 var AptIdeaPlugin.ModuleApt.addAptDependencies: Boolean
     get() = isAddAptDependencies
     set(value) {

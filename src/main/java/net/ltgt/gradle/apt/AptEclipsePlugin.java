@@ -22,8 +22,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
-import javax.inject.Inject;
-import org.codehaus.groovy.runtime.MethodClosure;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -36,7 +34,6 @@ import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.Delete;
 import org.gradle.api.tasks.SourceSet;
-import org.gradle.internal.reflect.Instantiator;
 import org.gradle.internal.xml.XmlTransformer;
 import org.gradle.plugins.ide.api.PropertiesFileContentMerger;
 import org.gradle.plugins.ide.api.XmlFileContentMerger;
@@ -52,13 +49,6 @@ public class AptEclipsePlugin implements Plugin<Project> {
         task.dependsOn(taskDependency);
       }
     };
-  }
-
-  private final Instantiator instantiator;
-
-  @Inject
-  public AptEclipsePlugin(Instantiator instantiator) {
-    this.instantiator = instantiator;
   }
 
   @Override
@@ -92,27 +82,6 @@ public class AptEclipsePlugin implements Plugin<Project> {
   private void configureEclipse(
       final Project project, final SourceSet mainSourceSet, final SourceSet testSourceSet) {
     final EclipseModel eclipseModel = project.getExtensions().getByType(EclipseModel.class);
-
-    project.afterEvaluate(
-        new Action<Project>() {
-          @Override
-          public void execute(final Project project) {
-            eclipseModel
-                .getClasspath()
-                .getPlusConfigurations()
-                .addAll(
-                    Arrays.asList(
-                        project
-                            .getConfigurations()
-                            .getByName(
-                                AptPlugin.IMPL.getCompileOnlyConfigurationName(mainSourceSet)),
-                        project
-                            .getConfigurations()
-                            .getByName(
-                                AptPlugin.IMPL.getCompileOnlyConfigurationName(testSourceSet))));
-          }
-        });
-
     configureJdtApt(project, eclipseModel, mainSourceSet);
     configureFactorypath(project, eclipseModel, mainSourceSet, testSourceSet);
   }
@@ -120,11 +89,13 @@ public class AptEclipsePlugin implements Plugin<Project> {
   private void configureJdtApt(
       final Project project, EclipseModel eclipseModel, final SourceSet mainSourceSet) {
     final EclipseJdtApt jdtApt =
-        instantiator.newInstance(
-            EclipseJdtApt.class,
-            project,
-            new PropertiesFileContentMerger(new PropertiesTransformer()));
-    ((ExtensionAware) eclipseModel.getJdt()).getExtensions().add("apt", jdtApt);
+        ((ExtensionAware) eclipseModel.getJdt())
+            .getExtensions()
+            .create(
+                "apt",
+                EclipseJdtApt.class,
+                project,
+                new PropertiesFileContentMerger(new PropertiesTransformer()));
     ConventionMapping conventionMapping = ((IConventionAware) jdtApt).getConventionMapping();
     conventionMapping.map(
         "aptEnabled",
@@ -166,17 +137,14 @@ public class AptEclipsePlugin implements Plugin<Project> {
         .getJdt()
         .getFile()
         .withProperties(
-            // withProperties(Action) overload was added in Gradle 2.14
-            new MethodClosure(
-                new Action<Properties>() {
-                  @Override
-                  public void execute(Properties properties) {
-                    properties.setProperty(
-                        "org.eclipse.jdt.core.compiler.processAnnotations",
-                        jdtApt.isAptEnabled() ? "enabled" : "disabled");
-                  }
-                },
-                "execute"));
+            new Action<Properties>() {
+              @Override
+              public void execute(Properties properties) {
+                properties.setProperty(
+                    "org.eclipse.jdt.core.compiler.processAnnotations",
+                    jdtApt.isAptEnabled() ? "enabled" : "disabled");
+              }
+            });
 
     final Object task =
         AptPlugin.IMPL.createTask(
@@ -217,9 +185,12 @@ public class AptEclipsePlugin implements Plugin<Project> {
       SourceSet mainSourceSet,
       SourceSet testSourceSet) {
     final EclipseFactorypath factorypath =
-        instantiator.newInstance(
-            EclipseFactorypath.class, new XmlFileContentMerger(new XmlTransformer()));
-    ((ExtensionAware) eclipseModel).getExtensions().add("factorypath", factorypath);
+        ((ExtensionAware) eclipseModel)
+            .getExtensions()
+            .create(
+                "factorypath",
+                EclipseFactorypath.class,
+                new XmlFileContentMerger(new XmlTransformer()));
     factorypath.setPlusConfigurations(
         new ArrayList<>(
             Arrays.asList(

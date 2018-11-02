@@ -22,7 +22,7 @@ If you're interested in better IDE support, please vote for those issues to even
  * in IntelliJ IDEA: [for annotation processing in the IDE](https://youtrack.jetbrains.com/issue/IDEA-187868),
    and/or simply [`options.annotationProcessorGeneratedSourcesDirectory` (e.g. if delegating build/run actions to Gradle)](https://youtrack.jetbrains.com/issue/IDEA-182577)
 
-**Note: the documentation below only applies to version 0.19. For previous versions, please see [the previous version of this README](https://github.com/tbroyer/gradle-apt-plugin/blob/648bf2810097799796fdeb327255cdc99733aabd/README.md).**
+**Note: the documentation below only applies to version 0.20. For previous versions, please see [the previous version of this README](https://github.com/tbroyer/gradle-apt-plugin/blob/648bf2810097799796fdeb327255cdc99733aabd/README.md).**
 
 ## Do without the plugin
 
@@ -230,25 +230,18 @@ There's no easy workaround at this point, sorry :man_shrugging:
 
 The plugin is published to the Plugin Portal; see instructions there: https://plugins.gradle.org/plugin/net.ltgt.apt
 
+You will need Gradle ≥ 4.3 to use it.
+
 ## Configurations
 
-For each `SourceSet`, two configurations are available:
-
-* `<sourceSet>CompileOnly` (Gradle ≥ 2.12 already provides those configurations; note that this plugin doesn't provide a `<sourceSet>CompileClasspath` like Gradle ≥ 2.12, but instead make it directly extend `<sourceSet>Compile`)
-* `<sourceSet>AnnotationProcessor` (Gradle ≥ 4.6 already provides those configurations)
+For each `SourceSet`, a `<sourceSet>AnnotationProcessor` configuration is available (Gradle ≥ 4.6 already provides those configurations)
 
 As a result, the following configurations are available for any Java project:
 
-* `compileOnly`, extends `compile`
 * `annotationProcessor`
-* `testCompileOnly`, extends `testCompile`
 * `testAnnotationProcessor`
 
-The `*Only` configurations are used to specify compile-time only dependencies such as annotations that will be processed by annotation processors. Annotation processors themselves are to be added to the `annotationProcessor` and `testAnnotationProcessor` configurations.
-
-The `*Only` configurations are part of the `classpath` of the `JavaCompile` and `GroovyCompile` tasks, whereas the `apt` and `testApt` configurations are turned into `-processorpath` compiler arguments.
-
-Finally, note that those configurations don't extend each others: `testCompileOnly` doesn't extend `compileOnly`, and `testAnnotationProcessor` doesn't extend `annotationProcessor`; those configurations are only use for their respective `JavaCompile` and `GroovyCompile` tasks.
+Note that those configurations don't extend each others: `testAnnotationProcessor` doesn't extend `annotationProcessor`; those configurations are only use for their respective `JavaCompile` and `GroovyCompile` tasks.
 
 ### Example usage
 
@@ -297,11 +290,8 @@ tasks.named<GroovyCompile>("compileGroovy") {
 
 ## Build cache
 
-Compilation tasks are still [cacheable](https://docs.gradle.org/current/userguide/build_cache.html) with a few caveats:
- * Only one _language_ can be used per source set (i.e. either `src/main/java` or `src/main/groovy` but not both), unless Groovy joint compilation is used (putting Java files in `src/main/groovy`), or tasks are configured to use distinct generated sources destination directories.
- * Groovy compilation tasks are only fully cacheable starting with Gradle 4.3.
-   In previous versions, the tasks won't be relocatable and will only be cacheable if files in the annotation processor path do not change (e.g. when using a project dependency and that project is rebuilt, even if the classes come from the build cache).
-   This due to a bug/limitation in Gradle preventing the plugin to rely on `options.annotationProcessorPath`, and having no mean to tell Gradle to use classpath normalization; this was fixed in Gradle 4.3.
+Compilation tasks are still [cacheable](https://docs.gradle.org/current/userguide/build_cache.html)
+with the caveat that only one _language_ can be used per source set (i.e. either `src/main/java` or `src/main/groovy` but not both), unless Groovy joint compilation is used (putting Java files in `src/main/groovy`), or tasks are configured to use distinct generated sources destination directories.
 
 ## Gradle Kotlin DSL
 
@@ -456,11 +446,8 @@ idea {
       // whether the annotationProcessor/apt and testAnnotationProcessor/testApt dependencies are added as module dependencies
       addAptDependencies = true
 
-      // The following are mostly internal details; you shouldn't ever need to configure them.
-      // whether the compileOnly and testCompileOnly dependencies are added as module dependencies
-      addCompileOnlyDependencies = false // defaults to true in Gradle < 2.12
       // the dependency scope used for apt and/or compileOnly dependencies (when enabled above)
-      mainDependenciesScope = "PROVIDED" // defaults to "COMPILE" in Gradle < 3.4, or when using the Gradle integration in IntelliJ IDEA
+      mainDependenciesScope = "PROVIDED" // defaults to "COMPILE" when using the Gradle integration in IntelliJ IDEA
     }
   }
 }
@@ -505,22 +492,20 @@ allprojects { project ->
 ## Configuration
 
 The plugin makes many things configurable by enhancing source sets and tasks.
-Some of those enhancements have been added to Gradle proper, sometimes with different names. You're encouraged to use the built-in Gradle properties, and the equivalent ones added by this plugin are deprecated (and will emit deprecation messages to the console.)
 
-Each source set has a few properties:
+Each source set has a couple properties (Gradle ≥ 4.6 already provides those properties natively, this plugin contributes it for earlier Gradle versions):
 
-* `compileOnlyConfigurationName` (read-only `String`) returning the `<sourceSet>CompileOnly` configuration name (Gradle ≥ 2.12 already provides that property natively, this plugin contributes it for earlier Gradle versions)
-* `annotationProcessorConfigurationName` (read-only `String`) returning the `<sourceSet>AnnotationProcessor>` configuration name (Gradle ≥ 4.6 already provides that property natively, this plugin contributes it for earlier Gradle versions)
+* `annotationProcessorConfigurationName` (read-only `String`) returning the `<sourceSet>AnnotationProcessor>` configuration name
 * `annotationProcessorPath`, a `FileCollection` defaulting to the `<sourceSet>AnnotationProcessor` configuration
 
 Each source set `output` gains a `generatedSourcesDir` property, a `File` defaulting to `${project.buildDir}/generated/source/apt/${sourceSet.name}`.
 
 Each `JavaCompile` and `GroovyCompile` task gains a couple properties:
 
-* `generatedSourcesDestinationDir`, corresponding to the `-s` compiler argument, i.e. whether (if set) and where to write sources files generated by annotation processors. This property is deprecated when using Gradle ≥ 4.3, please use `options.annotationProcessorGeneratedSourcesDirectory` instead. There's no Kotlin extension for this property.
+* `generatedSourcesDestinationDir`, corresponding to the `-s` compiler argument, i.e. whether (if set) and where to write sources files generated by annotation processors. This property is deprecated, please use `options.annotationProcessorGeneratedSourcesDirectory` instead. There's no Kotlin extension for this property.
 * `aptOptions` (read-only), itself with 4 properties:
   * `annotationProcessing`, a `boolean` setting whether annotation processing is enabled or not; this maps to the `-proc:none` compiler argument, and defaults to `true` (meaning that argument is not passed in, and annotation processing is enabled)
-  * `processorpath`, a `FileCollection` corresponding to the `-processorpath` compiler argument; this property is deprecated when using Gradle ≥ 3.4, please use `options.annotationProcessorPath` instead
+  * `processorpath`, a `FileCollection` corresponding to the `-processorpath` compiler argument; this property is deprecated, please use `options.annotationProcessorPath` instead
   * `processors`, a list of annotation processor class names, mapping to the `-processor` compiler argument
   * `processorArgs`, a map of annotation processor options, each entry mapping to a `-Akey=value` compiler argument
 

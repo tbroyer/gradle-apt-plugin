@@ -15,9 +15,6 @@
  */
 package net.ltgt.gradle.apt;
 
-import static net.ltgt.gradle.apt.CompatibilityUtils.getBeforeMerged;
-import static net.ltgt.gradle.apt.CompatibilityUtils.getWhenMerged;
-
 import java.util.Map;
 import org.gradle.api.tasks.Internal;
 import org.gradle.plugins.ide.api.PropertiesGeneratorTask;
@@ -26,10 +23,11 @@ public class GenerateEclipseJdtApt extends PropertiesGeneratorTask<JdtApt> {
   @SuppressWarnings("NullAway.Init") // will be initialized by setJdtApt right after creation
   private EclipseJdtApt jdtApt;
 
+  @SuppressWarnings("unchecked")
   @Override
   protected void configure(JdtApt jdtApt) {
     EclipseJdtApt jdtAptModel = getJdtApt();
-    getBeforeMerged(jdtAptModel.getFile()).execute(jdtApt);
+    jdtAptModel.getFile().getBeforeMerged().execute(jdtApt);
     jdtApt.setAptEnabled(jdtAptModel.isAptEnabled());
     jdtApt.setGenSrcDir(getProject().relativePath(jdtAptModel.getGenSrcDir()));
     jdtApt.setReconcileEnabled(jdtAptModel.isReconcileEnabled());
@@ -41,7 +39,7 @@ public class GenerateEclipseJdtApt extends PropertiesGeneratorTask<JdtApt> {
             .put(entry.getKey(), entry.getValue() == null ? null : entry.getValue().toString());
       }
     }
-    getWhenMerged(jdtAptModel.getFile()).execute(jdtApt);
+    jdtAptModel.getFile().getWhenMerged().execute(jdtApt);
   }
 
   @Override

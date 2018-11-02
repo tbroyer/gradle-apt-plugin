@@ -25,7 +25,6 @@ import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.HasConvention;
-import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
@@ -57,12 +56,6 @@ class AptPlugin45 extends AptPlugin.Impl {
   }
 
   @Override
-  protected <T> void addExtension(
-      ExtensionContainer extensionContainer, Class<T> publicType, String name, T extension) {
-    extensionContainer.add(publicType, name, extension);
-  }
-
-  @Override
   protected AptPlugin.AptConvention createAptConvention(
       Project project, AbstractCompile task, CompileOptions compileOptions) {
     return new AptConvention45(project, task, compileOptions);
@@ -89,12 +82,6 @@ class AptPlugin45 extends AptPlugin.Impl {
   protected AptPlugin.AptSourceSetConvention createAptSourceSetConvention(
       Project project, SourceSet sourceSet) {
     return new AptSourceSetConvention45(project, sourceSet);
-  }
-
-  @Override
-  protected void ensureCompileOnlyConfiguration(
-      Project project, SourceSet sourceSet, AptPlugin.AptSourceSetConvention convention) {
-    // no-op
   }
 
   @Override
@@ -150,11 +137,6 @@ class AptPlugin45 extends AptPlugin.Impl {
         .getAnnotationProcessorConfigurationName();
   }
 
-  @Override
-  String getCompileOnlyConfigurationName(SourceSet sourceSet) {
-    return sourceSet.getCompileOnlyConfigurationName();
-  }
-
   private static class AptSourceSetConvention45 extends AptPlugin.AptSourceSetConvention {
     @Nullable private FileCollection annotationProcessorPath;
 
@@ -171,11 +153,6 @@ class AptPlugin45 extends AptPlugin.Impl {
     @Override
     public void setAnnotationProcessorPath(@Nullable FileCollection annotationProcessorPath) {
       this.annotationProcessorPath = annotationProcessorPath;
-    }
-
-    @Override
-    public String getCompileOnlyConfigurationName() {
-      return sourceSet.getCompileOnlyConfigurationName();
     }
 
     @Override
