@@ -15,7 +15,6 @@
  */
 package net.ltgt.gradle.apt;
 
-import java.io.File;
 import java.util.List;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
@@ -91,29 +90,20 @@ class AptPlugin45 extends AptPlugin.Impl {
     if (compileOptions.getAnnotationProcessorPath() == null) {
       compileOptions.setAnnotationProcessorPath(
           project.files(
-              new Callable<FileCollection>() {
-                @Nullable
-                @Override
-                public FileCollection call() {
-                  return ((HasConvention) sourceSet)
-                      .getConvention()
-                      .getPlugin(AptPlugin.AptSourceSetConvention.class)
-                      .getAnnotationProcessorPath();
-                }
-              }));
+              (Callable<FileCollection>)
+                  () ->
+                      ((HasConvention) sourceSet)
+                          .getConvention()
+                          .getPlugin(AptPlugin.AptSourceSetConvention.class)
+                          .getAnnotationProcessorPath()));
     }
     compileOptions.setAnnotationProcessorGeneratedSourcesDirectory(
         project.provider(
-            new Callable<File>() {
-              @Nullable
-              @Override
-              public File call() {
-                return ((HasConvention) sourceSet.getOutput())
+            () ->
+                ((HasConvention) sourceSet.getOutput())
                     .getConvention()
                     .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
-                    .getGeneratedSourcesDir();
-              }
-            }));
+                    .getGeneratedSourcesDir()));
   }
 
   @Override

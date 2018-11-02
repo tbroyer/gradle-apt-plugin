@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
@@ -50,125 +51,79 @@ public class AptPlugin implements Plugin<Project> {
 
   @Override
   public void apply(final Project project) {
-    configureCompileTasks(
-        project,
-        JavaCompile.class,
-        new GetCompileOptions<JavaCompile>() {
-          @Override
-          public CompileOptions getCompileOptions(JavaCompile task) {
-            return task.getOptions();
-          }
-        });
-    configureCompileTasks(
-        project,
-        GroovyCompile.class,
-        new GetCompileOptions<GroovyCompile>() {
-          @Override
-          public CompileOptions getCompileOptions(GroovyCompile task) {
-            return task.getOptions();
-          }
-        });
+    configureCompileTasks(project, JavaCompile.class, JavaCompile::getOptions);
+    configureCompileTasks(project, GroovyCompile.class, GroovyCompile::getOptions);
 
     project
         .getPlugins()
         .withType(
             JavaBasePlugin.class,
-            new Action<JavaBasePlugin>() {
-              @Override
-              public void execute(JavaBasePlugin javaBasePlugin) {
-                final JavaPluginConvention javaConvention =
-                    project.getConvention().getPlugin(JavaPluginConvention.class);
-                javaConvention
-                    .getSourceSets()
-                    .all(
-                        new Action<SourceSet>() {
-                          @Override
-                          public void execute(final SourceSet sourceSet) {
-                            AptSourceSetConvention convention =
-                                IMPL.createAptSourceSetConvention(project, sourceSet);
-                            ((HasConvention) sourceSet)
-                                .getConvention()
-                                .getPlugins()
-                                .put(PLUGIN_ID, convention);
+            javaBasePlugin -> {
+              final JavaPluginConvention javaConvention =
+                  project.getConvention().getPlugin(JavaPluginConvention.class);
+              javaConvention
+                  .getSourceSets()
+                  .all(
+                      sourceSet -> {
+                        AptSourceSetConvention convention =
+                            IMPL.createAptSourceSetConvention(project, sourceSet);
+                        ((HasConvention) sourceSet)
+                            .getConvention()
+                            .getPlugins()
+                            .put(PLUGIN_ID, convention);
 
-                            AptSourceSetOutputConvention outputConvention =
-                                new AptSourceSetOutputConvention(project);
-                            outputConvention.setGeneratedSourcesDir(
-                                new File(
-                                    project.getBuildDir(),
-                                    "generated/source/apt/" + sourceSet.getName()));
-                            ((HasConvention) sourceSet.getOutput())
-                                .getConvention()
-                                .getPlugins()
-                                .put(PLUGIN_ID, outputConvention);
+                        AptSourceSetOutputConvention outputConvention =
+                            new AptSourceSetOutputConvention(project);
+                        outputConvention.setGeneratedSourcesDir(
+                            new File(
+                                project.getBuildDir(),
+                                "generated/source/apt/" + sourceSet.getName()));
+                        ((HasConvention) sourceSet.getOutput())
+                            .getConvention()
+                            .getPlugins()
+                            .put(PLUGIN_ID, outputConvention);
 
-                            ensureConfigurations(project, sourceSet, convention);
+                        ensureConfigurations(project, sourceSet, convention);
 
-                            configureCompileTaskForSourceSet(
-                                project,
-                                sourceSet,
-                                sourceSet.getCompileJavaTaskName(),
-                                JavaCompile.class,
-                                new GetCompileOptions<JavaCompile>() {
-                                  @Override
-                                  public CompileOptions getCompileOptions(JavaCompile task) {
-                                    return task.getOptions();
-                                  }
-                                });
-                          }
-                        });
-              }
+                        configureCompileTaskForSourceSet(
+                            project,
+                            sourceSet,
+                            sourceSet.getCompileJavaTaskName(),
+                            JavaCompile.class,
+                            JavaCompile::getOptions);
+                      });
             });
     project
         .getPlugins()
         .withType(
             GroovyBasePlugin.class,
-            new Action<GroovyBasePlugin>() {
-              @Override
-              public void execute(GroovyBasePlugin groovyBasePlugin) {
-                JavaPluginConvention javaConvention =
-                    project.getConvention().getPlugin(JavaPluginConvention.class);
-                javaConvention
-                    .getSourceSets()
-                    .all(
-                        new Action<SourceSet>() {
-                          @Override
-                          public void execute(SourceSet sourceSet) {
-                            AptSourceSetConvention convention =
-                                ((HasConvention) sourceSet)
-                                    .getConvention()
-                                    .getPlugin(AptSourceSetConvention.class);
-                            configureCompileTaskForSourceSet(
-                                project,
-                                sourceSet,
-                                sourceSet.getCompileTaskName("groovy"),
-                                GroovyCompile.class,
-                                new GetCompileOptions<GroovyCompile>() {
-                                  @Override
-                                  public CompileOptions getCompileOptions(GroovyCompile task) {
-                                    return task.getOptions();
-                                  }
-                                });
-                          }
-                        });
-              }
+            groovyBasePlugin -> {
+              JavaPluginConvention javaConvention =
+                  project.getConvention().getPlugin(JavaPluginConvention.class);
+              javaConvention
+                  .getSourceSets()
+                  .all(
+                      sourceSet ->
+                          configureCompileTaskForSourceSet(
+                              project,
+                              sourceSet,
+                              sourceSet.getCompileTaskName("groovy"),
+                              GroovyCompile.class,
+                              GroovyCompile::getOptions));
             });
   }
 
   private <T extends AbstractCompile> void configureCompileTasks(
       final Project project,
       Class<T> compileTaskClass,
-      final GetCompileOptions<T> getCompileOptions) {
+      final Function<T, CompileOptions> getCompileOptions) {
     IMPL.configureTasks(
         project,
         compileTaskClass,
-        new Action<T>() {
-          @Override
-          public void execute(T task) {
-            CompileOptions compileOptions = getCompileOptions.getCompileOptions(task);
-            task.getExtensions().add(AptOptions.class, "aptOptions", IMPL.createAptOptions());
-            IMPL.configureCompileTask(project, task, compileOptions);
-          }
+        task -> {
+          CompileOptions compileOptions = getCompileOptions.apply(task);
+          task.getExtensions().add(AptOptions.class, "aptOptions", IMPL.createAptOptions());
+          IMPL.configureCompileTask(project, task, compileOptions);
         });
   }
 
@@ -184,22 +139,14 @@ public class AptPlugin implements Plugin<Project> {
       final SourceSet sourceSet,
       String compileTaskName,
       Class<T> compileTaskClass,
-      final GetCompileOptions<T> getCompileOptions) {
+      final Function<T, CompileOptions> getCompileOptions) {
     IMPL.configureTask(
         project,
         compileTaskClass,
         compileTaskName,
-        new Action<T>() {
-          @Override
-          public void execute(T task) {
+        task ->
             IMPL.configureCompileTaskForSourceSet(
-                project, sourceSet, task, getCompileOptions.getCompileOptions(task));
-          }
-        });
-  }
-
-  private interface GetCompileOptions<T extends AbstractCompile> {
-    CompileOptions getCompileOptions(T task);
+                project, sourceSet, task, getCompileOptions.apply(task)));
   }
 
   abstract static class Impl {

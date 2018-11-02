@@ -20,14 +20,12 @@ googleJavaFormat {
 group = "net.ltgt.gradle"
 
 if (JavaVersion.current().isJava9Compatible) {
-    tasks.withType<JavaCompile>().configureEach { options.compilerArgs.addAll(arrayOf("--release", "7")) }
-    tasks.withType<GroovyCompile>().configureEach { options.compilerArgs.addAll(arrayOf("--release", "7")) }
+    tasks.withType<JavaCompile>().configureEach { options.compilerArgs.addAll(arrayOf("--release", "8")) }
+    tasks.withType<GroovyCompile>().configureEach { options.compilerArgs.addAll(arrayOf("--release", "8")) }
 }
 
 gradle.taskGraph.whenReady {
     if (hasTask(":publishPlugins")) {
-        check(JavaVersion.current().isJava9Compatible) { "Releases must be built with JDK 9" }
-
         check("git diff --quiet --exit-code".execute(null, rootDir).waitFor() == 0) { "Working tree is dirty" }
         val process = "git describe --exact-match".execute(null, rootDir)
         check(process.waitFor() == 0) { "Version is not tagged" }

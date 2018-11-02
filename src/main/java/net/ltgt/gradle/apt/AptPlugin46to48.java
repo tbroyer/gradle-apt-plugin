@@ -15,9 +15,7 @@
  */
 package net.ltgt.gradle.apt;
 
-import java.io.File;
 import java.util.List;
-import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 import org.gradle.api.Action;
 import org.gradle.api.Named;
@@ -88,16 +86,11 @@ class AptPlugin46to48 extends AptPlugin.Impl {
       CompileOptions compileOptions) {
     compileOptions.setAnnotationProcessorGeneratedSourcesDirectory(
         project.provider(
-            new Callable<File>() {
-              @Nullable
-              @Override
-              public File call() {
-                return ((HasConvention) sourceSet.getOutput())
+            () ->
+                ((HasConvention) sourceSet.getOutput())
                     .getConvention()
                     .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
-                    .getGeneratedSourcesDir();
-              }
-            }));
+                    .getGeneratedSourcesDir()));
   }
 
   @Override

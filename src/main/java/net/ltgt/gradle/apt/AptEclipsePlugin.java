@@ -15,13 +15,8 @@
  */
 package net.ltgt.gradle.apt;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.Callable;
-import javax.annotation.Nullable;
 import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -43,12 +38,7 @@ import org.gradle.plugins.ide.eclipse.model.EclipseModel;
 public class AptEclipsePlugin implements Plugin<Project> {
 
   private static Action<Task> dependsOn(final Object taskDependency) {
-    return new Action<Task>() {
-      @Override
-      public void execute(Task task) {
-        task.dependsOn(taskDependency);
-      }
-    };
+    return task -> task.dependsOn(taskDependency);
   }
 
   @Override
@@ -60,18 +50,15 @@ public class AptEclipsePlugin implements Plugin<Project> {
         .getPlugins()
         .withType(
             JavaPlugin.class,
-            new Action<JavaPlugin>() {
-              @Override
-              public void execute(JavaPlugin javaPlugin) {
-                JavaPluginConvention javaConvention =
-                    project.getConvention().getPlugin(JavaPluginConvention.class);
-                SourceSet mainSourceSet =
-                    javaConvention.getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME);
-                SourceSet testSourceSet =
-                    javaConvention.getSourceSets().getByName(SourceSet.TEST_SOURCE_SET_NAME);
+            javaPlugin -> {
+              JavaPluginConvention javaConvention =
+                  project.getConvention().getPlugin(JavaPluginConvention.class);
+              SourceSet mainSourceSet =
+                  javaConvention.getSourceSets().getByName(SourceSet.MAIN_SOURCE_SET_NAME);
+              SourceSet testSourceSet =
+                  javaConvention.getSourceSets().getByName(SourceSet.TEST_SOURCE_SET_NAME);
 
-                configureEclipse(project, mainSourceSet, testSourceSet);
-              }
+              configureEclipse(project, mainSourceSet, testSourceSet);
             });
   }
 
@@ -99,70 +86,46 @@ public class AptEclipsePlugin implements Plugin<Project> {
     ConventionMapping conventionMapping = ((IConventionAware) jdtApt).getConventionMapping();
     conventionMapping.map(
         "aptEnabled",
-        new Callable<Boolean>() {
-          @Override
-          public Boolean call() throws Exception {
-            return project
+        () ->
+            project
                 .getTasks()
                 .getByName(mainSourceSet.getCompileJavaTaskName())
                 .getExtensions()
                 .getByType(AptPlugin.AptOptions.class)
-                .isAnnotationProcessing();
-          }
-        });
-    conventionMapping.map(
-        "genSrcDir",
-        new Callable<File>() {
-          @Override
-          public File call() throws Exception {
-            return project.file(".apt_generated");
-          }
-        });
+                .isAnnotationProcessing());
+    conventionMapping.map("genSrcDir", () -> project.file(".apt_generated"));
     conventionMapping.map(
         "processorOptions",
-        new Callable<Map<String, ?>>() {
-          @Nullable
-          @Override
-          public Map<String, ?> call() throws Exception {
-            return project
+        () ->
+            project
                 .getTasks()
                 .getByName(mainSourceSet.getCompileJavaTaskName())
                 .getExtensions()
                 .getByType(AptPlugin.AptOptions.class)
-                .getProcessorArgs();
-          }
-        });
+                .getProcessorArgs());
 
     eclipseModel
         .getJdt()
         .getFile()
         .withProperties(
-            new Action<Properties>() {
-              @Override
-              public void execute(Properties properties) {
+            properties ->
                 properties.setProperty(
                     "org.eclipse.jdt.core.compiler.processAnnotations",
-                    jdtApt.isAptEnabled() ? "enabled" : "disabled");
-              }
-            });
+                    jdtApt.isAptEnabled() ? "enabled" : "disabled"));
 
     final Object task =
         AptPlugin.IMPL.createTask(
             project,
             "eclipseJdtApt",
             GenerateEclipseJdtApt.class,
-            new Action<GenerateEclipseJdtApt>() {
-              @Override
-              public void execute(GenerateEclipseJdtApt generateEclipseJdtApt) {
-                generateEclipseJdtApt.setDescription(
-                    "Generates the Eclipse JDT APT settings file.");
-                generateEclipseJdtApt.setInputFile(
-                    project.file(".settings/org.eclipse.jdt.apt.core.prefs"));
-                generateEclipseJdtApt.setOutputFile(
-                    project.file(".settings/org.eclipse.jdt.apt.core.prefs"));
+            generateEclipseJdtApt -> {
+              generateEclipseJdtApt.setDescription("Generates the Eclipse JDT APT settings file.");
+              generateEclipseJdtApt.setInputFile(
+                  project.file(".settings/org.eclipse.jdt.apt.core.prefs"));
+              generateEclipseJdtApt.setOutputFile(
+                  project.file(".settings/org.eclipse.jdt.apt.core.prefs"));
 
-                generateEclipseJdtApt.setJdtApt(jdtApt);
-              }
+              generateEclipseJdtApt.setJdtApt(jdtApt);
             });
     AptPlugin.IMPL.configureTask(project, Task.class, "eclipse", dependsOn(task));
     final Object cleanTask =
@@ -170,12 +133,7 @@ public class AptEclipsePlugin implements Plugin<Project> {
             project,
             "cleanEclipseJdtApt",
             Delete.class,
-            new Action<Delete>() {
-              @Override
-              public void execute(Delete cleanEclipseJdtApt) {
-                cleanEclipseJdtApt.delete(task);
-              }
-            });
+            cleanEclipseJdtApt -> cleanEclipseJdtApt.delete(task));
     AptPlugin.IMPL.configureTask(project, Task.class, "cleanEclipse", dependsOn(cleanTask));
   }
 
@@ -207,17 +165,13 @@ public class AptEclipsePlugin implements Plugin<Project> {
             project,
             "eclipseFactorypath",
             GenerateEclipseFactorypath.class,
-            new Action<GenerateEclipseFactorypath>() {
-              @Override
-              public void execute(GenerateEclipseFactorypath generateEclipseFactorypath) {
-                generateEclipseFactorypath.setDescription(
-                    "Generates the Eclipse factorypath file.");
-                generateEclipseFactorypath.setInputFile(project.file(".factorypath"));
-                generateEclipseFactorypath.setOutputFile(project.file(".factorypath"));
+            generateEclipseFactorypath -> {
+              generateEclipseFactorypath.setDescription("Generates the Eclipse factorypath file.");
+              generateEclipseFactorypath.setInputFile(project.file(".factorypath"));
+              generateEclipseFactorypath.setOutputFile(project.file(".factorypath"));
 
-                generateEclipseFactorypath.setFactorypath(factorypath);
-                generateEclipseFactorypath.dependsOn(factorypath.getPlusConfigurations().toArray());
-              }
+              generateEclipseFactorypath.setFactorypath(factorypath);
+              generateEclipseFactorypath.dependsOn(factorypath.getPlusConfigurations().toArray());
             });
     AptPlugin.IMPL.configureTask(project, Task.class, "eclipse", dependsOn(task));
     final Object cleanTask =
@@ -225,12 +179,7 @@ public class AptEclipsePlugin implements Plugin<Project> {
             project,
             "cleanEclipseFactorypath",
             Delete.class,
-            new Action<Delete>() {
-              @Override
-              public void execute(Delete cleanEclipseFactorypath) {
-                cleanEclipseFactorypath.delete(task);
-              }
-            });
+            cleanEclipseFactorypath -> cleanEclipseFactorypath.delete(task));
     AptPlugin.IMPL.configureTask(project, Task.class, "cleanEclipse", dependsOn(cleanTask));
   }
 }

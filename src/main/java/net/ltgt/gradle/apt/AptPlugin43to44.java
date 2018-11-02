@@ -15,7 +15,6 @@
  */
 package net.ltgt.gradle.apt;
 
-import java.io.File;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
 import org.gradle.api.Action;
@@ -59,49 +58,30 @@ class AptPlugin43to44 extends AptPlugin.Impl {
     task.getInputs()
         .property(
             "aptOptions.annotationProcessing",
-            new Callable<Object>() {
-              @Override
-              public Object call() {
-                return task.getExtensions()
-                    .getByType(AptPlugin.AptOptions.class)
-                    .isAnnotationProcessing();
-              }
-            });
+            (Callable<Object>)
+                () ->
+                    task.getExtensions()
+                        .getByType(AptPlugin.AptOptions.class)
+                        .isAnnotationProcessing());
     task.getInputs()
         .property(
             "aptOptions.processors",
-            new Callable<Object>() {
-              @Nullable
-              @Override
-              public Object call() {
-                return task.getExtensions().getByType(AptPlugin.AptOptions.class).getProcessors();
-              }
-            })
+            (Callable<Object>)
+                () -> task.getExtensions().getByType(AptPlugin.AptOptions.class).getProcessors())
         .optional(true);
     task.getInputs()
         .property(
             "aptOptions.processorArgs",
-            new Callable<Object>() {
-              @Nullable
-              @Override
-              public Object call() {
-                return task.getExtensions()
-                    .getByType(AptPlugin.AptOptions.class)
-                    .getProcessorArgs();
-              }
-            })
+            (Callable<Object>)
+                () -> task.getExtensions().getByType(AptPlugin.AptOptions.class).getProcessorArgs())
         .optional(true);
 
     task.doFirst(
         "configure options.compilerArgs from aptOptions",
-        new Action<Task>() {
-          @Override
-          public void execute(Task task) {
+        task1 ->
             compileOptions
                 .getCompilerArgs()
-                .addAll(task.getExtensions().getByType(AptPlugin.AptOptions.class).asArguments());
-          }
-        });
+                .addAll(task1.getExtensions().getByType(AptPlugin.AptOptions.class).asArguments()));
   }
 
   @Override
@@ -129,28 +109,19 @@ class AptPlugin43to44 extends AptPlugin.Impl {
       CompileOptions compileOptions) {
     compileOptions.setAnnotationProcessorPath(
         project.files(
-            new Callable<FileCollection>() {
-              @Nullable
-              @Override
-              public FileCollection call() {
-                return ((HasConvention) sourceSet)
-                    .getConvention()
-                    .getPlugin(AptPlugin.AptSourceSetConvention.class)
-                    .getAnnotationProcessorPath();
-              }
-            }));
+            (Callable<FileCollection>)
+                () ->
+                    ((HasConvention) sourceSet)
+                        .getConvention()
+                        .getPlugin(AptPlugin.AptSourceSetConvention.class)
+                        .getAnnotationProcessorPath()));
     compileOptions.setAnnotationProcessorGeneratedSourcesDirectory(
         project.provider(
-            new Callable<File>() {
-              @Nullable
-              @Override
-              public File call() {
-                return ((HasConvention) sourceSet.getOutput())
+            () ->
+                ((HasConvention) sourceSet.getOutput())
                     .getConvention()
                     .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
-                    .getGeneratedSourcesDir();
-              }
-            }));
+                    .getGeneratedSourcesDir()));
   }
 
   @Override
