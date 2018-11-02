@@ -310,55 +310,6 @@ class AptPluginIntegrationSpec extends Specification {
     new File(testProjectDir.root, 'core/build/classes/java/main/annotated-elements').text.trim() == "core.HelloWorld"
   }
 
-  def 'deprecated features'() {
-    given:
-    settingsFile << """\
-      include 'processor'
-    """.stripIndent()
-    buildFile << """\
-      allprojects {
-        apply plugin: 'java'
-      }
-
-      apply plugin: 'net.ltgt.apt'
-
-      sourceSets {
-        integTest {
-          processorpath = null
-        }
-      }
-      dependencies {
-        apt project(':processor')
-        testApt project(':processor')
-        integTestApt project(':processor')
-      }
-
-      compileIntegTestJava {
-        generatedSourcesDestinationDir = file("\$buildDir/foo")
-        aptOptions.processorpath = []
-      }
-    """
-
-    when:
-    def result = GradleRunner.create()
-        .withGradleVersion(TEST_GRADLE_VERSION)
-        .withProjectDir(testProjectDir.root)
-        .withArguments(':classes')
-        .build()
-
-    then:
-    result.output.contains("sourceSets.integTest: " + AptPlugin.AptSourceSetConvention.PROCESSORPATH_DEPRECATION_MESSAGE)
-    result.output.contains("The apt configuration has been deprecated. Please use the annotationProcessor configuration instead.")
-    result.output.contains("The testApt configuration has been deprecated. Please use the testAnnotationProcessor configuration instead.")
-    result.output.contains("The integTestApt configuration has been deprecated. Please use the integTestAnnotationProcessor configuration instead.")
-    GradleVersion.version(TEST_GRADLE_VERSION) < GradleVersion.version("3.4") || (
-        result.output.contains(":compileIntegTestJava: The aptOptions.processorpath property has been deprecated") &&
-        result.output.contains("Please use the options.annotationProcessorPath property instead.")
-    )
-    GradleVersion.version(TEST_GRADLE_VERSION) < GradleVersion.version("4.3") ||
-        result.output.contains(":compileIntegTestJava: The generatedSourcesDestinationDir property has been deprecated. Please use the options.annotationProcessorGeneratedSourcesDirectory property instead.")
-  }
-
   def "simple non-groovy project"() {
     given:
     buildFile << """\

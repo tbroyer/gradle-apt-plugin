@@ -123,7 +123,7 @@ class KotlinDslIntegrationSpec extends Specification {
 
       eclipse {
         factorypath {
-          minusConfigurations.add(configurations.apt)
+          minusConfigurations.add(configurations.annotationProcessor)
         }
         jdt {
           apt {

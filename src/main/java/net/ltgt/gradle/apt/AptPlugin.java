@@ -26,7 +26,6 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.HasConvention;
 import org.gradle.api.plugins.GroovyBasePlugin;
@@ -35,7 +34,6 @@ import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.reflect.HasPublicType;
 import org.gradle.api.reflect.TypeOf;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
@@ -168,14 +166,7 @@ public class AptPlugin implements Plugin<Project> {
           @Override
           public void execute(T task) {
             CompileOptions compileOptions = getCompileOptions.getCompileOptions(task);
-            task.getConvention()
-                .getPlugins()
-                .put(PLUGIN_ID, IMPL.createAptConvention(project, task, compileOptions));
-            task.getExtensions()
-                .add(
-                    AptOptions.class,
-                    "aptOptions",
-                    IMPL.createAptOptions(project, task, compileOptions));
+            task.getExtensions().add(AptOptions.class, "aptOptions", IMPL.createAptOptions());
             IMPL.configureCompileTask(project, task, compileOptions);
           }
         });
@@ -186,39 +177,6 @@ public class AptPlugin implements Plugin<Project> {
     Configuration annotationProcessorConfiguration =
         IMPL.ensureAnnotationProcessorConfiguration(project, sourceSet, convention);
     convention.setAnnotationProcessorPath(annotationProcessorConfiguration);
-    createAptConfiguration(project, sourceSet, convention, annotationProcessorConfiguration);
-  }
-
-  private void createAptConfiguration(
-      final Project project,
-      SourceSet sourceSet,
-      AptSourceSetConvention convention,
-      final Configuration annotationProcessorConfiguration) {
-    final Configuration aptConfiguration =
-        project.getConfigurations().create(convention.getAptConfigurationName());
-    aptConfiguration.setVisible(false);
-    aptConfiguration.setDescription(
-        "Processor path for "
-            + sourceSet.getName()
-            + ". Deprecated, please use the "
-            + annotationProcessorConfiguration.getName()
-            + " configuration instead.");
-    aptConfiguration
-        .getDependencies()
-        .whenObjectAdded(
-            new Action<Dependency>() {
-              @Override
-              public void execute(Dependency dependency) {
-                DeprecationLogger.nagUserWith(
-                    project,
-                    "The "
-                        + aptConfiguration.getName()
-                        + " configuration has been deprecated. Please use the "
-                        + annotationProcessorConfiguration.getName()
-                        + " configuration instead.");
-              }
-            });
-    annotationProcessorConfiguration.extendsFrom(aptConfiguration);
   }
 
   private <T extends AbstractCompile> void configureCompileTaskForSourceSet(
@@ -268,11 +226,7 @@ public class AptPlugin implements Plugin<Project> {
     protected abstract <T extends Task> void configureTask(
         Project project, Class<T> taskClass, String taskName, Action<T> configure);
 
-    protected abstract AptConvention createAptConvention(
-        Project project, AbstractCompile task, CompileOptions compileOptions);
-
-    protected abstract AptOptions createAptOptions(
-        Project project, AbstractCompile task, CompileOptions compileOptions);
+    protected abstract AptOptions createAptOptions();
 
     protected abstract void configureCompileTask(
         Project project, AbstractCompile task, CompileOptions compileOptions);
@@ -289,15 +243,7 @@ public class AptPlugin implements Plugin<Project> {
     abstract String getAnnotationProcessorConfigurationName(SourceSet sourceSet);
   }
 
-  public abstract static class AptConvention {
-    @Nullable
-    public abstract File getGeneratedSourcesDestinationDir();
-
-    public abstract void setGeneratedSourcesDestinationDir(
-        @Nullable Object generatedSourcesDestinationDir);
-  }
-
-  public abstract static class AptOptions implements HasPublicType {
+  public static class AptOptions implements HasPublicType {
     private boolean annotationProcessing = true;
     @Nullable private List<?> processors = new ArrayList<>();
     @Nullable private Map<String, ?> processorArgs = new LinkedHashMap<>();
@@ -315,12 +261,6 @@ public class AptPlugin implements Plugin<Project> {
     public void setAnnotationProcessing(boolean annotationProcessing) {
       this.annotationProcessing = annotationProcessing;
     }
-
-    @Internal
-    @Nullable
-    public abstract FileCollection getProcessorpath();
-
-    public abstract void setProcessorpath(@Nullable Object processorpath);
 
     @Input
     @Optional
@@ -373,9 +313,6 @@ public class AptPlugin implements Plugin<Project> {
   }
 
   public abstract static class AptSourceSetConvention {
-    static final String PROCESSORPATH_DEPRECATION_MESSAGE =
-        "The processorpath property has been deprecated. Please use the annotationProcessorPath property instead.";
-
     protected final Project project;
     protected final SourceSet sourceSet;
 
@@ -389,31 +326,6 @@ public class AptPlugin implements Plugin<Project> {
 
     public abstract void setAnnotationProcessorPath(
         @Nullable FileCollection annotationProcessorPath);
-
-    @Nullable
-    @Deprecated
-    public FileCollection getProcessorpath() {
-      DeprecationLogger.nagUserWith(
-          project, "sourceSets." + sourceSet.getName() + ": " + PROCESSORPATH_DEPRECATION_MESSAGE);
-      return getAnnotationProcessorPath();
-    }
-
-    @Deprecated
-    public void setProcessorpath(@Nullable Object processorpath) {
-      DeprecationLogger.nagUserWith(
-          project, "sourceSets." + sourceSet.getName() + ": " + PROCESSORPATH_DEPRECATION_MESSAGE);
-      if (processorpath == null || processorpath instanceof FileCollection) {
-        setAnnotationProcessorPath((FileCollection) processorpath);
-      } else {
-        setAnnotationProcessorPath(project.files(processorpath));
-      }
-    }
-
-    @Deprecated
-    public String getAptConfigurationName() {
-      // HACK: we use the same naming logic/scheme as for tasks, so just use SourceSet#getTaskName
-      return sourceSet.getTaskName("", "apt");
-    }
 
     public abstract String getAnnotationProcessorConfigurationName();
   }

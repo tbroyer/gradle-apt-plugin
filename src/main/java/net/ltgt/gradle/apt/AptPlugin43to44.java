@@ -30,11 +30,6 @@ import org.gradle.api.tasks.compile.CompileOptions;
 
 class AptPlugin43to44 extends AptPlugin.Impl {
 
-  static final String GENERATED_SOURCES_DESTINATION_DIR_DEPRECATION_MESSAGE =
-      "The generatedSourcesDestinationDir property has been deprecated. Please use the options.annotationProcessorGeneratedSourcesDirectory property instead.";
-  static final String APT_OPTIONS_PROCESSORPATH_DEPRECATION_MESSAGE =
-      "The aptOptions.processorpath property has been deprecated. Please use the options.annotationProcessorPath property instead.";
-
   @Override
   protected <T extends Task> Object createTask(
       Project project, String taskName, Class<T> taskClass, Action<T> configure) {
@@ -54,15 +49,8 @@ class AptPlugin43to44 extends AptPlugin.Impl {
   }
 
   @Override
-  protected AptPlugin.AptConvention createAptConvention(
-      Project project, AbstractCompile task, CompileOptions compileOptions) {
-    return new AptConvention43to44(project, task, compileOptions);
-  }
-
-  @Override
-  protected AptPlugin.AptOptions createAptOptions(
-      Project project, AbstractCompile task, CompileOptions compileOptions) {
-    return new AptOptions43to44(project, task, compileOptions);
+  protected AptPlugin.AptOptions createAptOptions() {
+    return new AptPlugin.AptOptions();
   }
 
   @Override
@@ -195,72 +183,6 @@ class AptPlugin43to44 extends AptPlugin.Impl {
     public String getAnnotationProcessorConfigurationName() {
       // HACK: we use the same naming logic/scheme as for tasks, so just use SourceSet#getTaskName
       return sourceSet.getTaskName("", "annotationProcessor");
-    }
-  }
-
-  private static class AptConvention43to44 extends AptPlugin.AptConvention {
-    private final Project project;
-    private final AbstractCompile task;
-    private final CompileOptions compileOptions;
-
-    AptConvention43to44(Project project, AbstractCompile task, CompileOptions compileOptions) {
-      this.project = project;
-      this.task = task;
-      this.compileOptions = compileOptions;
-    }
-
-    @Nullable
-    @Override
-    public File getGeneratedSourcesDestinationDir() {
-      DeprecationLogger.nagUserWith(task, GENERATED_SOURCES_DESTINATION_DIR_DEPRECATION_MESSAGE);
-      return compileOptions.getAnnotationProcessorGeneratedSourcesDirectory();
-    }
-
-    @Override
-    public void setGeneratedSourcesDestinationDir(
-        @Nullable final Object generatedSourcesDestinationDir) {
-      DeprecationLogger.nagUserWith(task, GENERATED_SOURCES_DESTINATION_DIR_DEPRECATION_MESSAGE);
-      if (generatedSourcesDestinationDir == null) {
-        compileOptions.setAnnotationProcessorGeneratedSourcesDirectory((File) null);
-      } else {
-        compileOptions.setAnnotationProcessorGeneratedSourcesDirectory(
-            project.provider(
-                new Callable<File>() {
-                  @Override
-                  public File call() {
-                    return project.file(generatedSourcesDestinationDir);
-                  }
-                }));
-      }
-    }
-  }
-
-  private static class AptOptions43to44 extends AptPlugin.AptOptions {
-    private final Project project;
-    private final AbstractCompile task;
-    private final CompileOptions compileOptions;
-
-    private AptOptions43to44(Project project, AbstractCompile task, CompileOptions compileOptions) {
-      this.project = project;
-      this.task = task;
-      this.compileOptions = compileOptions;
-    }
-
-    @Nullable
-    @Override
-    public FileCollection getProcessorpath() {
-      DeprecationLogger.nagUserWith(task, APT_OPTIONS_PROCESSORPATH_DEPRECATION_MESSAGE);
-      return compileOptions.getAnnotationProcessorPath();
-    }
-
-    @Override
-    public void setProcessorpath(@Nullable Object processorpath) {
-      DeprecationLogger.nagUserWith(task, APT_OPTIONS_PROCESSORPATH_DEPRECATION_MESSAGE);
-      if (processorpath == null || processorpath instanceof FileCollection) {
-        compileOptions.setAnnotationProcessorPath((FileCollection) processorpath);
-      } else {
-        compileOptions.setAnnotationProcessorPath(project.files(processorpath));
-      }
     }
   }
 }

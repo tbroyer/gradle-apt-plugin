@@ -26,18 +26,12 @@ import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.HasConvention;
-import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.api.tasks.compile.CompileOptions;
 import org.gradle.process.CommandLineArgumentProvider;
 
 class AptPlugin46to48 extends AptPlugin.Impl {
-
-  static final String GENERATED_SOURCES_DESTINATION_DIR_DEPRECATION_MESSAGE =
-      "The generatedSourcesDestinationDir property has been deprecated. Please use the options.annotationProcessorGeneratedSourcesDirectory property instead.";
-  static final String APT_OPTIONS_PROCESSORPATH_DEPRECATION_MESSAGE =
-      "The aptOptions.processorpath property has been deprecated. Please use the options.annotationProcessorPath property instead.";
 
   @Override
   protected <T extends Task> Object createTask(
@@ -58,15 +52,8 @@ class AptPlugin46to48 extends AptPlugin.Impl {
   }
 
   @Override
-  protected AptPlugin.AptConvention createAptConvention(
-      Project project, AbstractCompile task, CompileOptions compileOptions) {
-    return new AptConvention46to48(project, task, compileOptions);
-  }
-
-  @Override
-  protected AptPlugin.AptOptions createAptOptions(
-      Project project, AbstractCompile task, CompileOptions compileOptions) {
-    return new AptOptions46to48(project, task, compileOptions);
+  protected AptPlugin.AptOptions createAptOptions() {
+    return new AptOptions46to48();
   }
 
   @Override
@@ -139,75 +126,12 @@ class AptPlugin46to48 extends AptPlugin.Impl {
     }
   }
 
-  private static class AptConvention46to48 extends AptPlugin.AptConvention {
-    private final Project project;
-    private final AbstractCompile task;
-    private final CompileOptions compileOptions;
-
-    AptConvention46to48(Project project, AbstractCompile task, CompileOptions compileOptions) {
-      this.project = project;
-      this.task = task;
-      this.compileOptions = compileOptions;
-    }
-
-    @Override
-    public File getGeneratedSourcesDestinationDir() {
-      DeprecationLogger.nagUserWith(task, GENERATED_SOURCES_DESTINATION_DIR_DEPRECATION_MESSAGE);
-      return compileOptions.getAnnotationProcessorGeneratedSourcesDirectory();
-    }
-
-    @Override
-    public void setGeneratedSourcesDestinationDir(
-        @Nullable final Object generatedSourcesDestinationDir) {
-      DeprecationLogger.nagUserWith(task, GENERATED_SOURCES_DESTINATION_DIR_DEPRECATION_MESSAGE);
-      if (generatedSourcesDestinationDir == null) {
-        compileOptions.setAnnotationProcessorGeneratedSourcesDirectory((File) null);
-      } else {
-        compileOptions.setAnnotationProcessorGeneratedSourcesDirectory(
-            project.provider(
-                new Callable<File>() {
-                  @Override
-                  public File call() {
-                    return project.file(generatedSourcesDestinationDir);
-                  }
-                }));
-      }
-    }
-  }
-
   private static class AptOptions46to48 extends AptPlugin.AptOptions
       implements CommandLineArgumentProvider, Named {
-    private final Project project;
-    private final AbstractCompile task;
-    private final CompileOptions compileOptions;
-
-    private AptOptions46to48(Project project, AbstractCompile task, CompileOptions compileOptions) {
-      this.project = project;
-      this.task = task;
-      this.compileOptions = compileOptions;
-    }
 
     @Override
     public String getName() {
       return "apt";
-    }
-
-    @Internal
-    @Nullable
-    @Override
-    public FileCollection getProcessorpath() {
-      DeprecationLogger.nagUserWith(task, APT_OPTIONS_PROCESSORPATH_DEPRECATION_MESSAGE);
-      return compileOptions.getAnnotationProcessorPath();
-    }
-
-    @Override
-    public void setProcessorpath(@Nullable final Object processorpath) {
-      DeprecationLogger.nagUserWith(task, APT_OPTIONS_PROCESSORPATH_DEPRECATION_MESSAGE);
-      if (processorpath == null || processorpath instanceof FileCollection) {
-        compileOptions.setAnnotationProcessorPath((FileCollection) processorpath);
-      } else {
-        compileOptions.setAnnotationProcessorPath(project.files(processorpath));
-      }
     }
 
     @Override
