@@ -16,7 +16,6 @@
 package net.ltgt.gradle.apt;
 
 import java.util.concurrent.Callable;
-import javax.annotation.Nullable;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -85,20 +84,16 @@ class AptPlugin43to44 extends AptPlugin.Impl {
   }
 
   @Override
-  protected AptPlugin.AptSourceSetConvention createAptSourceSetConvention(
-      Project project, SourceSet sourceSet) {
-    return new AptSourceSetConvention43to44(project, sourceSet);
-  }
-
-  @Override
-  protected Configuration ensureAnnotationProcessorConfiguration(
-      Project project, SourceSet sourceSet, AptPlugin.AptSourceSetConvention convention) {
+  protected void ensureConfigurations(Project project, SourceSet sourceSet) {
     Configuration annotationProcessorConfiguration =
-        project.getConfigurations().create(convention.getAnnotationProcessorConfigurationName());
+        project.getConfigurations().create(getAnnotationProcessorConfigurationName(sourceSet));
     annotationProcessorConfiguration.setVisible(false);
     annotationProcessorConfiguration.setDescription(
         "Annotation processors and their dependencies for " + sourceSet.getName() + ".");
-    return annotationProcessorConfiguration;
+
+    AptPlugin.AptSourceSetConvention convention =
+        new AptPlugin.AptSourceSetConvention(project, sourceSet, annotationProcessorConfiguration);
+    ((HasConvention) sourceSet).getConvention().getPlugins().put(AptPlugin.PLUGIN_ID, convention);
   }
 
   @Override
@@ -126,34 +121,7 @@ class AptPlugin43to44 extends AptPlugin.Impl {
 
   @Override
   String getAnnotationProcessorConfigurationName(SourceSet sourceSet) {
-    return ((HasConvention) sourceSet)
-        .getConvention()
-        .getPlugin(AptPlugin.AptSourceSetConvention.class)
-        .getAnnotationProcessorConfigurationName();
-  }
-
-  private static class AptSourceSetConvention43to44 extends AptPlugin.AptSourceSetConvention {
-    @Nullable private FileCollection annotationProcessorPath;
-
-    private AptSourceSetConvention43to44(Project project, SourceSet sourceSet) {
-      super(project, sourceSet);
-    }
-
-    @Nullable
-    @Override
-    public FileCollection getAnnotationProcessorPath() {
-      return annotationProcessorPath;
-    }
-
-    @Override
-    public void setAnnotationProcessorPath(@Nullable FileCollection annotationProcessorPath) {
-      this.annotationProcessorPath = annotationProcessorPath;
-    }
-
-    @Override
-    public String getAnnotationProcessorConfigurationName() {
-      // HACK: we use the same naming logic/scheme as for tasks, so just use SourceSet#getTaskName
-      return sourceSet.getTaskName("", "annotationProcessor");
-    }
+    // HACK: we use the same naming logic/scheme as for tasks, so just use SourceSet#getTaskName
+    return sourceSet.getTaskName("", "annotationProcessor");
   }
 }

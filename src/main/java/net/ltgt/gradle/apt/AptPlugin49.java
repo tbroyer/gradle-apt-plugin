@@ -16,13 +16,10 @@
 package net.ltgt.gradle.apt;
 
 import java.util.List;
-import javax.annotation.Nullable;
 import org.gradle.api.Action;
 import org.gradle.api.Named;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.HasConvention;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
@@ -65,17 +62,8 @@ class AptPlugin49 extends AptPlugin.Impl {
   }
 
   @Override
-  protected AptPlugin.AptSourceSetConvention createAptSourceSetConvention(
-      Project project, SourceSet sourceSet) {
-    return new AptSourceSetConvention49(project, sourceSet);
-  }
-
-  @Override
-  protected Configuration ensureAnnotationProcessorConfiguration(
-      Project project, SourceSet sourceSet, AptPlugin.AptSourceSetConvention convention) {
-    return project
-        .getConfigurations()
-        .getByName(sourceSet.getAnnotationProcessorConfigurationName());
+  protected void ensureConfigurations(Project project, SourceSet sourceSet) {
+    // no-op
   }
 
   @Override
@@ -96,27 +84,6 @@ class AptPlugin49 extends AptPlugin.Impl {
   @Override
   String getAnnotationProcessorConfigurationName(SourceSet sourceSet) {
     return sourceSet.getAnnotationProcessorConfigurationName();
-  }
-
-  private static class AptSourceSetConvention49 extends AptPlugin.AptSourceSetConvention {
-    private AptSourceSetConvention49(Project project, SourceSet sourceSet) {
-      super(project, sourceSet);
-    }
-
-    @Override
-    public FileCollection getAnnotationProcessorPath() {
-      return sourceSet.getAnnotationProcessorPath();
-    }
-
-    @Override
-    public void setAnnotationProcessorPath(@Nullable FileCollection annotationProcessorPath) {
-      sourceSet.setAnnotationProcessorPath(annotationProcessorPath);
-    }
-
-    @Override
-    public String getAnnotationProcessorConfigurationName() {
-      return sourceSet.getAnnotationProcessorConfigurationName();
-    }
   }
 
   private static class AptOptions49 extends AptPlugin.AptOptions

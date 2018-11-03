@@ -65,12 +65,7 @@ public class AptPlugin implements Plugin<Project> {
                   .getSourceSets()
                   .all(
                       sourceSet -> {
-                        AptSourceSetConvention convention =
-                            IMPL.createAptSourceSetConvention(project, sourceSet);
-                        ((HasConvention) sourceSet)
-                            .getConvention()
-                            .getPlugins()
-                            .put(PLUGIN_ID, convention);
+                        IMPL.ensureConfigurations(project, sourceSet);
 
                         AptSourceSetOutputConvention outputConvention =
                             new AptSourceSetOutputConvention(project);
@@ -82,8 +77,6 @@ public class AptPlugin implements Plugin<Project> {
                             .getConvention()
                             .getPlugins()
                             .put(PLUGIN_ID, outputConvention);
-
-                        ensureConfigurations(project, sourceSet, convention);
 
                         configureCompileTaskForSourceSet(
                             project,
@@ -125,13 +118,6 @@ public class AptPlugin implements Plugin<Project> {
           task.getExtensions().add(AptOptions.class, "aptOptions", IMPL.createAptOptions());
           IMPL.configureCompileTask(project, task, compileOptions);
         });
-  }
-
-  private void ensureConfigurations(
-      Project project, SourceSet sourceSet, AptSourceSetConvention convention) {
-    Configuration annotationProcessorConfiguration =
-        IMPL.ensureAnnotationProcessorConfiguration(project, sourceSet, convention);
-    convention.setAnnotationProcessorPath(annotationProcessorConfiguration);
   }
 
   private <T extends AbstractCompile> void configureCompileTaskForSourceSet(
@@ -178,11 +164,7 @@ public class AptPlugin implements Plugin<Project> {
     protected abstract void configureCompileTask(
         Project project, AbstractCompile task, CompileOptions compileOptions);
 
-    protected abstract AptSourceSetConvention createAptSourceSetConvention(
-        Project project, SourceSet sourceSet);
-
-    protected abstract Configuration ensureAnnotationProcessorConfiguration(
-        Project project, SourceSet sourceSet, AptSourceSetConvention convention);
+    abstract void ensureConfigurations(Project project, SourceSet sourceSet);
 
     protected abstract void configureCompileTaskForSourceSet(
         Project project, SourceSet sourceSet, AbstractCompile task, CompileOptions compileOptions);
@@ -259,22 +241,31 @@ public class AptPlugin implements Plugin<Project> {
     }
   }
 
-  public abstract static class AptSourceSetConvention {
+  public static final class AptSourceSetConvention {
     protected final Project project;
     protected final SourceSet sourceSet;
 
-    public AptSourceSetConvention(Project project, SourceSet sourceSet) {
+    @Nullable private FileCollection annotationProcessorPath;
+
+    AptSourceSetConvention(
+        Project project, SourceSet sourceSet, Configuration annotationProcessorPath) {
       this.project = project;
       this.sourceSet = sourceSet;
+      this.annotationProcessorPath = annotationProcessorPath;
     }
 
     @Nullable
-    public abstract FileCollection getAnnotationProcessorPath();
+    public FileCollection getAnnotationProcessorPath() {
+      return annotationProcessorPath;
+    }
 
-    public abstract void setAnnotationProcessorPath(
-        @Nullable FileCollection annotationProcessorPath);
+    public void setAnnotationProcessorPath(@Nullable FileCollection annotationProcessorPath) {
+      this.annotationProcessorPath = annotationProcessorPath;
+    }
 
-    public abstract String getAnnotationProcessorConfigurationName();
+    public String getAnnotationProcessorConfigurationName() {
+      return IMPL.getAnnotationProcessorConfigurationName(sourceSet);
+    }
   }
 
   public static class AptSourceSetOutputConvention {
