@@ -22,6 +22,8 @@ If you're interested in better IDE support, please vote for those issues to even
  * in IntelliJ IDEA: [for annotation processing in the IDE](https://youtrack.jetbrains.com/issue/IDEA-187868),
    and/or simply [`options.annotationProcessorGeneratedSourcesDirectory` (e.g. if delegating build/run actions to Gradle)](https://youtrack.jetbrains.com/issue/IDEA-182577)
 
+**Note: the documentation below only applies to version 0.19. For previous versions, please see [the previous version of this README](https://github.com/tbroyer/gradle-apt-plugin/blob/648bf2810097799796fdeb327255cdc99733aabd/README.md).**
+
 ## Do without the plugin
 
 <details>
@@ -230,24 +232,21 @@ The plugin is published to the Plugin Portal; see instructions there: https://pl
 
 ## Configurations
 
-For each `SourceSet`, three configurations are available:
+For each `SourceSet`, two configurations are available:
 
 * `<sourceSet>CompileOnly` (Gradle ≥ 2.12 already provides those configurations; note that this plugin doesn't provide a `<sourceSet>CompileClasspath` like Gradle ≥ 2.12, but instead make it directly extend `<sourceSet>Compile`)
-* `<sourceSet>AnnotationProcessor`, since version 0.14 (Gradle 4.6 already provides those configurations)
-* `<sourceSet>Apt`: those are provided for backwards compatibility with versions of this plugin up to 0.13, and are deprecated since version 0.14. The `<sourceSet>AnnotationProcessor` configurations extend the respective `<sourceSet>Apt` configurations to provide that compatibility.
+* `<sourceSet>AnnotationProcessor` (Gradle ≥ 4.6 already provides those configurations)
 
 As a result, the following configurations are available for any Java project:
 
 * `compileOnly`, extends `compile`
-* `annotationProcessor` (and `apt`)
+* `annotationProcessor`
 * `testCompileOnly`, extends `testCompile`
-* `testAnnotationProcessor` (and `testApt`)
+* `testAnnotationProcessor`
 
-The `*Only` configurations are used to specify compile-time only dependencies such as annotations that will be processed by annotation processors. Annotation processors themselves are to be added to the `annotationProcessor` and `testAnnotationProcessor` configurations (or the `apt` and `testApt` configurations in version 0.13 and earlier).
+The `*Only` configurations are used to specify compile-time only dependencies such as annotations that will be processed by annotation processors. Annotation processors themselves are to be added to the `annotationProcessor` and `testAnnotationProcessor` configurations.
 
 The `*Only` configurations are part of the `classpath` of the `JavaCompile` and `GroovyCompile` tasks, whereas the `apt` and `testApt` configurations are turned into `-processorpath` compiler arguments.
-Note that up until version 0.7, if those configurations were empty, an empty processor path (`-processorpath :`) would be passed to `javac`; this was a breaking change compared to the normal behavior of Gradle, as it meant annotation processors wouldn't be looked up in the tasks' `classpath`.
-Starting with version 0.8, no `-processorpath` will be passed if the `<sourceSet>Apt` configuration is empty; this is to follow a proposal to add first-class support for annotation processing to Gradle proper, that [has been added in Gradle 4.6](https://github.com/gradle/gradle/pull/3786).
 
 Finally, note that those configurations don't extend each others: `testCompileOnly` doesn't extend `compileOnly`, and `testAnnotationProcessor` doesn't extend `annotationProcessor`; those configurations are only use for their respective `JavaCompile` and `GroovyCompile` tasks.
 
@@ -271,7 +270,7 @@ dependencies {
 
 ## Groovy support
 
-Starting with version 0.6, the plugin also configures `GroovyCompile` tasks added when the `groovy` plugin is applied.
+The plugin also configures `GroovyCompile` tasks added when the `groovy` plugin is applied.
 It does not however configure annotation processing for Groovy sources, only for Java sources used in joint compilation.
 To process annotations on Groovy sources, you'll have to configure your `GroovyCompile` tasks; e.g.
 
@@ -306,7 +305,7 @@ Compilation tasks are still [cacheable](https://docs.gradle.org/current/userguid
 
 ## Gradle Kotlin DSL
 
-Starting with version 0.15, the plugin provides Kotlin extensions to make configuration easier when using the Gradle Kotlin DSL.
+The plugin provides Kotlin extensions to make configuration easier when using the Gradle Kotlin DSL.
 The easiest is to `import net.ltgt.gradle.apt.*` at the top of your `*.gradle.kts` file.
 Most APIs are the same as in Groovy, see below for differences.
 
@@ -316,10 +315,9 @@ IDE configuration is provided on a best-effort basis.
 
 ### Eclipse
 
-Starting with version 0.11, applying the `net.ltgt.apt-eclipse` plugin will auto-configure the generated files to enable annotation processing in Eclipse.
-In prior versions (until 0.10), that configuration would automatically happen whenever both the `net.ltgt.apt` and `eclipse` were applied (the new `net.ltgt.apt-eclipse` plugin will also automatically apply the `net.ltgt.apt` and `eclipse` plugins).
+Applying the `net.ltgt.apt-eclipse` plugin will auto-configure the generated files to enable annotation processing in Eclipse.
 
-From version 0.11 onwards, Eclipse annotation processing can be configured through a DSL, as an extension to the Eclipse JDT DSL (presented here with the default values):
+Eclipse annotation processing can be configured through a DSL, as an extension to the Eclipse JDT DSL (presented here with the default values):
 
 <details open>
 <summary>Groovy</summary>
@@ -418,7 +416,7 @@ When using Buildship, you'll have to manually run the `eclipseJdtApt` and `eclip
 
 Note that Eclipse does not distinguish main and test sources, and will process all of them using the same factory path and processor options, and the same generated source directory.
 
-In any case, the `net.ltgt.apt-eclipse` plugin (or simply `eclipse` plugin up until version 0.10) has to be applied to the project.
+In any case, the `net.ltgt.apt-eclipse` plugin has to be applied to the project.
 
 This can be configured system-wide for all projects using the `net.ltgt.apt` plugin by using an init script similar to the following:
 ```gradle
@@ -437,15 +435,14 @@ allprojects { project ->
 
 ### IntelliJ IDEA
 
-Starting with version 0.11, applying the `net.ltgt.apt-idea` plugin will auto-configure the generated files to enable annotation processing in IntelliJ IDEA.
-In prior versions (until 0.10), that configuration would automatically happen whenever both the `net.ltgt.apt` and `idea` were applied (the new `net.ltgt.apt-idea` plugin will also automatically apply the `net.ltgt.apt` and `idea` plugins).
+Applying the `net.ltgt.apt-idea` plugin will auto-configure the generated files to enable annotation processing in IntelliJ IDEA.
 
 When using the Gradle integration in IntelliJ IDEA (rather than the `idea` task), it is recommended to delegate the IDE build actions to Gradle itself starting with IDEA 2016.3: https://www.jetbrains.com/help/idea/gradle.html#delegate_build_gradle
-Otherwise, you'll have to manually enable annotation processing: in Settings… → Build, Execution, Deployment → Compiler → Annotation Processors, check `Enable annotation processing` and `Obtain processors from project classpath` (you'll have to make sure `idea.module.apt.addAptDependencies` is enabled, starting with version 0.12). To mimic the Gradle behavior and generated files behavior, you can configure the production and test sources directories to `build/generated/source/apt/main` and `build/generated/source/apt/test` respectively and choose to `Store generated sources relative to:` `Module content root`.
+Otherwise, you'll have to manually enable annotation processing: in Settings… → Build, Execution, Deployment → Compiler → Annotation Processors, check `Enable annotation processing` and `Obtain processors from project classpath` (you'll have to make sure `idea.module.apt.addAptDependencies` is enabled). To mimic the Gradle behavior and generated files behavior, you can configure the production and test sources directories to `build/generated/source/apt/main` and `build/generated/source/apt/test` respectively and choose to `Store generated sources relative to:` `Module content root`.
 
 Note that starting with IntelliJ IDEA 2016.1, and unless you delegate build actions to Gradle, you'll have to uncheck `Create separate module per source set` when importing the project.
 
-From version 0.12 onwards, IntelliJ IDEA annotation processing can be configured through a DSL, as an extension to the IDEA DSL (presented here with the default values):
+IntelliJ IDEA annotation processing can be configured through a DSL, as an extension to the IDEA DSL (presented here with the default values):
 ```gradle
 idea {
   project {
@@ -482,7 +479,7 @@ allprojects { project ->
 }
 ```
 
-In any case, the `net.ltgt.apt-idea` plugin (or simply `idea` plugin up until version 0.10) has to be applied to the project.
+In any case, the `net.ltgt.apt-idea` plugin has to be applied to the project.
 
 This can be configured system-wide for all projects using the `net.ltgt.apt` plugin by using an init script similar to the following:
 ```gradle
@@ -507,29 +504,27 @@ allprojects { project ->
 
 ## Configuration
 
-Starting with version 0.8, the plugin makes many things configurable by enhancing source sets and tasks.
-Some of those enhancements have been added to Gradle proper, sometimes with different names. Starting with version 0.14, you're encouraged to use the built-in Gradle properties, and the equivalent ones added by this plugin are deprecated (and will emit deprecation messages to the console.)
+The plugin makes many things configurable by enhancing source sets and tasks.
+Some of those enhancements have been added to Gradle proper, sometimes with different names. You're encouraged to use the built-in Gradle properties, and the equivalent ones added by this plugin are deprecated (and will emit deprecation messages to the console.)
 
 Each source set has a few properties:
 
 * `compileOnlyConfigurationName` (read-only `String`) returning the `<sourceSet>CompileOnly` configuration name (Gradle ≥ 2.12 already provides that property natively, this plugin contributes it for earlier Gradle versions)
-* `annotationProcessorConfigurationName` (read-only `String`) returning the `<sourceSet>AnnotationProcessor>` configuration name, starting with version 0.14 (Gradle ≥ 4.6 already provides that property natively, this plugin contributes it for earlier Gradle versions)
-* `aptConfigurationName` (read-only `String`) returning the `<sourceSet>Apt` configuration name, deprecated in version 0.14, replaced with `annotationProcessorConfigurationName`. There's no Kotlin extension for this property.
-* `annotationProcessorPath`, a `FileCollection` defaulting to the `<sourceSet>AnnotationProcessor` configuration, starting with version 0.14
-* `processorpath`, a `FileCollection` defaulting to the `<sourceSet>Apt` configuration, deprecated in version 0.14, replaced with `annotationProcessorPath`. There's no Kotlin extension for this property.
+* `annotationProcessorConfigurationName` (read-only `String`) returning the `<sourceSet>AnnotationProcessor>` configuration name (Gradle ≥ 4.6 already provides that property natively, this plugin contributes it for earlier Gradle versions)
+* `annotationProcessorPath`, a `FileCollection` defaulting to the `<sourceSet>AnnotationProcessor` configuration
 
 Each source set `output` gains a `generatedSourcesDir` property, a `File` defaulting to `${project.buildDir}/generated/source/apt/${sourceSet.name}`.
 
 Each `JavaCompile` and `GroovyCompile` task gains a couple properties:
 
-* `generatedSourcesDestinationDir`, corresponding to the `-s` compiler argument, i.e. whether (if set) and where to write sources files generated by annotation processors. This property is deprecated starting with version 0.14 when using Gradle ≥ 4.3, please use `options.annotationProcessorGeneratedSourcesDirectory` instead. There's no Kotlin extension for this property.
+* `generatedSourcesDestinationDir`, corresponding to the `-s` compiler argument, i.e. whether (if set) and where to write sources files generated by annotation processors. This property is deprecated when using Gradle ≥ 4.3, please use `options.annotationProcessorGeneratedSourcesDirectory` instead. There's no Kotlin extension for this property.
 * `aptOptions` (read-only), itself with 4 properties:
   * `annotationProcessing`, a `boolean` setting whether annotation processing is enabled or not; this maps to the `-proc:none` compiler argument, and defaults to `true` (meaning that argument is not passed in, and annotation processing is enabled)
-  * `processorpath`, a `FileCollection` corresponding to the `-processorpath` compiler argument; this property is deprecated starting with version 0.14 when using Gradle ≥ 3.4, please use `options.annotationProcessorPath` instead
+  * `processorpath`, a `FileCollection` corresponding to the `-processorpath` compiler argument; this property is deprecated when using Gradle ≥ 3.4, please use `options.annotationProcessorPath` instead
   * `processors`, a list of annotation processor class names, mapping to the `-processor` compiler argument
   * `processorArgs`, a map of annotation processor options, each entry mapping to a `-Akey=value` compiler argument
 
 For each source set, the corresponding `JavaCompile` and `GroovyCompile` tasks are configured such that:
 
-* `generatedSourcesDestinationDir` maps to the source set's `output.generatedSourcesDir`
-* `aptOptions.processorpath` maps to the source set's `annotationProcessorPath`
+* `options.annotationProcessorGeneratedSourcesDirectory` maps to the source set's `output.generatedSourcesDir`
+* `options.annotationProcessorPath` maps to the source set's `annotationProcessorPath` (Gradle ≥ 4.6 already does that mapping natively, this plugin contributes it for earlier Gradle versions)
