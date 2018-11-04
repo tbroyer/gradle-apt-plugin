@@ -28,12 +28,14 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.internal.HasConvention;
 import org.gradle.api.plugins.GroovyBasePlugin;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.reflect.HasPublicType;
 import org.gradle.api.reflect.TypeOf;
+import org.gradle.api.tasks.GroovySourceSet;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.SourceSet;
@@ -67,20 +69,10 @@ public class AptPlugin implements Plugin<Project> {
                       sourceSet -> {
                         IMPL.ensureConfigurations(project, sourceSet);
 
-                        AptSourceSetOutputConvention outputConvention =
-                            new AptSourceSetOutputConvention(project);
-                        outputConvention.setGeneratedSourcesDir(
-                            new File(
-                                project.getBuildDir(),
-                                "generated/source/apt/" + sourceSet.getName()));
-                        ((HasConvention) sourceSet.getOutput())
-                            .getConvention()
-                            .getPlugins()
-                            .put(PLUGIN_ID, outputConvention);
-
                         configureCompileTaskForSourceSet(
                             project,
                             sourceSet,
+                            sourceSet.getJava(),
                             sourceSet.getCompileJavaTaskName(),
                             JavaCompile.class,
                             JavaCompile::getOptions);
@@ -96,13 +88,20 @@ public class AptPlugin implements Plugin<Project> {
               javaConvention
                   .getSourceSets()
                   .all(
-                      sourceSet ->
-                          configureCompileTaskForSourceSet(
-                              project,
-                              sourceSet,
-                              sourceSet.getCompileTaskName("groovy"),
-                              GroovyCompile.class,
-                              GroovyCompile::getOptions));
+                      sourceSet -> {
+                        SourceDirectorySet groovy =
+                            ((HasConvention) sourceSet)
+                                .getConvention()
+                                .getPlugin(GroovySourceSet.class)
+                                .getGroovy();
+                        configureCompileTaskForSourceSet(
+                            project,
+                            sourceSet,
+                            groovy,
+                            sourceSet.getCompileTaskName("groovy"),
+                            GroovyCompile.class,
+                            GroovyCompile::getOptions);
+                      });
             });
   }
 
@@ -124,6 +123,7 @@ public class AptPlugin implements Plugin<Project> {
   private <T extends AbstractCompile> void configureCompileTaskForSourceSet(
       final Project project,
       final SourceSet sourceSet,
+      final SourceDirectorySet sourceDirectorySet,
       String compileTaskName,
       Class<T> compileTaskClass,
       final Function<T, CompileOptions> getCompileOptions) {
@@ -131,9 +131,20 @@ public class AptPlugin implements Plugin<Project> {
         project,
         compileTaskClass,
         compileTaskName,
-        task ->
-            IMPL.configureCompileTaskForSourceSet(
-                project, sourceSet, task, getCompileOptions.apply(task)));
+        task -> {
+          final CompileOptions compileOptions = getCompileOptions.apply(task);
+          IMPL.configureCompileTaskForSourceSet(project, sourceSet, compileOptions);
+
+          compileOptions.setAnnotationProcessorGeneratedSourcesDirectory(
+              project.provider(
+                  () ->
+                      new File(
+                          project.getBuildDir(),
+                          "generated/sources/annotationProcessor/"
+                              + sourceDirectorySet.getName()
+                              + "/"
+                              + sourceSet.getName())));
+        });
   }
 
   abstract static class Impl {
@@ -168,7 +179,7 @@ public class AptPlugin implements Plugin<Project> {
     abstract void ensureConfigurations(Project project, SourceSet sourceSet);
 
     protected abstract void configureCompileTaskForSourceSet(
-        Project project, SourceSet sourceSet, AbstractCompile task, CompileOptions compileOptions);
+        Project project, SourceSet sourceSet, CompileOptions compileOptions);
 
     abstract String getAnnotationProcessorConfigurationName(SourceSet sourceSet);
   }
@@ -266,28 +277,6 @@ public class AptPlugin implements Plugin<Project> {
 
     public String getAnnotationProcessorConfigurationName() {
       return IMPL.getAnnotationProcessorConfigurationName(sourceSet);
-    }
-  }
-
-  public static class AptSourceSetOutputConvention {
-    private final Project project;
-
-    @Nullable private Object generatedSourcesDir;
-
-    public AptSourceSetOutputConvention(Project project) {
-      this.project = project;
-    }
-
-    @Nullable
-    public File getGeneratedSourcesDir() {
-      if (generatedSourcesDir == null) {
-        return null;
-      }
-      return project.file(generatedSourcesDir);
-    }
-
-    public void setGeneratedSourcesDir(@Nullable Object generatedSourcesDir) {
-      this.generatedSourcesDir = generatedSourcesDir;
     }
   }
 }

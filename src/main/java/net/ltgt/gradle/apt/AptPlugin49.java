@@ -20,7 +20,6 @@ import org.gradle.api.Action;
 import org.gradle.api.Named;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.internal.HasConvention;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.api.tasks.compile.CompileOptions;
@@ -64,18 +63,7 @@ class AptPlugin49 extends AptPlugin.Impl {
 
   @Override
   protected void configureCompileTaskForSourceSet(
-      Project project,
-      final SourceSet sourceSet,
-      AbstractCompile task,
-      CompileOptions compileOptions) {
-    compileOptions.setAnnotationProcessorGeneratedSourcesDirectory(
-        project.provider(
-            () ->
-                ((HasConvention) sourceSet.getOutput())
-                    .getConvention()
-                    .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
-                    .getGeneratedSourcesDir()));
-  }
+      Project project, final SourceSet sourceSet, CompileOptions compileOptions) {}
 
   @Override
   String getAnnotationProcessorConfigurationName(SourceSet sourceSet) {

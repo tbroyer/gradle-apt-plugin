@@ -47,12 +47,12 @@ class AptPluginSpec extends PluginProjectSpec {
     project.configurations.findByName('testAnnotationProcessor')
     with(project.tasks.compileJava) { JavaCompile task ->
       task.effectiveAnnotationProcessorPath.empty
-      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/source/apt/main')
+      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/sources/annotationProcessor/java/main')
       task.options.allCompilerArgs.empty
     }
     with(project.tasks.compileTestJava) { JavaCompile task ->
       task.effectiveAnnotationProcessorPath.empty
-      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/source/apt/test')
+      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/sources/annotationProcessor/java/test')
       task.options.allCompilerArgs.empty
     }
   }
@@ -68,22 +68,22 @@ class AptPluginSpec extends PluginProjectSpec {
     project.configurations.findByName('testAnnotationProcessor')
     with(project.tasks.compileJava) { JavaCompile task ->
       task.effectiveAnnotationProcessorPath.empty
-      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/source/apt/main')
+      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/sources/annotationProcessor/java/main')
       task.options.allCompilerArgs.empty
     }
     with(project.tasks.compileGroovy) { GroovyCompile task ->
       task.options.annotationProcessorPath.empty
-      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/source/apt/main')
+      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/sources/annotationProcessor/groovy/main')
       task.options.allCompilerArgs.empty
     }
     with(project.tasks.compileTestJava) { JavaCompile task ->
       task.effectiveAnnotationProcessorPath.empty
-      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/source/apt/test')
+      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/sources/annotationProcessor/java/test')
       task.options.allCompilerArgs.empty
     }
     with(project.tasks.compileTestGroovy) { GroovyCompile task ->
       task.options.annotationProcessorPath.empty
-      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/source/apt/test')
+      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/sources/annotationProcessor/groovy/test')
       task.options.allCompilerArgs.empty
     }
   }
@@ -128,25 +128,25 @@ class AptPluginSpec extends PluginProjectSpec {
     with(project.tasks.compileJava) { JavaCompile task ->
       !task.effectiveAnnotationProcessorPath.empty
       task.effectiveAnnotationProcessorPath.asPath == project.configurations.annotationProcessor.asPath
-      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/source/apt/main')
+      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/sources/annotationProcessor/java/main')
       task.options.allCompilerArgs.empty
     }
     with(project.tasks.compileGroovy) { GroovyCompile task ->
       !task.options.annotationProcessorPath.empty
       task.options.annotationProcessorPath.asPath == project.configurations.annotationProcessor.asPath
-      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/source/apt/main')
+      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/sources/annotationProcessor/groovy/main')
       task.options.allCompilerArgs.empty
     }
     with(project.tasks.compileTestJava) { JavaCompile task ->
       !task.effectiveAnnotationProcessorPath.empty
       task.effectiveAnnotationProcessorPath.asPath == project.configurations.testAnnotationProcessor.asPath
-      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/source/apt/test')
+      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/sources/annotationProcessor/java/test')
       task.options.allCompilerArgs.empty
     }
     with(project.tasks.compileTestGroovy) { GroovyCompile task ->
       !task.options.annotationProcessorPath.empty
       task.options.annotationProcessorPath.asPath == project.configurations.testAnnotationProcessor.asPath
-      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/source/apt/test')
+      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.buildDir, 'generated/sources/annotationProcessor/groovy/test')
       task.options.allCompilerArgs.empty
     }
     project.configurations.annotationProcessor.resolvedConfiguration.resolvedArtifacts*.moduleVersion.id.collect { "$it.group:$it.name:$it.version" as String }.toSet()
@@ -194,11 +194,9 @@ class AptPluginSpec extends PluginProjectSpec {
       testAnnotationProcessing 'processor:testCompile:1.0'
     }
     project.sourceSets.main {
-      output.generatedSourcesDir = 'src/main/generated'
       annotationProcessorPath = project.configurations.annotationProcessing
     }
     project.sourceSets.test {
-      output.generatedSourcesDir = 'src/test/generated'
       annotationProcessorPath = project.configurations.testAnnotationProcessing
     }
     project.evaluate()
@@ -207,25 +205,21 @@ class AptPluginSpec extends PluginProjectSpec {
     with(project.tasks.compileJava) { JavaCompile task ->
       !task.effectiveAnnotationProcessorPath.empty
       task.effectiveAnnotationProcessorPath.asPath == project.configurations.annotationProcessing.asPath
-      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.projectDir, 'src/main/generated')
       task.options.allCompilerArgs.empty
     }
     with(project.tasks.compileGroovy) { GroovyCompile task ->
       !task.options.annotationProcessorPath.empty
       task.options.annotationProcessorPath.asPath == project.configurations.annotationProcessing.asPath
-      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.projectDir, 'src/main/generated')
       task.options.allCompilerArgs.empty
     }
     with(project.tasks.compileTestJava) { JavaCompile task ->
       !task.effectiveAnnotationProcessorPath.empty
       task.effectiveAnnotationProcessorPath.asPath == project.configurations.testAnnotationProcessing.asPath
-      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.projectDir, 'src/test/generated')
       task.options.allCompilerArgs.empty
     }
     with(project.tasks.compileTestGroovy) { GroovyCompile task ->
       !task.options.annotationProcessorPath.empty
       task.options.annotationProcessorPath.asPath == project.configurations.testAnnotationProcessing.asPath
-      task.options.annotationProcessorGeneratedSourcesDirectory == new File(project.projectDir, 'src/test/generated')
       task.options.allCompilerArgs.empty
     }
   }

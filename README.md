@@ -41,7 +41,7 @@ DSL aside, the `net.ltgt.apt` plugin, is equivalent to the following snippet
 // Workaround for https://github.com/gradle/gradle/issues/4956
 sourceSets.configureEach { sourceSet ->
   tasks.named(sourceSet.compileJavaTaskName).configure {
-    options.annotationProcessorGeneratedSourcesDirectory = file("$buildDir/generated/source/apt/${sourceSet.name}")
+    options.annotationProcessorGeneratedSourcesDirectory = file("$buildDir/generated/sources/annotationProcessor/java/${sourceSet.name}")
   }
 }
 ```
@@ -54,7 +54,7 @@ sourceSets.configureEach { sourceSet ->
 // Workaround for https://github.com/gradle/gradle/issues/4956
 sourceSets.configureEach {
     tasks.named<JavaCompile>(compileJavaTaskName) {
-        options.annotationProcessorGeneratedSourcesDirectory = file("$buildDir/generated/source/apt/${this@configureEach.name}")
+        options.annotationProcessorGeneratedSourcesDirectory = file("$buildDir/generated/sources/annotationProcessor/java/${this@configureEach.name}")
     }
 }
 ```
@@ -428,7 +428,7 @@ allprojects { project ->
 Applying the `net.ltgt.apt-idea` plugin will auto-configure the generated files to enable annotation processing in IntelliJ IDEA.
 
 When using the Gradle integration in IntelliJ IDEA (rather than the `idea` task), it is recommended to delegate the IDE build actions to Gradle itself starting with IDEA 2016.3: https://www.jetbrains.com/help/idea/gradle.html#delegate_build_gradle
-Otherwise, you'll have to manually enable annotation processing: in Settings… → Build, Execution, Deployment → Compiler → Annotation Processors, check `Enable annotation processing` and `Obtain processors from project classpath` (you'll have to make sure `idea.module.apt.addAptDependencies` is enabled). To mimic the Gradle behavior and generated files behavior, you can configure the production and test sources directories to `build/generated/source/apt/main` and `build/generated/source/apt/test` respectively and choose to `Store generated sources relative to:` `Module content root`.
+Otherwise, you'll have to manually enable annotation processing: in Settings… → Build, Execution, Deployment → Compiler → Annotation Processors, check `Enable annotation processing` and `Obtain processors from project classpath` (you'll have to make sure `idea.module.apt.addAptDependencies` is enabled). To mimic the Gradle behavior and generated files behavior, you can configure the production and test sources directories to `build/generated/sources/annotationProcessor/java/main` and `build/generated/sources/annotationProcessor/java/test` respectively and choose to `Store generated sources relative to:` `Module content root`.
 
 Note that unless you delegate build actions to Gradle, you'll have to uncheck `Create separate module per source set` when importing the project.
 
@@ -498,8 +498,6 @@ Each source set has a couple properties (Gradle ≥ 4.6 already provides those p
 * `annotationProcessorConfigurationName` (read-only `String`) returning the `<sourceSet>AnnotationProcessor>` configuration name
 * `annotationProcessorPath`, a `FileCollection` defaulting to the `<sourceSet>AnnotationProcessor` configuration
 
-Each source set `output` gains a `generatedSourcesDir` property, a `File` defaulting to `${project.buildDir}/generated/source/apt/${sourceSet.name}`.
-
 Each `JavaCompile` and `GroovyCompile` task gains an `aptOptions` (read-only) property, itself with 3 properties:
   * `annotationProcessing`, a `boolean` setting whether annotation processing is enabled or not; this maps to the `-proc:none` compiler argument, and defaults to `true` (meaning that argument is not passed in, and annotation processing is enabled)
   * `processors`, a list of annotation processor class names, mapping to the `-processor` compiler argument
@@ -507,5 +505,5 @@ Each `JavaCompile` and `GroovyCompile` task gains an `aptOptions` (read-only) pr
 
 For each source set, the corresponding `JavaCompile` and `GroovyCompile` tasks are configured such that:
 
-* `options.annotationProcessorGeneratedSourcesDirectory` maps to the source set's `output.generatedSourcesDir`
+* `options.annotationProcessorGeneratedSourcesDirectory` is set to `${project.buildDir}/generated/sources/annotationProcessor/${sourceDirectorySet.name}/${sourceSet.name}/`, where `$sourceirectorySet.name}` will be either `java` or `groovy`.
 * `options.annotationProcessorPath` maps to the source set's `annotationProcessorPath` (Gradle ≥ 4.6 already does that mapping natively, this plugin contributes it for earlier Gradle versions)

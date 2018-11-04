@@ -75,8 +75,8 @@ class IdeaIntegrationSpec extends Specification {
       assert expected == (it.size() == 1)
       assert expected == (it.@default == true)
       assert expected == (it.@enabled == true)
-      assert expected == (it.sourceOutputDir.@name == 'build/generated/source/apt/main')
-      assert expected == (it.sourceTestOutputDir.@name == 'build/generated/source/apt/test')
+      assert expected == (it.sourceOutputDir.@name == 'build/generated/sources/annotationProcessor/java/main')
+      assert expected == (it.sourceTestOutputDir.@name == 'build/generated/sources/annotationProcessor/java/test')
       assert expected == (it.outputRelativeToContentRoot.@value == true)
       assert expected == (it.processorPath.@useClasspath == true)
     }
@@ -329,9 +329,9 @@ class IdeaIntegrationSpec extends Specification {
 
     then:
     ideaModule.contentRoots*.sourceDirectories*.findAll { it.generated }*.directory.flatten()
-        .contains(new File(testProjectDir.root, 'build/generated/source/apt/main'))
+        .contains(new File(testProjectDir.root, 'build/generated/sources/annotationProcessor/java/main'))
     ideaModule.contentRoots*.testDirectories*.findAll { it.generated }*.directory.flatten()
-        .contains(new File(testProjectDir.root, 'build/generated/source/apt/test'))
+        .contains(new File(testProjectDir.root, 'build/generated/sources/annotationProcessor/java/test'))
 
     def dependencies = ideaModule.dependencies.collect {
       "${it.gradleModuleVersion.group}:${it.gradleModuleVersion.name}:${it.gradleModuleVersion.version}:${it.scope.scope}" as String
@@ -426,9 +426,9 @@ class IdeaIntegrationSpec extends Specification {
 
     then:
     !ideaModule.contentRoots*.sourceDirectories*.directory.flatten()
-        .contains(new File(testProjectDir.root, 'build/generated/source/apt/main'))
+        .contains(new File(testProjectDir.root, 'build/generated/sources/annotationProcessor/java/main'))
     !ideaModule.contentRoots*.testDirectories*.directory.flatten()
-        .contains(new File(testProjectDir.root, 'build/generated/source/apt/test'))
+        .contains(new File(testProjectDir.root, 'build/generated/sources/annotationProcessor/java/test'))
 
     def dependencies = ideaModule.dependencies.collect {
       "${it.gradleModuleVersion.group}:${it.gradleModuleVersion.name}:${it.gradleModuleVersion.version}:${it.scope.scope}" as String

@@ -18,11 +18,12 @@ package net.ltgt.gradle.apt;
 import groovy.util.Node;
 import groovy.util.NodeList;
 import java.io.File;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -31,9 +32,12 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.internal.HasConvention;
 import org.gradle.api.plugins.ExtensionAware;
+import org.gradle.api.plugins.GroovyBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.compile.GroovyCompile;
+import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.plugins.ide.idea.GenerateIdeaModule;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
@@ -82,26 +86,47 @@ public class AptIdeaPlugin implements Plugin<Project> {
     project.afterEvaluate(
         project1 -> {
           if (apt.isAddGeneratedSourcesDirs()) {
-            File mainGeneratedSourcesDir =
-                ((HasConvention) mainSourceSet.getOutput())
-                    .getConvention()
-                    .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
-                    .getGeneratedSourcesDir();
-            File testGeneratedSourcesDir =
-                ((HasConvention) testSourceSet.getOutput())
-                    .getConvention()
-                    .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
-                    .getGeneratedSourcesDir();
+            List<File> mainGeneratedSourcesDirs = new ArrayList<>();
+            List<File> testGeneratedSourcesDirs = new ArrayList<>();
+            mainGeneratedSourcesDirs.add(
+                ((JavaCompile)
+                        project1.getTasks().getByName(mainSourceSet.getCompileJavaTaskName()))
+                    .getOptions()
+                    .getAnnotationProcessorGeneratedSourcesDirectory());
+            testGeneratedSourcesDirs.add(
+                ((JavaCompile)
+                        project1.getTasks().getByName(testSourceSet.getCompileJavaTaskName()))
+                    .getOptions()
+                    .getAnnotationProcessorGeneratedSourcesDirectory());
+            if (project1.getPlugins().hasPlugin(GroovyBasePlugin.class)) {
+              mainGeneratedSourcesDirs.add(
+                  ((GroovyCompile)
+                          project1.getTasks().getByName(mainSourceSet.getCompileTaskName("groovy")))
+                      .getOptions()
+                      .getAnnotationProcessorGeneratedSourcesDirectory());
+              testGeneratedSourcesDirs.add(
+                  ((GroovyCompile)
+                          project1.getTasks().getByName(testSourceSet.getCompileTaskName("groovy")))
+                      .getOptions()
+                      .getAnnotationProcessorGeneratedSourcesDirectory());
+            }
+            mainGeneratedSourcesDirs.removeIf(Objects::isNull);
+            testGeneratedSourcesDirs.removeIf(Objects::isNull);
+
             // For some reason, modifying the existing collections doesn't work.
             // We need to copy the values and then assign it back.
-            ideaModule.setSourceDirs(addToSet(ideaModule.getSourceDirs(), mainGeneratedSourcesDir));
-            ideaModule.setTestSourceDirs(
-                addToSet(ideaModule.getTestSourceDirs(), testGeneratedSourcesDir));
-            ideaModule.setGeneratedSourceDirs(
-                addToSet(
-                    ideaModule.getGeneratedSourceDirs(),
-                    mainGeneratedSourcesDir,
-                    testGeneratedSourcesDir));
+            if (!mainGeneratedSourcesDirs.isEmpty()) {
+              ideaModule.setSourceDirs(
+                  addToSet(ideaModule.getSourceDirs(), mainGeneratedSourcesDirs));
+              ideaModule.setGeneratedSourceDirs(
+                  addToSet(ideaModule.getGeneratedSourceDirs(), mainGeneratedSourcesDirs));
+            }
+            if (!testGeneratedSourcesDirs.isEmpty()) {
+              ideaModule.setTestSourceDirs(
+                  addToSet(ideaModule.getTestSourceDirs(), testGeneratedSourcesDirs));
+              ideaModule.setGeneratedSourceDirs(
+                  addToSet(ideaModule.getGeneratedSourceDirs(), testGeneratedSourcesDirs));
+            }
           }
 
           if (apt.isAddAptDependencies()) {
@@ -126,9 +151,9 @@ public class AptIdeaPlugin implements Plugin<Project> {
         });
   }
 
-  private static Set<File> addToSet(Set<File> sourceDirs, File... dirs) {
+  private static Set<File> addToSet(Set<File> sourceDirs, Collection<File> dirs) {
     Set<File> newSet = new LinkedHashSet<>(sourceDirs);
-    newSet.addAll(Arrays.asList(dirs));
+    newSet.addAll(dirs);
     return newSet;
   }
 
@@ -175,14 +200,14 @@ public class AptIdeaPlugin implements Plugin<Project> {
                       Collections.singletonMap(
                           "name",
                           project.relativePath(project.getBuildDir())
-                              + "/generated/source/apt/"
+                              + "/generated/sources/annotationProcessor/java/"
                               + SourceSet.MAIN_SOURCE_SET_NAME));
                   profile.appendNode(
                       "sourceTestOutputDir",
                       Collections.singletonMap(
                           "name",
                           project.relativePath(project.getBuildDir())
-                              + "/generated/source/apt/"
+                              + "/generated/sources/annotationProcessor/java/"
                               + SourceSet.TEST_SOURCE_SET_NAME));
                   profile.appendNode(
                       "outputRelativeToContentRoot", Collections.singletonMap("value", true));

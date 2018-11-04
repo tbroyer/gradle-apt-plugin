@@ -781,9 +781,9 @@ class AptPluginIntegrationSpec extends Specification {
     result.task(':core:compileTestGroovy').outcome == TaskOutcome.SUCCESS
     result.task(':core:classes').outcome == TaskOutcome.SUCCESS
     result.task(':core:testClasses').outcome == TaskOutcome.SUCCESS
-    new File(testProjectDir.root, 'core/build/generated/source/apt/main/core/HelloWorldJHelper.java').exists()
-    new File(testProjectDir.root, 'core/build/generated/source/apt/test/test/HelloWorldJHelper.java').exists()
-    new File(testProjectDir.root, 'core/build/generated/source/apt/test/test/HelloWorldGHelper.java').exists()
+    new File(testProjectDir.root, 'core/build/generated/sources/annotationProcessor/java/main/core/HelloWorldJHelper.java').exists()
+    new File(testProjectDir.root, 'core/build/generated/sources/annotationProcessor/groovy/test/test/HelloWorldJHelper.java').exists()
+    new File(testProjectDir.root, 'core/build/generated/sources/annotationProcessor/groovy/test/test/HelloWorldGHelper.java').exists()
     new File(testProjectDir.root, 'core/build/classes/java/main/core/HelloWorldJ.class').exists()
     new File(testProjectDir.root, 'core/build/classes/java/main/core/HelloWorldJHelper.class').exists()
     new File(testProjectDir.root, 'core/build/classes/groovy/test/test/HelloWorldJ.class').exists()
@@ -811,9 +811,9 @@ class AptPluginIntegrationSpec extends Specification {
     result.task(':core:compileTestGroovy').outcome == TaskOutcome.FROM_CACHE
     result.task(':core:classes').outcome == TaskOutcome.UP_TO_DATE
     result.task(':core:testClasses').outcome == TaskOutcome.UP_TO_DATE
-    new File(testProjectDir.root, 'core/build/generated/source/apt/main/core/HelloWorldJHelper.java').exists()
-    new File(testProjectDir.root, 'core/build/generated/source/apt/test/test/HelloWorldJHelper.java').exists()
-    new File(testProjectDir.root, 'core/build/generated/source/apt/test/test/HelloWorldGHelper.java').exists()
+    new File(testProjectDir.root, 'core/build/generated/sources/annotationProcessor/java/main/core/HelloWorldJHelper.java').exists()
+    new File(testProjectDir.root, 'core/build/generated/sources/annotationProcessor/groovy/test/test/HelloWorldJHelper.java').exists()
+    new File(testProjectDir.root, 'core/build/generated/sources/annotationProcessor/groovy/test/test/HelloWorldGHelper.java').exists()
     new File(testProjectDir.root, 'core/build/classes/java/main/core/HelloWorldJ.class').exists()
     new File(testProjectDir.root, 'core/build/classes/java/main/core/HelloWorldJHelper.class').exists()
     new File(testProjectDir.root, 'core/build/classes/groovy/test/test/HelloWorldJ.class').exists()

@@ -87,10 +87,7 @@ class AptPlugin43to44 extends AptPlugin.Impl {
 
   @Override
   protected void configureCompileTaskForSourceSet(
-      Project project,
-      final SourceSet sourceSet,
-      AbstractCompile task,
-      CompileOptions compileOptions) {
+      Project project, final SourceSet sourceSet, CompileOptions compileOptions) {
     compileOptions.setAnnotationProcessorPath(
         project.files(
             (Callable<FileCollection>)
@@ -99,13 +96,6 @@ class AptPlugin43to44 extends AptPlugin.Impl {
                         .getConvention()
                         .getPlugin(AptPlugin.AptSourceSetConvention.class)
                         .getAnnotationProcessorPath()));
-    compileOptions.setAnnotationProcessorGeneratedSourcesDirectory(
-        project.provider(
-            () ->
-                ((HasConvention) sourceSet.getOutput())
-                    .getConvention()
-                    .getPlugin(AptPlugin.AptSourceSetOutputConvention.class)
-                    .getGeneratedSourcesDir()));
   }
 
   @Override

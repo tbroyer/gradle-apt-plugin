@@ -18,7 +18,6 @@ package net.ltgt.gradle.apt
 import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.tasks.SourceSet
-import org.gradle.api.tasks.SourceSetOutput
 import org.gradle.api.tasks.compile.GroovyCompile
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.configure
@@ -28,7 +27,6 @@ import org.gradle.plugins.ide.eclipse.model.EclipseJdt
 import org.gradle.plugins.ide.eclipse.model.EclipseModel
 import org.gradle.plugins.ide.idea.model.IdeaModule
 import org.gradle.plugins.ide.idea.model.IdeaProject
-import java.io.File
 
 val JavaCompile.aptOptions: AptPlugin.AptOptions
     get() = the()
@@ -56,10 +54,6 @@ val SourceSet.annotationProcessorConfigurationName: String
 var SourceSet.annotationProcessorPath: FileCollection?
     get() = withConvention(AptPlugin.AptSourceSetConvention::class) { annotationProcessorPath }
     set(value) = withConvention(AptPlugin.AptSourceSetConvention::class) { annotationProcessorPath = value }
-
-var SourceSetOutput.generatedSourcesDir: File?
-    get() = withConvention(AptPlugin.AptSourceSetOutputConvention::class) { generatedSourcesDir }
-    set(value) = withConvention(AptPlugin.AptSourceSetOutputConvention::class) { setGeneratedSourcesDir(value) }
 
 // Eclipse
 
