@@ -53,34 +53,23 @@ class AptPlugin43to44 extends AptPlugin.Impl {
 
   @Override
   protected void configureCompileTask(
-      Project project, final AbstractCompile task, final CompileOptions compileOptions) {
+      final AbstractCompile task,
+      final CompileOptions compileOptions,
+      AptPlugin.AptOptions aptOptions) {
     task.getInputs()
         .property(
             "aptOptions.annotationProcessing",
-            (Callable<Object>)
-                () ->
-                    task.getExtensions()
-                        .getByType(AptPlugin.AptOptions.class)
-                        .isAnnotationProcessing());
+            (Callable<Object>) aptOptions::isAnnotationProcessing);
     task.getInputs()
-        .property(
-            "aptOptions.processors",
-            (Callable<Object>)
-                () -> task.getExtensions().getByType(AptPlugin.AptOptions.class).getProcessors())
+        .property("aptOptions.processors", (Callable<Object>) aptOptions::getProcessors)
         .optional(true);
     task.getInputs()
-        .property(
-            "aptOptions.processorArgs",
-            (Callable<Object>)
-                () -> task.getExtensions().getByType(AptPlugin.AptOptions.class).getProcessorArgs())
+        .property("aptOptions.processorArgs", (Callable<Object>) aptOptions::getProcessorArgs)
         .optional(true);
 
     task.doFirst(
         "configure options.compilerArgs from aptOptions",
-        task1 ->
-            compileOptions
-                .getCompilerArgs()
-                .addAll(task1.getExtensions().getByType(AptPlugin.AptOptions.class).asArguments()));
+        task1 -> compileOptions.getCompilerArgs().addAll(aptOptions.asArguments()));
   }
 
   @Override

@@ -55,12 +55,10 @@ class AptPlugin45 extends AptPlugin.Impl {
   @SuppressWarnings("deprecation")
   @Override
   protected void configureCompileTask(
-      Project project, AbstractCompile task, CompileOptions compileOptions) {
+      AbstractCompile task, CompileOptions compileOptions, AptPlugin.AptOptions aptOptions) {
     compileOptions
         .getCompilerArgumentProviders()
-        .add(
-            (org.gradle.api.tasks.compile.CompilerArgumentProvider)
-                task.getExtensions().getByType(AptPlugin.AptOptions.class));
+        .add((org.gradle.api.tasks.compile.CompilerArgumentProvider) aptOptions);
   }
 
   @Override

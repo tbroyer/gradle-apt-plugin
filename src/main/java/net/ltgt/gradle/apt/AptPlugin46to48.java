@@ -53,12 +53,8 @@ class AptPlugin46to48 extends AptPlugin.Impl {
 
   @Override
   protected void configureCompileTask(
-      Project project, AbstractCompile task, CompileOptions compileOptions) {
-    compileOptions
-        .getCompilerArgumentProviders()
-        .add(
-            (CommandLineArgumentProvider)
-                task.getExtensions().getByType(AptPlugin.AptOptions.class));
+      AbstractCompile task, CompileOptions compileOptions, AptPlugin.AptOptions aptOptions) {
+    compileOptions.getCompilerArgumentProviders().add((CommandLineArgumentProvider) aptOptions);
   }
 
   @Override

@@ -115,8 +115,9 @@ public class AptPlugin implements Plugin<Project> {
         compileTaskClass,
         task -> {
           CompileOptions compileOptions = getCompileOptions.apply(task);
-          task.getExtensions().add(AptOptions.class, "aptOptions", IMPL.createAptOptions());
-          IMPL.configureCompileTask(project, task, compileOptions);
+          final AptOptions aptOptions = IMPL.createAptOptions();
+          task.getExtensions().add(AptOptions.class, "aptOptions", aptOptions);
+          IMPL.configureCompileTask(task, compileOptions, aptOptions);
         });
   }
 
@@ -162,7 +163,7 @@ public class AptPlugin implements Plugin<Project> {
     protected abstract AptOptions createAptOptions();
 
     protected abstract void configureCompileTask(
-        Project project, AbstractCompile task, CompileOptions compileOptions);
+        AbstractCompile task, CompileOptions compileOptions, AptOptions aptOptions);
 
     abstract void ensureConfigurations(Project project, SourceSet sourceSet);
 
