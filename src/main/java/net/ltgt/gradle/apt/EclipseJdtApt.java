@@ -23,6 +23,8 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
+import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.plugins.ide.api.PropertiesFileContentMerger;
 import org.gradle.util.ConfigureUtil;
 
@@ -30,54 +32,77 @@ public class EclipseJdtApt {
   private final Project project;
   private final PropertiesFileContentMerger file;
 
+  @SuppressWarnings("unchecked")
   public EclipseJdtApt(Project project, PropertiesFileContentMerger file) {
     this.project = project;
     this.file = file;
+    this.aptEnabled = project.getObjects().property(Boolean.class);
+    aptEnabled.set(true);
+    this.reconcileEnabled = project.getObjects().property(Boolean.class);
+    reconcileEnabled.set(true);
+    this.genSrcDir = project.getObjects().property(File.class);
+    genSrcDir.set(project.file(".apt_generated"));
+    this.processorOptions =
+        (Property<Map<String, ?>>) (Property<?>) project.getObjects().property(Map.class);
+    processorOptions.set(new LinkedHashMap<>());
   }
 
-  private boolean aptEnabled = true;
+  private final Property<Boolean> aptEnabled;
 
   public boolean isAptEnabled() {
-    return aptEnabled;
+    return aptEnabled.get();
   }
 
   public void setAptEnabled(boolean aptEnabled) {
-    this.aptEnabled = aptEnabled;
+    this.aptEnabled.set(aptEnabled);
   }
 
-  private boolean reconcileEnabled = true;
+  public void setAptEnabled(Provider<Boolean> aptEnabled) {
+    this.aptEnabled.set(aptEnabled);
+  }
+
+  private final Property<Boolean> reconcileEnabled;
 
   public boolean isReconcileEnabled() {
-    return reconcileEnabled;
+    return reconcileEnabled.get();
   }
 
   public void setReconcileEnabled(boolean reconcileEnabled) {
-    this.reconcileEnabled = reconcileEnabled;
+    this.reconcileEnabled.set(reconcileEnabled);
   }
 
-  private Object genSrcDir = ".apt_generated";
+  public void setReconcileEnabled(Provider<Boolean> reconcileEnabled) {
+    this.reconcileEnabled.set(reconcileEnabled);
+  }
+
+  private final Property<File> genSrcDir;
 
   public File getGenSrcDir() {
     return project.file(genSrcDir);
   }
 
   public void setGenSrcDir(File genSrcDir) {
-    this.genSrcDir = Objects.requireNonNull(genSrcDir);
+    this.genSrcDir.set(Objects.requireNonNull(genSrcDir));
   }
 
   public void setGenSrcDir(Object genSrcDir) {
-    this.genSrcDir = Objects.requireNonNull(genSrcDir);
+    Objects.requireNonNull(genSrcDir);
+    this.genSrcDir.set(project.provider(() -> project.file(genSrcDir)));
   }
 
-  @Nullable private Map<String, ?> processorOptions = new LinkedHashMap<>();
+  private final Property<Map<String, ?>> processorOptions;
 
   @Nullable
   public Map<String, ?> getProcessorOptions() {
-    return processorOptions;
+    return processorOptions.getOrNull();
   }
 
   public void setProcessorOptions(@Nullable Map<String, ?> processorOptions) {
-    this.processorOptions = processorOptions;
+    this.processorOptions.set(processorOptions);
+  }
+
+  public void setProcessorOptions(Provider<Map<String, ?>> processorOptions) {
+    this.processorOptions.set(processorOptions);
   }
 
   public PropertiesFileContentMerger getFile() {

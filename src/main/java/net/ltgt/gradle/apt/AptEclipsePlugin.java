@@ -21,8 +21,6 @@ import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.internal.ConventionMapping;
-import org.gradle.api.internal.IConventionAware;
 import org.gradle.api.internal.PropertiesTransformer;
 import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.plugins.JavaPlugin;
@@ -83,26 +81,24 @@ public class AptEclipsePlugin implements Plugin<Project> {
                 EclipseJdtApt.class,
                 project,
                 new PropertiesFileContentMerger(new PropertiesTransformer()));
-    ConventionMapping conventionMapping = ((IConventionAware) jdtApt).getConventionMapping();
-    conventionMapping.map(
-        "aptEnabled",
-        () ->
-            project
-                .getTasks()
-                .getByName(mainSourceSet.getCompileJavaTaskName())
-                .getExtensions()
-                .getByType(AptPlugin.AptOptions.class)
-                .isAnnotationProcessing());
-    conventionMapping.map("genSrcDir", () -> project.file(".apt_generated"));
-    conventionMapping.map(
-        "processorOptions",
-        () ->
-            project
-                .getTasks()
-                .getByName(mainSourceSet.getCompileJavaTaskName())
-                .getExtensions()
-                .getByType(AptPlugin.AptOptions.class)
-                .getProcessorArgs());
+    jdtApt.setAptEnabled(
+        project.provider(
+            () ->
+                project
+                    .getTasks()
+                    .getByName(mainSourceSet.getCompileJavaTaskName())
+                    .getExtensions()
+                    .getByType(AptPlugin.AptOptions.class)
+                    .isAnnotationProcessing()));
+    jdtApt.setProcessorOptions(
+        project.provider(
+            () ->
+                project
+                    .getTasks()
+                    .getByName(mainSourceSet.getCompileJavaTaskName())
+                    .getExtensions()
+                    .getByType(AptPlugin.AptOptions.class)
+                    .getProcessorArgs()));
 
     eclipseModel
         .getJdt()
