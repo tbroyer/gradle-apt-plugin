@@ -39,7 +39,7 @@ DSL aside, the `net.ltgt.apt` plugin, is equivalent to the following snippet
 // Workaround for https://github.com/gradle/gradle/issues/4956
 sourceSets.configureEach { sourceSet ->
   tasks.named(sourceSet.compileJavaTaskName).configure {
-    options.annotationProcessorGeneratedSourcesDirectory = file("$buildDir/generated/source/apt/${sourceSet.name})
+    options.annotationProcessorGeneratedSourcesDirectory = file("$buildDir/generated/source/apt/${sourceSet.name}")
   }
 }
 ```
@@ -149,8 +149,8 @@ idea {
 // Workaround for https://youtrack.jetbrains.com/issue/IDEA-187868
 idea {
     module {
-        scopes["PROVIDED"]["plus"].add(configurations.annotationProcessor)
-        scopes["TEST"]["plus"].add(configurations.testAnnotationProcessor)
+        scopes["PROVIDED"]!!["plus"]!!.add(configurations.annotationProcessor)
+        scopes["TEST"]!!["plus"]!!.add(configurations.testAnnotationProcessor)
     }
 }
 ```
