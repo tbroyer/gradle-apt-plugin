@@ -18,26 +18,22 @@ package net.ltgt.gradle.apt;
 import groovy.util.Node;
 import groovy.util.NodeList;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.HasConvention;
 import org.gradle.api.plugins.ExtensionAware;
-import org.gradle.api.plugins.GroovyBasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
 import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.compile.GroovyCompile;
-import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.plugins.ide.idea.GenerateIdeaModule;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
@@ -86,33 +82,18 @@ public class AptIdeaPlugin implements Plugin<Project> {
     project.afterEvaluate(
         project1 -> {
           if (apt.isAddGeneratedSourcesDirs()) {
-            List<File> mainGeneratedSourcesDirs = new ArrayList<>();
-            List<File> testGeneratedSourcesDirs = new ArrayList<>();
-            mainGeneratedSourcesDirs.add(
-                ((JavaCompile)
-                        project1.getTasks().getByName(mainSourceSet.getCompileJavaTaskName()))
-                    .getOptions()
-                    .getAnnotationProcessorGeneratedSourcesDirectory());
-            testGeneratedSourcesDirs.add(
-                ((JavaCompile)
-                        project1.getTasks().getByName(testSourceSet.getCompileJavaTaskName()))
-                    .getOptions()
-                    .getAnnotationProcessorGeneratedSourcesDirectory());
-            if (project1.getPlugins().hasPlugin(GroovyBasePlugin.class)) {
-              mainGeneratedSourcesDirs.add(
-                  ((GroovyCompile)
-                          project1.getTasks().getByName(mainSourceSet.getCompileTaskName("groovy")))
-                      .getOptions()
-                      .getAnnotationProcessorGeneratedSourcesDirectory());
-              testGeneratedSourcesDirs.add(
-                  ((GroovyCompile)
-                          project1.getTasks().getByName(testSourceSet.getCompileTaskName("groovy")))
-                      .getOptions()
-                      .getAnnotationProcessorGeneratedSourcesDirectory());
-            }
-            mainGeneratedSourcesDirs.removeIf(Objects::isNull);
-            testGeneratedSourcesDirs.removeIf(Objects::isNull);
-
+            Collection<File> mainGeneratedSourcesDirs =
+                ((FileCollection)
+                        ((ExtensionAware) mainSourceSet.getOutput())
+                            .getExtensions()
+                            .getByName(AptPlugin.SOURCE_SET_OUTPUT_GENERATED_SOURCES_DIRS))
+                    .getFiles();
+            Collection<File> testGeneratedSourcesDirs =
+                ((FileCollection)
+                        ((ExtensionAware) testSourceSet.getOutput())
+                            .getExtensions()
+                            .getByName(AptPlugin.SOURCE_SET_OUTPUT_GENERATED_SOURCES_DIRS))
+                    .getFiles();
             // For some reason, modifying the existing collections doesn't work.
             // We need to copy the values and then assign it back.
             if (!mainGeneratedSourcesDirs.isEmpty()) {

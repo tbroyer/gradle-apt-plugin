@@ -40,9 +40,9 @@ class AptPlugin46to48 extends AptPlugin.Impl {
   }
 
   @Override
-  protected <T extends Task> void configureTask(
+  protected <T extends Task> Object configureTask(
       Project project, Class<T> taskClass, String taskName, Action<T> configure) {
-    project.getTasks().withType(taskClass).getByName(taskName, configure);
+    return project.getTasks().withType(taskClass).getByName(taskName, configure);
   }
 
   @Override

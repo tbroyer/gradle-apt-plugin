@@ -821,4 +821,41 @@ class AptPluginIntegrationSpec extends Specification {
     new File(testProjectDir.root, 'core/build/classes/groovy/test/test/HelloWorldG.class').exists()
     new File(testProjectDir.root, 'core/build/classes/groovy/test/test/HelloWorldGHelper.class').exists()
   }
+
+  def "generated sources depend on compilation task"() {
+    given:
+    buildFile << """\
+      apply plugin: 'net.ltgt.apt'
+      apply plugin: 'java'
+
+      task sourcesJar(type: Jar) {
+        from(sourceSets.main.allSource)
+        from(sourceSets.main.output.generatedSourcesDirs)
+      }
+    """.stripIndent()
+
+    def f = new File(testProjectDir.newFolder('src', 'main', 'java', 'simple'), 'HelloWorld.java')
+    f.createNewFile()
+    f << """\
+      package simple;
+
+      public class HelloWorld {
+        public String sayHello(String name) {
+          return "Hello, " + name + "!";
+        }
+      }
+    """.stripIndent()
+
+    when:
+    def result = GradleRunner.create()
+        .withGradleVersion(TEST_GRADLE_VERSION)
+        .withProjectDir(testProjectDir.root)
+        .withArguments('sourcesJar')
+        .build()
+
+    then:
+    result.task(':sourcesJar').outcome == TaskOutcome.SUCCESS
+    result.task(':compileJava') != null
+    result.task(':compileJava').outcome == TaskOutcome.SUCCESS
+  }
 }

@@ -21,6 +21,7 @@ import org.gradle.api.Named;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.api.tasks.compile.CompileOptions;
 import org.gradle.process.CommandLineArgumentProvider;
@@ -40,9 +41,11 @@ class AptPlugin49 extends AptPlugin.Impl {
   }
 
   @Override
-  protected <T extends Task> void configureTask(
+  protected <T extends Task> TaskProvider<T> configureTask(
       Project project, Class<T> taskClass, String taskName, Action<T> configure) {
-    project.getTasks().withType(taskClass).named(taskName).configure(configure);
+    TaskProvider<T> task = project.getTasks().withType(taskClass).named(taskName);
+    task.configure(configure);
+    return task;
   }
 
   @Override

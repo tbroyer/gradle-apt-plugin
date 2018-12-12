@@ -18,9 +18,11 @@ package net.ltgt.gradle.apt
 import org.gradle.api.file.FileCollection
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.SourceSetOutput
 import org.gradle.api.tasks.compile.GroovyCompile
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.getByName
 import org.gradle.kotlin.dsl.the
 import org.gradle.kotlin.dsl.withConvention
 import org.gradle.plugins.ide.eclipse.model.EclipseJdt
@@ -54,6 +56,9 @@ val SourceSet.annotationProcessorConfigurationName: String
 var SourceSet.annotationProcessorPath: FileCollection?
     get() = withConvention(AptPlugin.AptSourceSetConvention::class) { annotationProcessorPath }
     set(value) = withConvention(AptPlugin.AptSourceSetConvention::class) { annotationProcessorPath = value }
+
+val SourceSetOutput.generatedSourcesDirs: FileCollection
+    get() = (this as ExtensionAware).extensions.getByName<FileCollection>(AptPlugin.SOURCE_SET_OUTPUT_GENERATED_SOURCES_DIRS)
 
 // Eclipse
 
