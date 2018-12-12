@@ -8,7 +8,7 @@ plugins {
     `maven-publish`
     groovy
     id("com.gradle.plugin-publish") version "0.10.0"
-    id("com.github.sherter.google-java-format") version "0.7.1"
+    id("com.github.sherter.google-java-format") version "0.8"
     id("net.ltgt.errorprone") version "0.6"
     id("com.github.hierynomus.license") version "0.14.0"
 }
