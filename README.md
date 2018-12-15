@@ -10,7 +10,7 @@ If you use older versions of Gradle, you can still benefit from those features:
 * automatically configures the corresponding `JavaCompile` and `GroovyCompile` tasks to make use of these configurations, when the `java` or `groovy` plugin is applied.
 
 With recent versions of Gradle, this plugin will actually only:
-* configure `JavaCompile` and `GroovyCompile` tasks' `options.annotationProcessorGeneratedSourcesDirectory` with a _sane_ default value so you can see the generated sources in your IDE and for debugging, and avoid shipping them in your JARs ([see Gradle issue](https://github.com/gradle/gradle/issues/4956));
+* configure `JavaCompile` and `GroovyCompile` tasks' `options.annotationProcessorGeneratedSourcesDirectory` with a _sane_ default value so you can see the generated sources in your IDE and for debugging, and avoid shipping them in your JARs ([see Gradle issue](https://github.com/gradle/gradle/issues/4956), fixed in Gradle 5.2);
 * add some DSL to configure annotation processors; it is however recommended to directly configure the tasks' `options.compilerArgs`.
 
 Quite ironically, what you'll probably find the most useful here is the part that's only provided as a "best effort",
@@ -508,5 +508,5 @@ Each `JavaCompile` and `GroovyCompile` task gains an `aptOptions` (read-only) pr
 
 For each source set, the corresponding `JavaCompile` and `GroovyCompile` tasks are configured such that:
 
-* `options.annotationProcessorGeneratedSourcesDirectory` is set to `${project.buildDir}/generated/sources/annotationProcessor/${sourceDirectorySet.name}/${sourceSet.name}/`, where `$sourceirectorySet.name}` will be either `java` or `groovy`.
+* `options.annotationProcessorGeneratedSourcesDirectory` is set to `${project.buildDir}/generated/sources/annotationProcessor/${sourceDirectorySet.name}/${sourceSet.name}/`, where `$sourceirectorySet.name}` will be either `java` or `groovy` (Gradle ≥ 5.2 already does that mapping natively, this plugin contributes it for earlier Gradle versions).
 * `options.annotationProcessorPath` maps to the source set's `annotationProcessorPath` (Gradle ≥ 4.6 already does that mapping natively, this plugin contributes it for earlier Gradle versions)
