@@ -200,7 +200,7 @@ if (Boolean.getBoolean("idea.active")) {
         }
       }
     } else {
-      // fallback to automatically applying net.ltgt.apt-eclipse whenever net.ltgt.apt is used
+      // fallback to automatically applying net.ltgt.apt-idea whenever net.ltgt.apt is used
       project.plugins.withId("net.ltgt.apt") {
         try {
           project.apply plugin: "net.ltgt.apt-idea"
