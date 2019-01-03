@@ -10,7 +10,7 @@ plugins {
     id("com.gradle.plugin-publish") version "0.10.0"
     id("com.github.sherter.google-java-format") version "0.8"
     id("net.ltgt.errorprone") version "0.6"
-    id("com.github.hierynomus.license") version "0.14.0"
+    id("com.github.hierynomus.license") version "0.15.0"
 }
 
 googleJavaFormat {
@@ -47,10 +47,10 @@ dependencies {
     errorprone("com.google.errorprone:error_prone_core:2.3.2")
     errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
 
-    annotationProcessor("com.uber.nullaway:nullaway:0.6.0")
+    annotationProcessor("com.uber.nullaway:nullaway:0.6.4")
 
     testImplementation(localGroovy())
-    testImplementation("com.netflix.nebula:nebula-test:7.1.0")
+    testImplementation("com.netflix.nebula:nebula-test:7.1.6")
     testImplementation("org.spockframework:spock-core:1.1-groovy-2.4") {
         exclude(group = "org.codehaus.groovy")
     }
@@ -133,7 +133,7 @@ pluginBundle {
 val ktlint by configurations.creating
 
 dependencies {
-    ktlint("com.github.shyiko:ktlint:0.27.0")
+    ktlint("com.github.shyiko:ktlint:0.29.0")
 }
 
 tasks {
