@@ -65,7 +65,7 @@ tasks {
         options.errorprone.option("NullAway:AnnotatedPackages", "net.ltgt.gradle.apt")
     }
 
-    "jar"(Jar::class) {
+    jar {
         from(Callable { project(":kotlin-extensions").sourceSets["main"].output })
     }
 
@@ -76,7 +76,7 @@ tasks {
         dependsOn("publishAptIdeaPluginMarkerMavenPublicationToTestRepository")
     }
 
-    "test"(Test::class) {
+    test {
         dependsOn(publishPluginsToTestRepository)
 
         val testGradleVersion = project.findProperty("test.gradle-version")
@@ -137,7 +137,7 @@ tasks {
         main = "com.github.shyiko.ktlint.Main"
         args("**/*.gradle.kts", "**/*.kt")
     }
-    "check" {
+    check {
         dependsOn(verifyKtlint)
     }
 
