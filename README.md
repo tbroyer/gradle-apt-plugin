@@ -12,6 +12,7 @@ If you use older versions of Gradle, you can still benefit from those features:
 With recent versions of Gradle, this plugin will actually only:
 * configure `JavaCompile` and `GroovyCompile` tasks' `options.annotationProcessorGeneratedSourcesDirectory` with a _sane_ default value so you can see the generated sources in your IDE and for debugging, and avoid shipping them in your JARs ([see Gradle issue](https://github.com/gradle/gradle/issues/4956), fixed in Gradle 5.2);
 * add some DSL to configure annotation processors; it is however recommended to directly configure the tasks' `options.compilerArgs`.
+* backport the `sourceSet.output.generatedSourcesDirs` API (added in Gradle 5.2)
 
 Quite ironically, what you'll probably find the most useful here is the part that's only provided as a "best effort",
 namely the `net.ltgt.apt-idea` or `net.ltgt.apt-eclipse` plugins that will automatically configures IntelliJ IDEA and Eclipse respectively.
