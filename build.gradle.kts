@@ -34,7 +34,13 @@ gradle.taskGraph.whenReady {
 }
 
 repositories {
-    jcenter()
+    mavenCentral()
+    jcenter() {
+        content {
+            onlyForConfigurations("ktlint")
+            includeModule("com.andreapivetta.kolor", "kolor")
+        }
+    }
 }
 
 dependencies {
