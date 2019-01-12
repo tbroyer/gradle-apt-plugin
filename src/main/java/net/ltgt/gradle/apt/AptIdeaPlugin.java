@@ -28,7 +28,6 @@ import java.util.Set;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.HasConvention;
 import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.plugins.JavaPlugin;
@@ -83,17 +82,9 @@ public class AptIdeaPlugin implements Plugin<Project> {
         project1 -> {
           if (apt.isAddGeneratedSourcesDirs()) {
             Collection<File> mainGeneratedSourcesDirs =
-                ((FileCollection)
-                        ((ExtensionAware) mainSourceSet.getOutput())
-                            .getExtensions()
-                            .getByName(AptPlugin.SOURCE_SET_OUTPUT_GENERATED_SOURCES_DIRS))
-                    .getFiles();
+                AptPlugin.IMPL.getGeneratedSourcesDirs(mainSourceSet.getOutput()).getFiles();
             Collection<File> testGeneratedSourcesDirs =
-                ((FileCollection)
-                        ((ExtensionAware) testSourceSet.getOutput())
-                            .getExtensions()
-                            .getByName(AptPlugin.SOURCE_SET_OUTPUT_GENERATED_SOURCES_DIRS))
-                    .getFiles();
+                AptPlugin.IMPL.getGeneratedSourcesDirs(testSourceSet.getOutput()).getFiles();
             // For some reason, modifying the existing collections doesn't work.
             // We need to copy the values and then assign it back.
             if (!mainGeneratedSourcesDirs.isEmpty()) {

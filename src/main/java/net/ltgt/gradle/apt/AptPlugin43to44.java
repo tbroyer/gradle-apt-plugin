@@ -15,18 +15,26 @@
  */
 package net.ltgt.gradle.apt;
 
+import java.io.File;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.internal.HasConvention;
+import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.SourceSetOutput;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.api.tasks.compile.CompileOptions;
 
 class AptPlugin43to44 extends AptPlugin.Impl {
+
+  private static final String SOURCE_SET_OUTPUT_GENERATED_SOURCES_DIRS = "generatedSourcesDirs";
 
   @Override
   protected <T extends Task> Object createTask(
@@ -87,7 +95,10 @@ class AptPlugin43to44 extends AptPlugin.Impl {
 
   @Override
   protected void configureCompileTaskForSourceSet(
-      Project project, final SourceSet sourceSet, CompileOptions compileOptions) {
+      Project project,
+      final SourceSet sourceSet,
+      SourceDirectorySet sourceDirectorySet,
+      CompileOptions compileOptions) {
     compileOptions.setAnnotationProcessorPath(
         project.files(
             (Callable<FileCollection>)
@@ -96,11 +107,64 @@ class AptPlugin43to44 extends AptPlugin.Impl {
                         .getConvention()
                         .getPlugin(AptPlugin.AptSourceSetConvention.class)
                         .getAnnotationProcessorPath()));
+
+    compileOptions.setAnnotationProcessorGeneratedSourcesDirectory(
+        project.provider(
+            () ->
+                new File(
+                    project.getBuildDir(),
+                    "generated/sources/annotationProcessor/"
+                        + sourceDirectorySet.getName()
+                        + "/"
+                        + sourceSet.getName())));
   }
 
   @Override
   String getAnnotationProcessorConfigurationName(SourceSet sourceSet) {
     // HACK: we use the same naming logic/scheme as for tasks, so just use SourceSet#getTaskName
     return sourceSet.getTaskName("", "annotationProcessor");
+  }
+
+  @Override
+  <T extends AbstractCompile> void addSourceSetOutputGeneratedSourcesDir(
+      Project project,
+      SourceSetOutput sourceSetOutput,
+      String compileTaskName,
+      Class<T> compileTaskClass,
+      Function<T, CompileOptions> getCompileOptions,
+      Object taskOrProvider) {
+    ((ExtensionAware) sourceSetOutput)
+        .getExtensions()
+        .<ConfigurableFileCollection>configure(
+            SOURCE_SET_OUTPUT_GENERATED_SOURCES_DIRS,
+            files ->
+                files
+                    .from(
+                        (Callable<File>)
+                            () ->
+                                getCompileOptions
+                                    .apply(
+                                        project
+                                            .getTasks()
+                                            .withType(compileTaskClass)
+                                            .getByName(compileTaskName))
+                                    .getAnnotationProcessorGeneratedSourcesDirectory())
+                    .builtBy(taskOrProvider));
+  }
+
+  @Override
+  void setupGeneratedSourcesDirs(Project project, SourceSetOutput sourceSetOutput) {
+    final FileCollection files = project.files();
+    ((ExtensionAware) sourceSetOutput)
+        .getExtensions()
+        .add(FileCollection.class, SOURCE_SET_OUTPUT_GENERATED_SOURCES_DIRS, files);
+  }
+
+  @Override
+  FileCollection getGeneratedSourcesDirs(SourceSetOutput sourceSetOutput) {
+    return (FileCollection)
+        ((ExtensionAware) sourceSetOutput)
+            .getExtensions()
+            .getByName(SOURCE_SET_OUTPUT_GENERATED_SOURCES_DIRS);
   }
 }

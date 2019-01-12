@@ -15,12 +15,10 @@
  */
 package net.ltgt.gradle.apt;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 import org.gradle.api.Action;
@@ -28,11 +26,9 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.SourceDirectorySet;
 import org.gradle.api.internal.HasConvention;
-import org.gradle.api.plugins.ExtensionAware;
 import org.gradle.api.plugins.GroovyBasePlugin;
 import org.gradle.api.plugins.JavaBasePlugin;
 import org.gradle.api.plugins.JavaPluginConvention;
@@ -42,6 +38,7 @@ import org.gradle.api.tasks.GroovySourceSet;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.SourceSetOutput;
 import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.api.tasks.compile.CompileOptions;
 import org.gradle.api.tasks.compile.GroovyCompile;
@@ -51,7 +48,6 @@ import org.gradle.util.GradleVersion;
 public class AptPlugin implements Plugin<Project> {
 
   static final String PLUGIN_ID = "net.ltgt.apt";
-  static final String SOURCE_SET_OUTPUT_GENERATED_SOURCES_DIRS = "generatedSourcesDirs";
 
   static final Impl IMPL = Impl.newInstance();
 
@@ -138,45 +134,23 @@ public class AptPlugin implements Plugin<Project> {
             compileTaskName,
             task -> {
               final CompileOptions compileOptions = getCompileOptions.apply(task);
-              IMPL.configureCompileTaskForSourceSet(project, sourceSet, compileOptions);
-
-              compileOptions.setAnnotationProcessorGeneratedSourcesDirectory(
-                  project.provider(
-                      () ->
-                          new File(
-                              project.getBuildDir(),
-                              "generated/sources/annotationProcessor/"
-                                  + sourceDirectorySet.getName()
-                                  + "/"
-                                  + sourceSet.getName())));
+              IMPL.configureCompileTaskForSourceSet(
+                  project, sourceSet, sourceDirectorySet, compileOptions);
             });
 
-    ((ExtensionAware) sourceSet.getOutput())
-        .getExtensions()
-        .<ConfigurableFileCollection>configure(
-            SOURCE_SET_OUTPUT_GENERATED_SOURCES_DIRS,
-            files ->
-                files
-                    .from(
-                        (Callable<File>)
-                            () ->
-                                getCompileOptions
-                                    .apply(
-                                        project
-                                            .getTasks()
-                                            .withType(compileTaskClass)
-                                            .getByName(compileTaskName))
-                                    .getAnnotationProcessorGeneratedSourcesDirectory())
-                    .builtBy(taskOrProvider));
+    IMPL.addSourceSetOutputGeneratedSourcesDir(
+        project,
+        sourceSet.getOutput(),
+        compileTaskName,
+        compileTaskClass,
+        getCompileOptions,
+        taskOrProvider);
   }
 
   private void configureSourceSet(Project project, SourceSet sourceSet) {
     IMPL.ensureConfigurations(project, sourceSet);
 
-    final FileCollection files = project.files();
-    ((ExtensionAware) sourceSet.getOutput())
-        .getExtensions()
-        .add(FileCollection.class, SOURCE_SET_OUTPUT_GENERATED_SOURCES_DIRS, files);
+    IMPL.setupGeneratedSourcesDirs(project, sourceSet.getOutput());
   }
 
   abstract static class Impl {
@@ -211,9 +185,24 @@ public class AptPlugin implements Plugin<Project> {
     abstract void ensureConfigurations(Project project, SourceSet sourceSet);
 
     protected abstract void configureCompileTaskForSourceSet(
-        Project project, SourceSet sourceSet, CompileOptions compileOptions);
+        Project project,
+        SourceSet sourceSet,
+        SourceDirectorySet sourceDirectorySet,
+        CompileOptions compileOptions);
 
     abstract String getAnnotationProcessorConfigurationName(SourceSet sourceSet);
+
+    abstract void setupGeneratedSourcesDirs(Project project, SourceSetOutput sourceSetOutput);
+
+    abstract <T extends AbstractCompile> void addSourceSetOutputGeneratedSourcesDir(
+        Project project,
+        SourceSetOutput sourceSetOutput,
+        String compileTaskName,
+        Class<T> compileTaskClass,
+        Function<T, CompileOptions> getCompileOptions,
+        Object taskOrProvider);
+
+    abstract FileCollection getGeneratedSourcesDirs(SourceSetOutput sourceSetOutput);
   }
 
   public static class AptOptions implements HasPublicType {
