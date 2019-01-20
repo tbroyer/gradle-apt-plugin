@@ -91,14 +91,13 @@ public class AptEclipsePlugin implements Plugin<Project> {
                     .getByType(AptPlugin.AptOptions.class)
                     .isAnnotationProcessing()));
     jdtApt.setProcessorOptions(
-        project.provider(
-            () ->
-                project
-                    .getTasks()
-                    .getByName(mainSourceSet.getCompileJavaTaskName())
-                    .getExtensions()
-                    .getByType(AptPlugin.AptOptions.class)
-                    .getProcessorArgs()));
+        () ->
+            project
+                .getTasks()
+                .getByName(mainSourceSet.getCompileJavaTaskName())
+                .getExtensions()
+                .getByType(AptPlugin.AptOptions.class)
+                .getProcessorArgs());
 
     eclipseModel
         .getJdt()

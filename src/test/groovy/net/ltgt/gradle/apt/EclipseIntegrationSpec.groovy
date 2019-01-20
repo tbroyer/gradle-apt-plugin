@@ -259,6 +259,9 @@ class EclipseIntegrationSpec extends Specification {
             reconcileEnabled = false
             file.whenMerged {
               processorOptions.baz = 'qux'
+              // to make sure we don't modify the source map
+              file("compileJava-processorArgs.txt").text =
+                  compileJava.aptOptions.processorArgs.collect { "\${it.key}=\${it.value}" }.join("\\n")
             }
           }
         }
@@ -302,6 +305,9 @@ class EclipseIntegrationSpec extends Specification {
     aptSettings.getProperty('org.eclipse.jdt.apt.processorOptions/baz') == 'qux'
     aptSettings.getProperty('org.eclipse.jdt.apt.processorOptions/hasNullValue') == 'org.eclipse.jdt.apt.NULLVALUE'
     !aptSettings.containsKey('org.eclipse.jdt.apt.processorOptions/ignoredOption')
+    // Test that setting eclipse.jdt.apt.processorOptions doesn't modify the compile tasks' options
+    def compileJavaProcessorArgs = loadProperties("compileJava-processorArgs.txt")
+    compileJavaProcessorArgs.getProperty('baz') == 'willBeOverwritten'
 
     // Test that removing processor options effectively removes it from settings
     // We test this by actually renaming the option

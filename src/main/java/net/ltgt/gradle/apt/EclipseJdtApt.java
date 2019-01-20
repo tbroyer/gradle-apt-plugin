@@ -20,6 +20,7 @@ import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import org.gradle.api.Action;
 import org.gradle.api.Project;
@@ -44,9 +45,7 @@ public class EclipseJdtApt {
     genSrcDir.set(project.file(".apt_generated"));
     this.genTestSrcDir = project.getObjects().property(File.class);
     genTestSrcDir.set(project.file(".apt_generated_tests"));
-    this.processorOptions =
-        (Property<Map<String, ?>>) (Property<?>) project.getObjects().property(Map.class);
-    processorOptions.set(new LinkedHashMap<>());
+    this.processorOptionsSupplier = LinkedHashMap::new;
   }
 
   private final Property<Boolean> aptEnabled;
@@ -107,19 +106,29 @@ public class EclipseJdtApt {
     this.genTestSrcDir.set(project.provider(() -> project.file(genTestSrcDir)));
   }
 
-  private final Property<Map<String, ?>> processorOptions;
+  // XXX: this is actually either a Property<Map> or a MapProperty depending on Gradle version
+  private @Nullable Supplier<Map<String, ?>> processorOptionsSupplier;
+  private @Nullable Map<String, ?> processorOptions;
 
   @Nullable
   public Map<String, ?> getProcessorOptions() {
-    return processorOptions.getOrNull();
+    if (processorOptions == null && processorOptionsSupplier != null) {
+      processorOptions = processorOptionsSupplier.get();
+      processorOptionsSupplier = null;
+      if (processorOptions != null) {
+        processorOptions = new LinkedHashMap<>(processorOptions);
+      }
+    }
+    return processorOptions;
   }
 
   public void setProcessorOptions(@Nullable Map<String, ?> processorOptions) {
-    this.processorOptions.set(processorOptions);
+    setProcessorOptions(() -> processorOptions);
   }
 
-  public void setProcessorOptions(Provider<Map<String, ?>> processorOptions) {
-    this.processorOptions.set(processorOptions);
+  void setProcessorOptions(Supplier<Map<String, ?>> processorOptions) {
+    this.processorOptionsSupplier = processorOptions;
+    this.processorOptions = null;
   }
 
   public PropertiesFileContentMerger getFile() {
