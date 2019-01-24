@@ -25,6 +25,7 @@ import org.gradle.plugins.ide.internal.generator.PropertiesPersistableConfigurat
 public class JdtApt extends PropertiesPersistableConfigurationObject {
 
   private static final String GEN_SRC_DIR_KEY = "org.eclipse.jdt.apt.genSrcDir";
+  private static final String GEN_TEST_SRC_DIR_KEY = "org.eclipse.jdt.apt.genTestSrcDir";
   private static final String RECONCILE_ENABLED_KEY = "org.eclipse.jdt.apt.reconcileEnabled";
   private static final String PROCESSOR_OPTIONS_KEY_PREFIX =
       "org.eclipse.jdt.apt.processorOptions/";
@@ -32,6 +33,7 @@ public class JdtApt extends PropertiesPersistableConfigurationObject {
 
   private boolean aptEnabled;
   @Nullable private String genSrcDir;
+  @Nullable private String genTestSrcDir;
   private boolean reconcileEnabled;
   private Map<String, String> processorOptions = new LinkedHashMap<>();
 
@@ -48,6 +50,7 @@ public class JdtApt extends PropertiesPersistableConfigurationObject {
   protected void load(Properties properties) {
     // Ignore aptEnabled when loading, see comment about storing it
     genSrcDir = properties.getProperty(GEN_SRC_DIR_KEY);
+    genTestSrcDir = properties.getProperty(GEN_TEST_SRC_DIR_KEY);
     reconcileEnabled = Boolean.parseBoolean(RECONCILE_ENABLED_KEY);
     for (String name : properties.stringPropertyNames()) {
       if (name.startsWith(PROCESSOR_OPTIONS_KEY_PREFIX)) {
@@ -68,6 +71,7 @@ public class JdtApt extends PropertiesPersistableConfigurationObject {
     properties.setProperty("org.eclipse.jdt.apt.aptEnabled", Boolean.toString(isAptEnabled()));
 
     properties.setProperty(GEN_SRC_DIR_KEY, getGenSrcDir());
+    properties.setProperty(GEN_TEST_SRC_DIR_KEY, getGenTestSrcDir());
     properties.setProperty(RECONCILE_ENABLED_KEY, Boolean.toString(isReconcileEnabled()));
     for (String name : properties.stringPropertyNames()) {
       if (name.startsWith(PROCESSOR_OPTIONS_KEY_PREFIX)
@@ -98,6 +102,15 @@ public class JdtApt extends PropertiesPersistableConfigurationObject {
 
   public void setGenSrcDir(@Nullable String genSrcDir) {
     this.genSrcDir = genSrcDir;
+  }
+
+  @Nullable
+  public String getGenTestSrcDir() {
+    return genTestSrcDir;
+  }
+
+  public void setGenTestSrcDir(@Nullable String genTestSrcDir) {
+    this.genTestSrcDir = genTestSrcDir;
   }
 
   public boolean isReconcileEnabled() {

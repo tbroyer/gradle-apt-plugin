@@ -23,7 +23,9 @@ If you're interested in better IDE support, please vote for those issues to even
  * in IntelliJ IDEA: [for annotation processing in the IDE](https://youtrack.jetbrains.com/issue/IDEA-187868),
    and/or simply [`options.annotationProcessorGeneratedSourcesDirectory` (e.g. if delegating build/run actions to Gradle)](https://youtrack.jetbrains.com/issue/IDEA-182577)
 
-**Note: the documentation below only applies to version 0.20. For previous versions, please see [the previous version of this README](https://github.com/tbroyer/gradle-apt-plugin/blob/648bf2810097799796fdeb327255cdc99733aabd/README.md).**
+**Note: the documentation below only applies to version 0.21.
+For version 0.20, see [the previous version of this README](https://github.com/tbroyer/gradle-apt-plugin/blob/v0.20/README.md).
+For previous versions, please see [this even earlier version](https://github.com/tbroyer/gradle-apt-plugin/blob/648bf2810097799796fdeb327255cdc99733aabd/README.md).**
 
 ## Do without the plugin
 
@@ -319,8 +321,9 @@ eclipse {
     apt {
       // whether annotation processing is enabled in Eclipse
       aptEnabled = compileJava.aptOptions.annotationProcessing
-      // where Eclipse will output the generated sources; value is interpreted as per project.file()
+      // where Eclipse will output the generated sources; values are interpreted as per project.file()
       genSrcDir = file('.apt_generated')
+      genTestSrcDir = file('.apt_generated_tests')
       // whether annotation processing is enabled in the editor
       reconcileEnabled = true
       // a map of annotation processor options; a null value will pass the argument as -Akey rather than -Akey=value
@@ -365,8 +368,9 @@ eclipse {
     apt {
       // whether annotation processing is enabled in Eclipse
       isAptEnabled = tasks.getByName<JavaCompile>("compileJava").aptOptions.annotationProcessing
-      // where Eclipse will output the generated sources; value is interpreted as per project.file()
+      // where Eclipse will output the generated sources; values are interpreted as per project.file()
       genSrcDir = file(".apt_generated")
+      genTestSrcDir = file(".apt_generated_tests")
       // whether annotation processing is enabled in the editor
       isReconcileEnabled = true
       // a map of annotation processor options; a null value will pass the argument as -Akey rather than -Akey=value

@@ -134,6 +134,7 @@ class EclipseIntegrationSpec extends Specification {
     def aptSettings = loadProperties('.settings/org.eclipse.jdt.apt.core.prefs')
     aptSettings.getProperty('org.eclipse.jdt.apt.aptEnabled') == 'true'
     aptSettings.getProperty('org.eclipse.jdt.apt.genSrcDir') == '.apt_generated'
+    aptSettings.getProperty('org.eclipse.jdt.apt.genTestSrcDir') == '.apt_generated_tests'
     aptSettings.getProperty('org.eclipse.jdt.apt.reconcileEnabled') == 'true'
 
     // Test idempotency of eclipseFactorypath
@@ -254,6 +255,7 @@ class EclipseIntegrationSpec extends Specification {
           apt {
             aptEnabled = false
             genSrcDir = file('whatever')
+            genTestSrcDir = file('tests_whatever')
             reconcileEnabled = false
             file.whenMerged {
               processorOptions.baz = 'qux'
@@ -294,6 +296,7 @@ class EclipseIntegrationSpec extends Specification {
     def aptSettings = loadProperties('.settings/org.eclipse.jdt.apt.core.prefs')
     aptSettings.getProperty('org.eclipse.jdt.apt.aptEnabled') == 'false'
     aptSettings.getProperty('org.eclipse.jdt.apt.genSrcDir') == 'whatever'
+    aptSettings.getProperty('org.eclipse.jdt.apt.genTestSrcDir') == 'tests_whatever'
     aptSettings.getProperty('org.eclipse.jdt.apt.reconcileEnabled') == 'false'
     aptSettings.getProperty('org.eclipse.jdt.apt.processorOptions/foo') == 'bar'
     aptSettings.getProperty('org.eclipse.jdt.apt.processorOptions/baz') == 'qux'
@@ -315,6 +318,7 @@ class EclipseIntegrationSpec extends Specification {
     def aptSettings2 = loadProperties('.settings/org.eclipse.jdt.apt.core.prefs')
     aptSettings2.getProperty('org.eclipse.jdt.apt.aptEnabled') == 'false'
     aptSettings2.getProperty('org.eclipse.jdt.apt.genSrcDir') == 'whatever'
+    aptSettings2.getProperty('org.eclipse.jdt.apt.genTestSrcDir') == 'tests_whatever'
     aptSettings2.getProperty('org.eclipse.jdt.apt.reconcileEnabled') == 'false'
     aptSettings2.getProperty('org.eclipse.jdt.apt.processorOptions/quux') == 'bar'
     !aptSettings2.containsKey('org.eclipse.jdt.apt.processorOptions/foo')

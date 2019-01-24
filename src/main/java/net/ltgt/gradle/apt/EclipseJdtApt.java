@@ -42,6 +42,8 @@ public class EclipseJdtApt {
     reconcileEnabled.set(true);
     this.genSrcDir = project.getObjects().property(File.class);
     genSrcDir.set(project.file(".apt_generated"));
+    this.genTestSrcDir = project.getObjects().property(File.class);
+    genTestSrcDir.set(project.file(".apt_generated_tests"));
     this.processorOptions =
         (Property<Map<String, ?>>) (Property<?>) project.getObjects().property(Map.class);
     processorOptions.set(new LinkedHashMap<>());
@@ -88,6 +90,21 @@ public class EclipseJdtApt {
   public void setGenSrcDir(Object genSrcDir) {
     Objects.requireNonNull(genSrcDir);
     this.genSrcDir.set(project.provider(() -> project.file(genSrcDir)));
+  }
+
+  private final Property<File> genTestSrcDir;
+
+  public File getGenTestSrcDir() {
+    return project.file(genTestSrcDir);
+  }
+
+  public void setGenTestSrcDir(File genTestSrcDir) {
+    this.genTestSrcDir.set(Objects.requireNonNull(genTestSrcDir));
+  }
+
+  public void setGenTestSrcDir(Object genTestSrcDir) {
+    Objects.requireNonNull(genTestSrcDir);
+    this.genTestSrcDir.set(project.provider(() -> project.file(genTestSrcDir)));
   }
 
   private final Property<Map<String, ?>> processorOptions;

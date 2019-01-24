@@ -129,6 +129,7 @@ class KotlinDslIntegrationSpec extends Specification {
           apt {
             isAptEnabled = true
             genSrcDir = file(".apt_generated")
+            genTestSrcDir = file(".apt_generated_tests")
             isReconcileEnabled = true
             processorOptions = mapOf("foo" to "bar")
           }

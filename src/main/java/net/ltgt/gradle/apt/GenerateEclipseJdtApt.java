@@ -30,6 +30,7 @@ public class GenerateEclipseJdtApt extends PropertiesGeneratorTask<JdtApt> {
     jdtAptModel.getFile().getBeforeMerged().execute(jdtApt);
     jdtApt.setAptEnabled(jdtAptModel.isAptEnabled());
     jdtApt.setGenSrcDir(getProject().relativePath(jdtAptModel.getGenSrcDir()));
+    jdtApt.setGenTestSrcDir(getProject().relativePath(jdtAptModel.getGenTestSrcDir()));
     jdtApt.setReconcileEnabled(jdtAptModel.isReconcileEnabled());
     jdtApt.getProcessorOptions().clear();
     if (jdtAptModel.getProcessorOptions() != null) {
