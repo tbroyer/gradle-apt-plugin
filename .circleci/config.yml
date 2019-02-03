@@ -61,13 +61,41 @@ caches:
 
     - &save-gradle-wrapper-current
       save_cache:
+        name: Saving Gradle wrapper 5.2-rc-1
+        key: v2-gradle-wrapper-5.2-rc-1
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-5.2-rc-1-bin/
+          - ~/.gradle/caches/5.2-rc-1/generated-gradle-jars/
+          - ~/.gradle/notifications/5.2-rc-1/
+    - &restore-gradle-wrapper-current
+      restore_cache:
+        name: Restoring Gradle wrapper 5.2-rc-1
+        keys:
+          - v2-gradle-wrapper-5.2-rc-1
+    
+    - &save-gradle-wrapper-5-1-1
+      save_cache:
+        name: Saving Gradle wrapper 5.1.1
+        key: v2-gradle-wrapper-5.1.1
+        paths:
+          - ~/.gradle/wrapper/dists/gradle-5.1.1-bin/
+          - ~/.gradle/caches/5.1.1/generated-gradle-jars/
+          - ~/.gradle/notifications/5.1.1/
+    - &restore-gradle-wrapper-5-1-1
+      restore_cache:
+        name: Restoring Gradle wrapper 5.1.1
+        keys:
+          - v2-gradle-wrapper-5.1.1
+    
+    - &save-gradle-wrapper-5-0
+      save_cache:
         name: Saving Gradle wrapper 5.0
         key: v2-gradle-wrapper-5.0
         paths:
           - ~/.gradle/wrapper/dists/gradle-5.0-bin/
           - ~/.gradle/caches/5.0/generated-gradle-jars/
           - ~/.gradle/notifications/5.0/
-    - &restore-gradle-wrapper-current
+    - &restore-gradle-wrapper-5-0
       restore_cache:
         name: Restoring Gradle wrapper 5.0
         keys:
@@ -225,6 +253,58 @@ jobs:
       - *save-gradle-dependencies-java11
       - *persist-workspace
     
+  java8_gradle51:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-5-1-1
+      - run:
+          name: Test against Gradle 5.1.1
+          command: ./gradlew test -Ptest.gradle-version=5.1.1
+      - *store-test-results
+      - *save-gradle-wrapper-5-1-1
+        
+  java11_gradle51:
+    <<: *java11
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java11
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-5-1-1
+      - run:
+          name: Test against Gradle 5.1.1
+          command: ./gradlew test -Ptest.gradle-version=5.1.1
+      - *store-test-results
+      - *save-gradle-wrapper-5-1-1
+        
+  java8_gradle50:
+    <<: *java8
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java8
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-5-0
+      - run:
+          name: Test against Gradle 5.0
+          command: ./gradlew test -Ptest.gradle-version=5.0
+      - *store-test-results
+      - *save-gradle-wrapper-5-0
+        
+  java11_gradle50:
+    <<: *java11
+    steps:
+      - *attach-workspace
+      - *restore-gradle-dependencies-java11
+      - *restore-gradle-wrapper-current
+      - *restore-gradle-wrapper-5-0
+      - run:
+          name: Test against Gradle 5.0
+          command: ./gradlew test -Ptest.gradle-version=5.0
+      - *store-test-results
+      - *save-gradle-wrapper-5-0
+        
   java8_gradle410:
     <<: *java8
     steps:
@@ -383,6 +463,26 @@ workflows:
           requires:
             - java8
     
+      - java8_gradle51:
+          requires:
+            - java8
+            
+        
+      - java11_gradle51:
+          requires:
+            - java11
+            - java8_gradle51
+        
+      - java8_gradle50:
+          requires:
+            - java8
+            
+        
+      - java11_gradle50:
+          requires:
+            - java11
+            - java8_gradle50
+        
       - java8_gradle410:
           requires:
             - java8
