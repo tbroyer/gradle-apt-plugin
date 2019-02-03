@@ -133,6 +133,51 @@ idea {
 
 </details>
 
+<details>
+<summary>With Gradle 5.2 (and a version of IntelliJ IDEA older than 2019.1)</summary>
+
+You can instead use:
+
+<details open>
+<summary>Groovy</summary>
+
+```gradle
+// Workaround for https://youtrack.jetbrains.com/issue/IDEA-182577
+idea {
+  module {
+    sourceDirs += sourceSets.main.output.generatedSourcesDirs
+    generatedSourceDirs += sourceSets.main.output.generatedSourcesDirs
+    testSourceDirs += sourceSets.test.output.generatedSourcesDirs
+    generatedSourceDirs += sourceSets.test.output.generatedSourcesDirs
+  }
+}
+```
+
+</details>
+<details>
+<summary>Kotlin</summary>
+
+```kotlin
+// Workaround for https://youtrack.jetbrains.com/issue/IDEA-182577
+idea {
+    module {
+        tasks.sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).output.generatedSourcesDirs.also {
+            // For some reason, modifying the existing collections doesn't work. We need to copy the values and then assign it back.
+            sourceDirs = sourceDirs + it
+            generatedSourceDirs = generatedSourceDirs + it
+        }
+        tasks.sourceSets.getByName(SourceSet.TEST_SOURCE_SET_NAME).output.generatedSourcesDirs.also {
+            // For some reason, modifying the existing collections doesn't work. We need to copy the values and then assign it back.
+            testSourceDirs = testSourceDirs + it
+            generatedSourceDirs = generatedSourceDirs + it
+        }
+    }
+}
+```
+
+</details>
+</details>
+
 If you want IntelliJ IDEA to process annotations, you'll have to do some manual configuration to enable annotation processing,
 and add the annotation processors to the project's compilation classpath:
 
