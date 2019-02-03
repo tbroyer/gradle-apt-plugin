@@ -505,6 +505,7 @@ Each source set has a couple properties (Gradle ≥ 4.6 already provides those p
 
 Each source set's `output` gains a `generatedSourcesDirs` property, a `FileCollection` aggregating the `options.annotationProcessorGeneratedSourcesDirectory` for `JavaCompile` and `GroovyCompile` corresponding to the source set.
 This allows, for example, packaging the generated sources in a _sources JAR_, a dependency on `output.generatedSourcesDir` will automatically trigger a compilation to generate those sources.
+Gradle ≥ 5.2 already provides this property natively, this plugin contributes it for earlier Gradle versions.
 
 Each `JavaCompile` and `GroovyCompile` task gains an `aptOptions` (read-only) property, itself with 3 properties:
   * `annotationProcessing`, a `boolean` setting whether annotation processing is enabled or not; this maps to the `-proc:none` compiler argument, and defaults to `true` (meaning that argument is not passed in, and annotation processing is enabled)

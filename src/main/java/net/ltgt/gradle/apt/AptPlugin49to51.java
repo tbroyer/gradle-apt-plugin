@@ -34,7 +34,7 @@ import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.api.tasks.compile.CompileOptions;
 import org.gradle.process.CommandLineArgumentProvider;
 
-class AptPlugin49 extends AptPlugin.Impl {
+class AptPlugin49to51 extends AptPlugin.Impl {
 
   private static final String SOURCE_SET_OUTPUT_GENERATED_SOURCES_DIRS = "generatedSourcesDirs";
 
@@ -60,7 +60,7 @@ class AptPlugin49 extends AptPlugin.Impl {
 
   @Override
   protected AptPlugin.AptOptions createAptOptions() {
-    return new AptOptions49();
+    return new AptOptions49to51();
   }
 
   @Override
@@ -139,7 +139,7 @@ class AptPlugin49 extends AptPlugin.Impl {
             .getByName(SOURCE_SET_OUTPUT_GENERATED_SOURCES_DIRS);
   }
 
-  private static class AptOptions49 extends AptPlugin.AptOptions
+  private static class AptOptions49to51 extends AptPlugin.AptOptions
       implements CommandLineArgumentProvider, Named {
 
     @Override

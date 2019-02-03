@@ -155,13 +155,16 @@ public class AptPlugin implements Plugin<Project> {
 
   abstract static class Impl {
     static Impl newInstance() {
-      if (GradleVersion.current().compareTo(GradleVersion.version("4.9")) >= 0) {
-        return new AptPlugin49();
-      } else if (GradleVersion.current().compareTo(GradleVersion.version("4.6")) >= 0) {
+      final GradleVersion current = GradleVersion.current().getBaseVersion();
+      if (current.compareTo(GradleVersion.version("5.2")) >= 0) {
+        return new AptPlugin52();
+      } else if (current.compareTo(GradleVersion.version("4.9")) >= 0) {
+        return new AptPlugin49to51();
+      } else if (current.compareTo(GradleVersion.version("4.6")) >= 0) {
         return new AptPlugin46to48();
-      } else if (GradleVersion.current().compareTo(GradleVersion.version("4.5")) >= 0) {
+      } else if (current.compareTo(GradleVersion.version("4.5")) >= 0) {
         return new AptPlugin45();
-      } else if (GradleVersion.current().compareTo(GradleVersion.version("4.3")) >= 0) {
+      } else if (current.compareTo(GradleVersion.version("4.3")) >= 0) {
         return new AptPlugin43to44();
       } else {
         throw new UnsupportedOperationException();
