@@ -1,6 +1,7 @@
 # gradle-apt-plugin
 
-The goal of this plugin is to eventually no longer be needed, being superseded by built-in features.
+The goal of this plugin was to eventually no longer be needed, being superseded by built-in features.
+This is becoming a reality with Gradle 5.2 and IntelliJ IDEA 2019.1.
 
 It originally did a few things to make it easier/safer to use Java annotation processors in a Gradle build.
 Those things are now available natively in Gradle, so what's this plugin about?
@@ -20,8 +21,10 @@ namely the `net.ltgt.apt-idea` or `net.ltgt.apt-eclipse` plugins that will autom
 If you're interested in better IDE support, please vote for those issues to eventually have built-in support:
  * [in Gradle](https://github.com/gradle/gradle/issues/2300) for the `idea` and `eclipse` plugins
  * [in Eclipse Buildship](https://github.com/eclipse/buildship/issues/329)
- * in IntelliJ IDEA: [for annotation processing in the IDE](https://youtrack.jetbrains.com/issue/IDEA-187868),
-   and/or simply [`options.annotationProcessorGeneratedSourcesDirectory` (e.g. if delegating build/run actions to Gradle)](https://youtrack.jetbrains.com/issue/IDEA-182577)
+ * in IntelliJ IDEA: [for annotation processing in the IDE](https://youtrack.jetbrains.com/issue/IDEA-187868)
+   (probably low priority as delegating build/run actions to Gradle is becoming the default in 2019.1),
+   and/or [simply `sourceSet.output.generatedSourcesDirs`](https://youtrack.jetbrains.com/issue/IDEA-182577)
+   (e.g. if delegating build/run actions to Gradle; this will be fixed in IntelliJ IDEA 2019.1 when using Gradle 5.2)
 
 **Note: the documentation below only applies to version 0.21.
 For version 0.20, see [the previous version of this README](https://github.com/tbroyer/gradle-apt-plugin/blob/v0.20/README.md).
