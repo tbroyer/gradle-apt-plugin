@@ -32,8 +32,7 @@ For previous versions, please see [this even earlier version](https://github.com
 
 ## Do without the plugin
 
-<details>
-<summary>This only applies if you are using Gradle ≥ 4.3</summary>
+This only applies if you are using Gradle ≥ 4.3
 
 ### Do without `net.ltgt.apt`
 
@@ -274,8 +273,6 @@ if (Boolean.getBoolean("idea.active")) {
 ### Do without `net.ltgt.apt-eclipse`
 
 There's no easy workaround at this point, sorry :man_shrugging:
-
-</details>
 
 ## Using the plugin
 
