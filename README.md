@@ -1,7 +1,7 @@
 # gradle-apt-plugin
 
 The goal of this plugin was to eventually no longer be needed, being superseded by built-in features.
-This has become a reality with Gradle 5.2 and IntelliJ IDEA 2019.1.
+This has become a reality with Gradle 5.2 and IntelliJ IDEA 2019.1. **tl;dr: this plugin is obsolete, don't use it.** If you're using Eclipse though, continue reading.
 
 It originally did a few things to make it easier/safer to use Java annotation processors in a Gradle build.
 Those things are now available natively in Gradle, so what's this plugin about?
@@ -23,12 +23,14 @@ namely the `net.ltgt.apt-idea` or `net.ltgt.apt-eclipse` plugins that will autom
 If you're interested in better IDE support, please vote for those issues to eventually have built-in support:
  * [in Gradle](https://github.com/gradle/gradle/issues/2300) for the `idea` and `eclipse` plugins
  * [in Eclipse Buildship](https://github.com/eclipse/buildship/issues/329)
- * [in IntelliJ IDEA](https://youtrack.jetbrains.com/issue/IDEA-187868) for annotation processing in the IDE
-   (probably low priority as delegating build/run actions to Gradle is becoming the default in 2019.1)
+ * ~[in IntelliJ IDEA](https://youtrack.jetbrains.com/issue/IDEA-187868) for annotation processing in the IDE
+   (probably low priority as delegating build/run actions to Gradle is becoming the default in 2019.1)~ (fixed in 2019.3)
 
-**Note: the documentation below only applies to version 0.21.
+**If you're using Eclipse, please migrate to the [`com.diffplug.eclipse.apt`](https://plugins.gradle.org/plugin/com.diffplug.eclipse.apt) plugin, which is a (maintained) fork of `net.ltgt.apt-eclipse`.**
+
+*Note: the documentation below only applies to version 0.21.
 For version 0.20, see [the previous version of this README](https://github.com/tbroyer/gradle-apt-plugin/blob/v0.20/README.md).
-For previous versions, please see [this even earlier version](https://github.com/tbroyer/gradle-apt-plugin/blob/648bf2810097799796fdeb327255cdc99733aabd/README.md).**
+For previous versions, please see [this even earlier version](https://github.com/tbroyer/gradle-apt-plugin/blob/648bf2810097799796fdeb327255cdc99733aabd/README.md).*
 
 ## Do without the plugin
 
